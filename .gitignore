@@ -1,0 +1,9 @@
+dist/
+node_modules/
+serve.log
+.DS_Store
+.playwright-cli/
+.workbuddy/
+output/
+scripts/deploy-server.sh
+tests/deploy.test.js

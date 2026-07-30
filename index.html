@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#07111e" />
+  <title>关系决策牌组 V0.9</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23e7bd65'/%3E%3Cpath d='M32 14 48 32 32 50 16 32Z' fill='none' stroke='%23172137' stroke-width='5'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">◇</span>
+        <div><strong>关系决策牌组</strong><small>场景出题 · AI发牌 · 回合收藏</small></div>
+      </div>
+
+      <div class="current-context">
+        <button id="prevPersonButton" class="round-icon" type="button" aria-label="上一位人物">←</button>
+        <button id="personButton" class="hero-chip" type="button">
+          <span id="heroAvatar" class="hero-avatar">李</span>
+          <span class="hero-copy"><span class="context-kicker">当前人物</span><strong id="heroName">李总</strong><small id="heroType">决策型领导</small><small id="heroMeta">分管领导 · 急迫</small></span>
+        </button>
+        <button id="nextPersonButton" class="round-icon" type="button" aria-label="下一位人物">→</button>
+        <button id="matterButton" class="matter-chip" type="button">
+          <span class="context-kicker">当前项目</span><strong id="matterName">数据治理平台</strong><small id="matterMeta">需要决策 · 节点与质量</small><span id="matterCount" class="matter-count">2 个项目可切换</span>
+        </button>
+      </div>
+
+      <div class="top-actions">
+        <button id="historyButton" class="ghost-button" type="button">回合 <span id="historyCount">1</span></button>
+        <button id="aiButton" class="round-icon" type="button" aria-label="AI 接入设置" title="AI 接入设置">AI</button>
+        <button id="dataButton" class="round-icon data-button" type="button" aria-label="导入或导出数据" title="导入或导出数据">⇅</button>
+      </div>
+    </header>
+
+    <main class="game-table">
+      <section class="board-zone">
+        <aside class="opponent-action-zone">
+          <button id="opponentDeckButton" class="opponent-action-button" type="button">
+            <span aria-hidden="true">♠</span>
+            <strong>对方出牌</strong>
+            <small><b id="opponentDeckCount">1</b> 张可选</small>
+          </button>
+        </aside>
+
+        <section class="battlefield board-stage">
+          <div class="board-head">
+            <span>对方当前场景</span><span>我的当前回应</span>
+          </div>
+          <div class="round-row current-row">
+            <span class="round-label active-label">当前轮</span>
+            <div class="duel-stack previous-opponent-stack">
+              <div id="previousOpponentSlot" class="field-slot previous-slot"></div>
+              <button id="previousOpponentPeek" class="previous-peek" data-previous-card="opponent" type="button" aria-label="放大查看上一轮场景牌"></button>
+              <div id="currentOpponentSlot" class="field-slot current-slot"></div>
+            </div>
+            <span class="round-arrow active-arrow">→</span>
+            <div class="duel-stack previous-player-stack">
+              <div id="previousPlayerSlot" class="field-slot previous-slot"></div>
+              <button id="previousPlayerPeek" class="previous-peek" data-previous-card="player" type="button" aria-label="放大查看上一轮回应牌"></button>
+              <div id="currentPlayerSlot" class="field-slot current-slot"></div>
+            </div>
+          </div>
+          <div id="roundControls" class="round-controls"></div>
+        </section>
+
+        <aside class="archive-rail">
+          <button id="packSpineButton" class="pack-spine" type="button" aria-label="打开我的卡包">
+            <span class="spine-gem">★</span>
+            <strong>我的卡包</strong>
+            <small><span id="packCount">3</span> 张收藏</small>
+            <i aria-hidden="true"></i>
+          </button>
+          <button id="archiveHistoryButton" class="archive-history" type="button">查看全部回合</button>
+        </aside>
+      </section>
+
+      <section class="hand-zone">
+        <header class="hand-header">
+          <div>
+            <span>当前应对手牌</span>
+            <strong id="handAxis">按一个统一维度展开主要解法</strong>
+            <small id="handCoverage"></small>
+          </div>
+          <div class="hand-legend"><span class="legend primary"></span>主推荐 <span class="legend backup"></span>条件备选 <span class="legend other"></span>其他路线</div>
+        </header>
+        <div id="handViewport" class="hand-viewport"><div id="handFan" class="hand-fan"></div></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="playModal" class="modal-backdrop" hidden><section class="modal-panel play-panel" role="dialog" aria-modal="true"><button class="modal-close floating" data-close="playModal" type="button">×</button><div id="playModalContent"></div></section></div>
+  <div id="previousCardModal" class="modal-backdrop" hidden><section class="modal-panel previous-card-panel" role="dialog" aria-modal="true"><button class="modal-close floating" data-close="previousCardModal" type="button">×</button><div id="previousCardContent"></div></section></div>
+
+  <div id="opponentDeckModal" class="modal-backdrop" hidden>
+    <section class="modal-panel" role="dialog" aria-modal="true">
+      <header class="modal-header"><div><span>对方场景牌堆</span><h2>创建并打出下一张场景牌</h2></div><button class="modal-close" data-close="opponentDeckModal" type="button">×</button></header>
+      <div class="source-tabs"><button class="source-tab active" data-source="templates" type="button">已有场景</button><button class="source-tab" data-source="real" type="button">现实回复</button><button class="source-tab" data-source="question" type="button">我的疑问</button><button class="source-tab" data-source="simulation" type="button">AI模拟</button></div>
+      <div id="sourceTemplates" class="source-panel active"></div>
+      <div id="sourceReal" class="source-panel"><label>对方实际说了什么</label><textarea id="realSceneInput" placeholder="例如：可以先试点，但月底前必须覆盖三个部门。"></textarea><button id="createRealButton" class="primary-button" type="button">生成现实场景牌</button></div>
+      <div id="sourceQuestion" class="source-panel"><label>你担心对方会问什么</label><textarea id="questionSceneInput" placeholder="例如：我担心他会问，如果还是延期谁负责。"></textarea><button id="createQuestionButton" class="primary-button" type="button">整理成假设场景牌</button></div>
+      <div id="sourceSimulation" class="source-panel"><p class="helper-text">根据当前人物、事项和刚刚打出的我方牌，模拟对方下一句话。</p><button id="createSimulationButton" class="primary-button" type="button">模拟并进入下一回合</button></div>
+    </section>
+  </div>
+
+  <div id="personModal" class="modal-backdrop" hidden><section class="modal-panel" role="dialog" aria-modal="true"><header class="modal-header"><div><span>人物详情</span><h2 id="personDetailTitle"></h2></div><button class="modal-close" data-close="personModal" type="button">×</button></header><div id="personDetail"></div></section></div>
+  <div id="matterModal" class="modal-backdrop" hidden><section class="modal-panel" role="dialog" aria-modal="true"><header class="modal-header"><div><span>事项详情</span><h2 id="matterDetailTitle"></h2></div><button class="modal-close" data-close="matterModal" type="button">×</button></header><div id="matterDetail"></div></section></div>
+
+  <div id="historyModal" class="modal-backdrop" hidden><section class="modal-panel wide-panel" role="dialog" aria-modal="true"><header class="modal-header"><div><span>全部回合</span><h2>现实与模拟记录</h2></div><button class="modal-close" data-close="historyModal" type="button">×</button></header><div id="historyList" class="record-grid"></div></section></div>
+
+  <div id="packModal" class="modal-backdrop" hidden>
+    <section class="modal-panel pack-panel" role="dialog" aria-modal="true">
+      <header class="modal-header"><div><span>我的卡包</span><h2>收藏的场景—应对卡</h2></div><button class="modal-close" data-close="packModal" type="button">×</button></header>
+      <div class="pack-tools"><input id="packSearch" type="search" placeholder="搜索收藏的牌"/></div>
+      <div id="packGrid" class="pack-grid"></div>
+    </section>
+  </div>
+
+  <div id="dataModal" class="modal-backdrop" hidden>
+    <section class="modal-panel compact-panel" role="dialog" aria-modal="true">
+      <header class="modal-header"><div><span>本地数据</span><h2>保存或迁移试玩进度</h2><p>数据自动保存在当前浏览器，也可以导出为 JSON 文件备份。</p></div><button class="modal-close" data-close="dataModal" type="button">×</button></header>
+      <div class="data-actions">
+        <button id="exportDataButton" class="primary-button" type="button">↓ 导出数据文件</button>
+        <button id="importDataButton" class="secondary-button" type="button">↑ 导入数据文件</button>
+        <input id="importDataInput" type="file" accept="application/json,.json" hidden />
+      </div>
+      <p id="dataStatus" class="data-status" role="status">浏览器会在人物、事项、回合或卡包变化后自动保存。</p>
+    </section>
+  </div>
+
+  <div id="aiModal" class="modal-backdrop" hidden>
+    <section class="modal-panel compact-panel" role="dialog" aria-modal="true">
+      <header class="modal-header"><div><span>AI 接入</span><h2>OpenAI 兼容接口</h2><p>适用于 OpenAI 及提供 Chat Completions 兼容格式的第三方服务。</p></div><button class="modal-close" data-close="aiModal" type="button">×</button></header>
+      <form id="aiConfigForm" class="edit-form ai-config-form">
+        <label>API Base URL<input id="aiBaseUrl" type="url" placeholder="https://api.openai.com/v1" required></label>
+        <label>模型名称<input id="aiModel" type="text" placeholder="例如：gpt-4.1-mini" required></label>
+        <label>API Key<input id="aiApiKey" type="password" autocomplete="off" placeholder="仅保存在当前浏览器"></label>
+        <label class="check-field"><input id="aiEnabled" type="checkbox">启用真实 AI 接口</label>
+        <label class="check-field"><input id="aiRememberKey" type="checkbox">在此浏览器保存密钥（导出文件不会包含密钥）</label>
+        <p class="security-note">纯前端直连仅适合个人本地或局域网试玩。公开部署时请改用服务端代理保护密钥。</p>
+        <div class="form-actions"><button id="testAiButton" class="secondary-button" type="button">测试连接</button><button class="primary-button" type="submit">保存设置</button></div>
+        <p id="aiStatus" class="data-status" role="status"></p>
+      </form>
+    </section>
+  </div>
+
+  <script src="data/demo-data.js"></script><script src="src/data-model.js"></script><script src="src/ai-client.js"></script><script src="src/storage.js"></script><script src="src/app.js"></script>
+</body>
+</html>
