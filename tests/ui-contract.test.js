@@ -125,6 +125,13 @@ test('桌面端对方出牌使用卡背式入口，手牌只保留牌面不显�
   assert.match(styles, /\.hand-zone::before\s*\{[^}]*display:none/s);
 });
 
+test('首页使用无框沉浸式牌桌，仅让卡牌和交互入口浮在桌面上', () => {
+  assert.match(styles, /\/\* V0\.9 无框沉浸式牌桌 \*\//);
+  assert.match(styles, /\.app-shell\s*\{[^}]*border:0[^}]*background:transparent[^}]*box-shadow:none/s);
+  assert.match(styles, /\.opponent-action-zone,\s*\.battlefield\.board-stage,\s*\.archive-rail\s*\{[^}]*border:0[^}]*background:transparent[^}]*box-shadow:none/s);
+  assert.match(styles, /\.battlefield\.board-stage::before,\s*\.archive-rail::before\s*\{[^}]*display:none/s);
+});
+
 test('移动端牌宽和牌高随视口自适应，卡包进一步压薄', () => {
   assert.match(styles, /\.current-row \.dialog-card\.current,[^}]*\.current-row \.empty-slot\s*\{[^}]*width:clamp\([^}]*aspect-ratio:7\/10[^}]*height:auto/s);
   assert.match(styles, /\.hand-card\s*\{[^}]*width:clamp\([^}]*aspect-ratio:3\/4[^}]*height:auto/s);

@@ -3886,3 +3886,46 @@ body {
     min-height:30px;
   }
 }
+
+/* V0.9 无框沉浸式牌桌 */
+.app-shell {
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  overflow:visible;
+}
+.topbar {
+  border-bottom:0;
+  background:transparent;
+  box-shadow:none;
+}
+.opponent-action-zone,
+.battlefield.board-stage,
+.archive-rail {
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+.battlefield.board-stage {
+  overflow:visible;
+}
+.battlefield.board-stage::before,
+.archive-rail::before {
+  display:none;
+}
+
+@media(max-width:720px) {
+  .app-shell {
+    width:100%;
+    margin:0;
+  }
+  .game-table {
+    gap:2px;
+    padding-right:4px;
+    padding-left:4px;
+  }
+  .archive-rail {
+    border-radius:0;
+  }
+}
