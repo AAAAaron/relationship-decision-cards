@@ -2,6 +2,12 @@
 
 围绕持续沟通设计的纯前端卡牌原型：对方打出场景牌，用户从手牌中选择表达方式，并把有价值的交锋收藏到卡包。
 
+## 在线试玩
+
+访问 **[GitHub Pages 在线版](https://aaaaaron.github.io/relationship-decision-cards/)**。
+
+`main` 分支更新后，GitHub Actions 会自动完成测试、构建并发布最新版本。
+
 ## 技术边界
 
 - 原生 HTML、CSS、JavaScript，不依赖前端框架或外部 CDN；

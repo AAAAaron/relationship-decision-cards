@@ -18,3 +18,9 @@ test('GitHub Pages 工作流测试、构建并发布 dist 目录', () => {
   assert.match(workflow, /pages:\s*write/);
   assert.match(workflow, /id-token:\s*write/);
 });
+
+test('README 提供公开在线试玩入口', () => {
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+
+  assert.match(readme, /https:\/\/aaaaaron\.github\.io\/relationship-decision-cards\//);
+});
