@@ -107,6 +107,7 @@
       else if (kind === 'hand-deal') effect = fx.createHandDealEffect({ THREE, canvas });
       else if (kind === 'player-play') effect = fx.createPlayerPlayEffect({ THREE, canvas });
       else if (kind === 'round-save') effect = fx.createRoundSaveEffect({ THREE, canvas });
+      else if (kind === 'card-flip') effect = fx.createCardFlipEffect({ THREE, canvas });
       if (!effect) return;
       try { effect.start(detail || {}); } catch (error) { /* noop */ }
       bus.add(effect);
@@ -114,7 +115,7 @@
     }
     const eventUnsubs = [];
     if (typeof window !== 'undefined' && window.addEventListener) {
-      ['rdc:opponent-play', 'rdc:hand-deal', 'rdc:player-play', 'rdc:round-save'].forEach(name => {
+      ['rdc:opponent-play', 'rdc:hand-deal', 'rdc:player-play', 'rdc:round-save', 'rdc:card-flip'].forEach(name => {
         const handler = (e) => triggerEffect(name.replace('rdc:', ''), (e && e.detail) || {});
         window.addEventListener(name, handler);
         eventUnsubs.push(() => window.removeEventListener(name, handler));

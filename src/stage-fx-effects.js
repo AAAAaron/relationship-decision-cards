@@ -552,12 +552,93 @@
     return effect;
   }
 
+  // 9.4 翻面响应：翻到背面时在卡牌位置后方产生一个很小的环形光
+  // 总时长 300ms
+  function createCardFlipEffect(ctx) {
+    const THREE = ctx && ctx.THREE;
+    const canvas = ctx && ctx.canvas;
+    let elapsed = 0;
+    let alive = false;
+    let objects = null;
+    const DURATION = 0.3;
+    const RANK_COLOR = {
+      primary: 0xf6dda0,
+      backup: 0x7594ff,
+      other: 0xc8d2e0,
+      risk: 0xd7868d
+    };
+    function rectToPoint(rect, canvasRect) {
+      if (!rect || !canvasRect || canvasRect.width === 0 || canvasRect.height === 0) return null;
+      const cx = rect.left + rect.width / 2 - canvasRect.left;
+      const cy = rect.top + rect.height / 2 - canvasRect.top;
+      return { x: (cx / canvasRect.width) * 2 - 1, y: -(cy / canvasRect.height) * 2 + 1 };
+    }
+    const effect = {
+      start(detail) {
+        elapsed = 0;
+        alive = true;
+        effect.detail = detail || {};
+        if (!THREE) return;
+        const canvasRect = canvas && typeof canvas.getBoundingClientRect === 'function' ? canvas.getBoundingClientRect() : null;
+        const pt = rectToPoint(detail && detail.rect, canvasRect);
+        if (!pt) return;
+        const color = RANK_COLOR[detail.rank] || 0xf6dda0;
+        // 环形点云：36 个点
+        const segments = 36;
+        const positions = new Float32Array(segments * 3);
+        for (let i = 0; i < segments; i += 1) {
+          const a = (i / segments) * Math.PI * 2;
+          const r = 0.1;
+          positions[i * 3] = pt.x + Math.cos(a) * r;
+          positions[i * 3 + 1] = pt.y + Math.sin(a) * r;
+          positions[i * 3 + 2] = -0.1;
+        }
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const mat = new THREE.PointsMaterial({
+          color, size: 0.05, sizeAttenuation: true, transparent: true, opacity: 0
+        });
+        objects = { points: new THREE.Points(geom, mat), mat };
+      },
+      update(dt) {
+        if (!alive) return;
+        elapsed += dt;
+        if (elapsed >= DURATION) alive = false;
+      },
+      isAlive() { return alive; },
+      getProgress() { return alive ? Math.min(1, elapsed / DURATION) : 1; },
+      getDuration() { return DURATION; },
+      getElapsed() { return elapsed; },
+      render(THREE, scene) {
+        if (!objects) return;
+        if (!objects.points.parent) scene.add(objects.points);
+        const p = effect.getProgress();
+        if (p < 0.5) {
+          objects.mat.opacity = (p / 0.5) * 0.9;
+          objects.points.scale.set(1 + p * 1.2, 1 + p * 1.2, 1);
+        } else {
+          objects.mat.opacity = Math.max(0, 0.9 * (1 - (p - 0.5) / 0.5));
+          objects.points.scale.set(1.6 + (p - 0.5) * 0.4, 1.6 + (p - 0.5) * 0.4, 1);
+        }
+      },
+      dispose(scene) {
+        if (!objects) return;
+        if (scene) scene.remove(objects.points);
+        if (objects.points.geometry) objects.points.geometry.dispose();
+        if (objects.points.material) objects.points.material.dispose();
+        objects = null;
+      }
+    };
+    return effect;
+  }
+
   return {
     createEffectBus,
     createOpponentPlayEffect,
     createHandDealEffect,
     createPlayerPlayEffect,
     createRoundSaveEffect,
+    createCardFlipEffect,
     domRectToCanvasPoint
   };
 });
