@@ -24,6 +24,17 @@
     return globalScope && globalScope.RelationshipStageFxEffects;
   }
 
+  // 程序生成桌面场景工厂：globalThis 优先(便于测试注入), 再降级到 require
+  function sceneFactoryApi() {
+    if (typeof globalThis !== 'undefined' && globalThis.RelationshipStageFxSceneFactory) {
+      return globalThis.RelationshipStageFxSceneFactory;
+    }
+    if (typeof require === 'function') {
+      try { return require('./stage-fx-scene-factory.js'); } catch (e) { return null; }
+    }
+    return null;
+  }
+
   function createStageFx({ THREE, canvas, fallback, controller, preferences } = {}) {
     function showFallbackAndReturn() {
       if (fallback && typeof fallback.show === 'function') fallback.show();
@@ -36,8 +47,16 @@
     const isLowPerf = preferences.isLowPerformance();
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-    camera.position.z = 6;
+    // 俯视正交相机：中央桌面 y=0 平面，z>0 朝向相机
+    const VIEW_SIZE = 6;
+    const aspect = (canvas.clientWidth || 1) / (canvas.clientHeight || 1);
+    const camera = new THREE.OrthographicCamera(
+      -VIEW_SIZE * aspect, VIEW_SIZE * aspect,
+      VIEW_SIZE, -VIEW_SIZE,
+      0.1, 100
+    );
+    camera.position.z = 10;
+    camera.lookAt(0, 0, 0);
 
     let renderer;
     try {
@@ -49,9 +68,30 @@
     renderer.setPixelRatio(pixelRatio);
     renderer.setClearColor(0x000000, 0);
 
-    const particleCountBase = isLowPerf ? 60 : (reduced ? 90 : 160);
-    const particles = createParticleField(THREE, scene, particleCountBase);
-    applyPresetBackground(THREE, scene, controller.getCurrentPreset());
+    // 程序生成桌面场景：中央固定牌桌垫 + 周边装饰按 preset 切换
+    const sceneFactory = sceneFactoryApi();
+    let currentSceneGroup = null;
+    function applyScenePreset(preset) {
+      if (!sceneFactory || typeof sceneFactory.createScene !== 'function') return;
+      // 卸载旧 Group
+      if (currentSceneGroup) {
+        try { scene.remove(currentSceneGroup); } catch (e) { /* noop */ }
+        try {
+          if (currentSceneGroup.traverse) {
+            currentSceneGroup.traverse(obj => {
+              if (obj.geometry && obj.geometry.dispose) obj.geometry.dispose();
+              if (obj.material && obj.material.dispose) obj.material.dispose();
+            });
+          }
+        } catch (e) { /* noop */ }
+      }
+      // 构建新 Group
+      try {
+        currentSceneGroup = sceneFactory.createScene(THREE, preset.id, preset);
+        if (currentSceneGroup) scene.add(currentSceneGroup);
+      } catch (error) { /* noop */ }
+    }
+    applyScenePreset(controller.getCurrentPreset());
 
     // 关键动作特效总线
     const fx = effectsApi();
@@ -67,7 +107,6 @@
       }
       const dt = lastFrame ? (time - lastFrame) / 1000 : 0.016;
       lastFrame = time;
-      advanceParticles(particles, dt, controller.getCurrentPreset());
       if (bus) {
         bus.update(dt);
         bus.render(THREE, scene);
@@ -93,8 +132,7 @@
     let unsubController = null;
     try {
       unsubController = controller.subscribe((next) => {
-        applyPresetBackground(THREE, scene, next);
-        scene.background = null;
+        applyScenePreset(next);
         startLoop();
       });
     } catch (error) { /* noop */ }
@@ -148,7 +186,17 @@
         document.removeEventListener('visibilitychange', onVisibility);
       }
       try { renderer.dispose(); } catch (error) { /* noop */ }
-      try { scene.traverse && scene.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) obj.material.dispose(); }); } catch (error) { /* noop */ }
+      if (currentSceneGroup) {
+        try {
+          if (currentSceneGroup.traverse) {
+            currentSceneGroup.traverse(obj => {
+              if (obj.geometry && obj.geometry.dispose) obj.geometry.dispose();
+              if (obj.material && obj.material.dispose) obj.material.dispose();
+            });
+          }
+        } catch (error) { /* noop */ }
+        try { scene.remove(currentSceneGroup); } catch (error) { /* noop */ }
+      }
     }
 
     handleResize();
@@ -178,42 +226,6 @@
       }),
       dispose
     };
-  }
-
-  function createParticleField(THREE, scene, count) {
-    const positions = new Float32Array(count * 3);
-    for (let i = 0; i < count; i += 1) {
-      positions[i * 3] = (Math.random() - 0.5) * 10;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 5;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 4;
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const material = new THREE.PointsMaterial({ color: 0x7da3ff, size: 0.045, transparent: true, opacity: 0.6, depthWrite: false });
-    const points = new THREE.Points(geometry, material);
-    scene.add(points);
-    return { points, positions, geometry, material, baseCount: count };
-  }
-
-  function applyPresetBackground(THREE, scene, preset) {
-    if (!preset || !THREE.Color) return;
-    const tint = parseColor(preset.tint, THREE);
-    scene.background = tint;
-  }
-
-  function parseColor(hex, THREE) {
-    try { return new THREE.Color(hex); } catch (error) { return new THREE.Color('#0a1626'); }
-  }
-
-  function advanceParticles(state, dt, preset) {
-    if (!state || !preset || !state.positions) return;
-    const drift = preset.motion ? preset.motion.drift : 0.0008;
-    const positions = state.positions;
-    for (let i = 0; i < positions.length; i += 3) {
-      positions[i + 1] += drift * 60 * dt;
-      if (positions[i + 1] > 3) positions[i + 1] = -3;
-    }
-    state.geometry.attributes.position.needsUpdate = true;
   }
 
   return { createStageFx };
