@@ -183,6 +183,59 @@
   }
   function bindFlips(root = document) {
     $$('[data-flip]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); b.closest('[data-flippable-card]').classList.toggle('is-flipped'); }));
+    // 9.2 鼠标视差：mousemove 设置 --shine-x/y/tilt-x/y
+    $$('[data-flippable-card]', root).forEach(card => {
+      let raf = null;
+      let nx = 50, ny = 25, tx = 0, ty = 0;
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) return;
+        nx = ((e.clientX - r.left) / r.width) * 100;
+        ny = ((e.clientY - r.top) / r.height) * 100;
+        tx = ((e.clientY - r.top) / r.height - 0.5) * -2.5;
+        ty = ((e.clientX - r.left) / r.width - 0.5) * 2.5;
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          const back = card.querySelector('.card-back');
+          if (back) {
+            back.style.setProperty('--shine-x', nx.toFixed(1) + '%');
+            back.style.setProperty('--shine-y', ny.toFixed(1) + '%');
+            back.style.setProperty('--tilt-x', tx.toFixed(2) + 'deg');
+            back.style.setProperty('--tilt-y', ty.toFixed(2) + 'deg');
+          }
+          raf = null;
+        });
+      });
+      card.addEventListener('mouseleave', () => {
+        const back = card.querySelector('.card-back');
+        if (back) {
+          back.style.setProperty('--tilt-x', '0deg');
+          back.style.setProperty('--tilt-y', '0deg');
+        }
+      });
+    });
+    // 9.4 Three.js 翻面响应
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      $$('[data-flippable-card]', root).forEach(card => {
+        const back = card.querySelector('.card-back');
+        $$('[data-flip]', card).forEach(btn => {
+          btn.addEventListener('click', () => {
+            try {
+              const side = back && back.parentElement && back.parentElement.classList.contains('is-flipped') ? 'back' : 'front';
+              const rank = (card.dataset.rank || (card.querySelector('[class*="rank-"]') || {}).className || '').match(/rank-(\w+)/);
+              window.dispatchEvent(new CustomEvent('rdc:card-flip', {
+                detail: {
+                  side,
+                  face: side,
+                  rank: rank ? rank[1] : null,
+                  rect: card.getBoundingClientRect()
+                }
+              }));
+            } catch (error) { /* noop */ }
+          });
+        });
+      });
+    }
   }
   function renderBoard() {
     const s = session();
