@@ -247,15 +247,74 @@
   // 8.4 我方出牌：DOM 卡抬起 + 沿曲线移 + 关系光路 + 落点光圈
   // 总时长 800ms
   function createPlayerPlayEffect(ctx) {
+    const THREE = ctx && ctx.THREE;
+    const canvas = ctx && ctx.canvas;
     let elapsed = 0;
     let alive = false;
     let rank = 'other';
+    let objects = null;
     const DURATION = 0.8;
-    return {
+    const RANK_COLOR = {
+      primary: 0xf6dda0,
+      backup: 0x7594ff,
+      other: 0xc8d2e0,
+      risk: 0xd7868d
+    };
+    function rectToPoint(rect, canvasRect) {
+      if (!rect || !canvasRect || canvasRect.width === 0 || canvasRect.height === 0) return null;
+      const cx = rect.left + rect.width / 2 - canvasRect.left;
+      const cy = rect.top + rect.height / 2 - canvasRect.top;
+      return { x: (cx / canvasRect.width) * 2 - 1, y: -(cy / canvasRect.height) * 2 + 1 };
+    }
+    const effect = {
       start(detail) {
         elapsed = 0;
         alive = true;
         rank = (detail && detail.rank) || 'other';
+        effect.detail = detail || {};
+        if (!THREE) return;
+        const canvasRect = canvas && typeof canvas.getBoundingClientRect === 'function' ? canvas.getBoundingClientRect() : null;
+        const src = rectToPoint(detail && detail.sourceRect, canvasRect);
+        const dst = rectToPoint(detail && detail.targetRect, canvasRect);
+        if (!src || !dst) return;
+        const color = RANK_COLOR[rank] || RANK_COLOR.other;
+        // 主推荐和备选用双段曲线（top arc + bottom arc）
+        const lines = [];
+        if (rank === 'primary' || rank === 'backup') {
+          const topCurve = new THREE.QuadraticBezierCurve3(
+            new THREE.Vector3(src.x, src.y, 0),
+            new THREE.Vector3((src.x + dst.x) / 2, Math.max(src.y, dst.y) + 0.35, 0),
+            new THREE.Vector3(dst.x, dst.y, 0)
+          );
+          const botCurve = new THREE.QuadraticBezierCurve3(
+            new THREE.Vector3(src.x, src.y, 0),
+            new THREE.Vector3((src.x + dst.x) / 2, Math.min(src.y, dst.y) - 0.35, 0),
+            new THREE.Vector3(dst.x, dst.y, 0)
+          );
+          [topCurve, botCurve].forEach(curve => {
+            const pts = curve.getPoints(24);
+            const geom = new THREE.BufferGeometry().setFromPoints(pts);
+            const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0 });
+            lines.push({ line: new THREE.Line(geom, mat), mat });
+          });
+        } else {
+          // other / risk：单条曲线
+          const curve = new THREE.QuadraticBezierCurve3(
+            new THREE.Vector3(src.x, src.y, 0),
+            new THREE.Vector3((src.x + dst.x) / 2, rank === 'risk' ? src.y + 0.15 : Math.max(src.y, dst.y) + 0.3, 0),
+            new THREE.Vector3(dst.x, dst.y, 0)
+          );
+          const pts = curve.getPoints(24);
+          const geom = new THREE.BufferGeometry().setFromPoints(pts);
+          const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0 });
+          lines.push({ line: new THREE.Line(geom, mat), mat });
+        }
+        // 落点光圈
+        const ringGeom = new THREE.RingGeometry(0.04, 0.06, 32);
+        const ringMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide || 0, transparent: true, opacity: 0 });
+        const ring = new THREE.Mesh(ringGeom, ringMat);
+        ring.position.set(dst.x, dst.y, -0.1);
+        objects = { lines, ring, ringMat };
       },
       update(dt) {
         if (!alive) return;
@@ -264,8 +323,45 @@
       },
       isAlive() { return alive; },
       getProgress() { return alive ? Math.min(1, elapsed / DURATION) : 1; },
-      getRank() { return rank; }
+      getDuration() { return DURATION; },
+      getRank() { return rank; },
+      render(THREE, scene) {
+        if (!objects) return;
+        const p = effect.getProgress();
+        if (objects.lines) {
+          objects.lines.forEach(l => {
+            if (!l.line.parent) scene.add(l.line);
+            if (p < 0.7) l.mat.opacity = Math.min(0.9, p / 0.3);
+            else l.mat.opacity = Math.max(0, 0.9 * (1 - (p - 0.7) / 0.3));
+          });
+        }
+        if (objects.ring && objects.ringMat) {
+          if (!objects.ring.parent) scene.add(objects.ring);
+          if (p >= 0.55) {
+            const k = (p - 0.55) / 0.45;
+            objects.ring.scale.set(1 + k * 6, 1 + k * 6, 1);
+            objects.ringMat.opacity = Math.max(0, 0.85 * (1 - k));
+          }
+        }
+      },
+      dispose(scene) {
+        if (!objects) return;
+        if (objects.lines) {
+          objects.lines.forEach(l => {
+            if (scene) scene.remove(l.line);
+            if (l.line.geometry) l.line.geometry.geometry ? l.line.geometry.geometry.dispose() : l.line.geometry.dispose();
+            l.line.material.dispose();
+          });
+        }
+        if (objects.ring) {
+          if (scene) scene.remove(objects.ring);
+          if (objects.ring.geometry) objects.ring.geometry.dispose();
+          if (objects.ring.material) objects.ring.material.dispose();
+        }
+        objects = null;
+      }
     };
+    return effect;
   }
 
   // 8.5 回合收藏：场景牌和回应牌连接光 + 中央金色星点 + 飞向卡包
