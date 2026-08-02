@@ -1115,7 +1115,30 @@
 
   function openThemeSettings() {
     renderThemeModal();
+    syncMotionLevelButtons();
     openModal('themeModal');
+  }
+
+  function syncMotionLevelButtons() {
+    const prefs = window.RelationshipMotionPreferences;
+    if (!prefs) return;
+    const current = prefs.getEffectiveMotionLevel();
+    $$('.motion-level-btn').forEach(btn => {
+      const isActive = btn.dataset.motionLevel === current;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+    });
+  }
+
+  function bindMotionLevelButtons() {
+    const prefs = window.RelationshipMotionPreferences;
+    if (!prefs) return;
+    $$('.motion-level-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        prefs.setMotionLevel(btn.dataset.motionLevel);
+        syncMotionLevelButtons();
+      });
+    });
   }
 
   function announceBackgroundSwitch(prevId, nextId) {
@@ -1137,6 +1160,7 @@
     if ($('themeButton')) $('themeButton').addEventListener('click', openThemeSettings);
     if ($('themePrevButton')) $('themePrevButton').addEventListener('click', () => BG.cyclePrevId());
     if ($('themeNextButton')) $('themeNextButton').addEventListener('click', () => BG.cycleNextId());
+    bindMotionLevelButtons();
   }
 
   renderAll();

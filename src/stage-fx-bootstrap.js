@@ -49,5 +49,19 @@ if (!api || !prefs || !scenes || !ctrlFactory) {
       const preset = scenes.resolveScenePresetFromEvent(detail);
       controller.setPreset(preset.id);
     });
+    // 12.3 动效开关响应
+    window.addEventListener('rdc:motion-level', (event) => {
+      const level = event && event.detail && event.detail.level;
+      if (level === 'off') {
+        stageFx.setEnabled(false);
+      } else {
+        stageFx.setEnabled(true);
+      }
+    });
+    // 启动时按存储的 level 应用
+    try {
+      const stored = prefs.getEffectiveMotionLevel();
+      if (stored === 'off') stageFx.setEnabled(false);
+    } catch (e) { /* noop */ }
   }
 }

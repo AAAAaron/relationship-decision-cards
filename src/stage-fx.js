@@ -159,6 +159,18 @@
       releaseRender: () => controller.releaseRender(),
       handleResize,
       setPreset: (id) => controller.setPreset(id),
+      setEnabled(on) {
+        if (on) {
+          document.body.classList.add('stage-fx-active');
+          document.body.classList.remove('stage-fx-fallback');
+          startLoop();
+        } else {
+          stopLoop();
+          document.body.classList.remove('stage-fx-active');
+          document.body.classList.add('stage-fx-fallback');
+          if (bus) bus.clear();
+        }
+      },
       getStats: () => ({
         controllerAnimating: controller.isAnimating(),
         busActive: bus ? bus.activeCount() : 0,
