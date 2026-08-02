@@ -78,7 +78,7 @@
         const src = rectToPoint(detail && detail.sourceRect, canvasRect);
         const dst = rectToPoint(detail && detail.targetRect, canvasRect);
         if (!src || !dst) return;
-        const points = THREE.QuadraticBezierCurve3
+        const curvePoints = THREE.QuadraticBezierCurve3
           ? new THREE.QuadraticBezierCurve3(
               new THREE.Vector3(src.x, src.y, 0),
               new THREE.Vector3((src.x + dst.x) / 2, Math.max(src.y, dst.y) + 0.6, 0),
@@ -89,13 +89,36 @@
               new THREE.Vector3((src.x + dst.x) / 2, Math.max(src.y, dst.y) + 0.6, 0),
               new THREE.Vector3(dst.x, dst.y, 0)
             ];
-        const arcGeom = new THREE.BufferGeometry().setFromPoints(points);
-        const arcMat = new THREE.LineBasicMaterial({ color: 0xf6dda0, transparent: true, opacity: 0 });
-        const arc = new THREE.Line(arcGeom, arcMat);
-        const ringGeom = new THREE.RingGeometry(0.05, 0.07, 32);
-        const ringMat = new THREE.MeshBasicMaterial({ color: 0x7594ff, side: THREE.DoubleSide || 0, transparent: true, opacity: 0 });
-        const ring = new THREE.Mesh(ringGeom, ringMat);
-        ring.position.set(dst.x, dst.y, -0.1);
+        // 用 Points 沿曲线分布（Line linewidth 在 WebGL 固定 1px 不可见）
+        const arcGeom = new THREE.BufferGeometry().setFromPoints(curvePoints);
+        const arcMat = new THREE.PointsMaterial({
+          color: 0xf6dda0,
+          size: 0.05,
+          sizeAttenuation: true,
+          transparent: true,
+          opacity: 0
+        });
+        const arc = new THREE.Points(arcGeom, arcMat);
+        // 落点波纹：用 Points 沿环分布（RingGeometry 在 WebGL 单面）
+        const ringSegments = 40;
+        const ringPositions = new Float32Array(ringSegments * 3);
+        for (let i = 0; i < ringSegments; i += 1) {
+          const a = (i / ringSegments) * Math.PI * 2;
+          const r = 0.08;
+          ringPositions[i * 3] = dst.x + Math.cos(a) * r;
+          ringPositions[i * 3 + 1] = dst.y + Math.sin(a) * r;
+          ringPositions[i * 3 + 2] = -0.1;
+        }
+        const ringGeom = new THREE.BufferGeometry();
+        ringGeom.setAttribute('position', new THREE.BufferAttribute(ringPositions, 3));
+        const ringMat = new THREE.PointsMaterial({
+          color: 0x7594ff,
+          size: 0.06,
+          sizeAttenuation: true,
+          transparent: true,
+          opacity: 0
+        });
+        const ring = new THREE.Points(ringGeom, ringMat);
         objects = { arc, arcMat, ring, ringMat };
       },
       update(dt) {
@@ -113,14 +136,15 @@
         if (objects.ring && !objects.ring.parent) scene.add(objects.ring);
         const p = effect.getProgress();
         if (objects.arcMat) {
-          if (p < 0.78) objects.arcMat.opacity = Math.min(0.9, p / 0.4);
-          else objects.arcMat.opacity = Math.max(0, 0.9 * (1 - (p - 0.78) / 0.22));
+          if (p < 0.78) objects.arcMat.opacity = Math.min(0.95, p / 0.4);
+          else objects.arcMat.opacity = Math.max(0, 0.95 * (1 - (p - 0.78) / 0.22));
         }
         if (objects.ringMat && objects.ring) {
           if (p >= 0.55) {
             const k = (p - 0.55) / 0.45;
+            // Points 通过 scale 整体放大 + 调整 size
             objects.ring.scale.set(1 + k * 8, 1 + k * 8, 1);
-            objects.ringMat.opacity = Math.max(0, 0.85 * (1 - k));
+            objects.ringMat.opacity = Math.max(0, 0.9 * (1 - k));
           }
         }
       },
