@@ -322,42 +322,58 @@
         const dst = rectToPoint(detail && detail.targetRect, canvasRect);
         if (!src || !dst) return;
         const color = RANK_COLOR[rank] || RANK_COLOR.other;
-        // 主推荐和备选用双段曲线（top arc + bottom arc）
         const lines = [];
+        function addBeamPoints(curve) {
+          const pts = curve.getPoints(28);
+          const positions = new Float32Array(pts.length * 3);
+          for (let j = 0; j < pts.length; j += 1) {
+            positions[j * 3] = pts[j].x;
+            positions[j * 3 + 1] = pts[j].y;
+            positions[j * 3 + 2] = 0;
+          }
+          const geom = new THREE.BufferGeometry();
+          geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+          const mat = new THREE.PointsMaterial({
+            color, size: 0.045, sizeAttenuation: true, transparent: true, opacity: 0
+          });
+          lines.push({ points: new THREE.Points(geom, mat), mat });
+        }
         if (rank === 'primary' || rank === 'backup') {
-          const topCurve = new THREE.QuadraticBezierCurve3(
+          // 双段曲线（top + bot）
+          addBeamPoints(new THREE.QuadraticBezierCurve3(
             new THREE.Vector3(src.x, src.y, 0),
             new THREE.Vector3((src.x + dst.x) / 2, Math.max(src.y, dst.y) + 0.35, 0),
             new THREE.Vector3(dst.x, dst.y, 0)
-          );
-          const botCurve = new THREE.QuadraticBezierCurve3(
+          ));
+          addBeamPoints(new THREE.QuadraticBezierCurve3(
             new THREE.Vector3(src.x, src.y, 0),
             new THREE.Vector3((src.x + dst.x) / 2, Math.min(src.y, dst.y) - 0.35, 0),
             new THREE.Vector3(dst.x, dst.y, 0)
-          );
-          [topCurve, botCurve].forEach(curve => {
-            const pts = curve.getPoints(24);
-            const geom = new THREE.BufferGeometry().setFromPoints(pts);
-            const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0 });
-            lines.push({ line: new THREE.Line(geom, mat), mat });
-          });
+          ));
         } else {
-          // other / risk：单条曲线
-          const curve = new THREE.QuadraticBezierCurve3(
+          // other / risk：单条曲线（risk 接近直线表示不规则）
+          addBeamPoints(new THREE.QuadraticBezierCurve3(
             new THREE.Vector3(src.x, src.y, 0),
-            new THREE.Vector3((src.x + dst.x) / 2, rank === 'risk' ? src.y + 0.15 : Math.max(src.y, dst.y) + 0.3, 0),
+            new THREE.Vector3((src.x + dst.x) / 2, rank === 'risk' ? src.y + 0.05 : Math.max(src.y, dst.y) + 0.3, 0),
             new THREE.Vector3(dst.x, dst.y, 0)
-          );
-          const pts = curve.getPoints(24);
-          const geom = new THREE.BufferGeometry().setFromPoints(pts);
-          const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0 });
-          lines.push({ line: new THREE.Line(geom, mat), mat });
+          ));
         }
-        // 落点光圈
-        const ringGeom = new THREE.RingGeometry(0.04, 0.06, 32);
-        const ringMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide || 0, transparent: true, opacity: 0 });
-        const ring = new THREE.Mesh(ringGeom, ringMat);
-        ring.position.set(dst.x, dst.y, -0.1);
+        // 落点光圈：Points 沿环
+        const ringSeg = 30;
+        const ringPos = new Float32Array(ringSeg * 3);
+        for (let j = 0; j < ringSeg; j += 1) {
+          const a = (j / ringSeg) * Math.PI * 2;
+          const r = 0.06;
+          ringPos[j * 3] = dst.x + Math.cos(a) * r;
+          ringPos[j * 3 + 1] = dst.y + Math.sin(a) * r;
+          ringPos[j * 3 + 2] = -0.1;
+        }
+        const ringGeom = new THREE.BufferGeometry();
+        ringGeom.setAttribute('position', new THREE.BufferAttribute(ringPos, 3));
+        const ringMat = new THREE.PointsMaterial({
+          color, size: 0.055, sizeAttenuation: true, transparent: true, opacity: 0
+        });
+        const ring = new THREE.Points(ringGeom, ringMat);
         objects = { lines, ring, ringMat };
       },
       update(dt) {
@@ -374,9 +390,9 @@
         const p = effect.getProgress();
         if (objects.lines) {
           objects.lines.forEach(l => {
-            if (!l.line.parent) scene.add(l.line);
-            if (p < 0.7) l.mat.opacity = Math.min(0.9, p / 0.3);
-            else l.mat.opacity = Math.max(0, 0.9 * (1 - (p - 0.7) / 0.3));
+            if (!l.points.parent) scene.add(l.points);
+            if (p < 0.7) l.mat.opacity = Math.min(0.95, p / 0.3);
+            else l.mat.opacity = Math.max(0, 0.95 * (1 - (p - 0.7) / 0.3));
           });
         }
         if (objects.ring && objects.ringMat) {
@@ -384,7 +400,7 @@
           if (p >= 0.55) {
             const k = (p - 0.55) / 0.45;
             objects.ring.scale.set(1 + k * 6, 1 + k * 6, 1);
-            objects.ringMat.opacity = Math.max(0, 0.85 * (1 - k));
+            objects.ringMat.opacity = Math.max(0, 0.9 * (1 - k));
           }
         }
       },
@@ -392,9 +408,9 @@
         if (!objects) return;
         if (objects.lines) {
           objects.lines.forEach(l => {
-            if (scene) scene.remove(l.line);
-            if (l.line.geometry) l.line.geometry.geometry ? l.line.geometry.geometry.dispose() : l.line.geometry.dispose();
-            l.line.material.dispose();
+            if (scene) scene.remove(l.points);
+            if (l.points.geometry) l.points.geometry.dispose();
+            l.points.material.dispose();
           });
         }
         if (objects.ring) {
