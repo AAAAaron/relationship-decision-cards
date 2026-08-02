@@ -87,13 +87,13 @@ test('createMeetingScene 包含笔记本 + 钢笔 + 文件', () => {
   assert.equal(props.children.length, 3, '会议室 props 应有 3 个物件');
 });
 
-test('createElevatorScene 包含 4 个楼层按钮', () => {
+test('createElevatorScene 包含 6 个楼层按钮', () => {
   const THREE = createMockThree();
   const scene = mod.createScene(THREE, 'elevator', fakePreset);
-  // 牌桌 + 周边 props + 粒子 = 3 个 group；周边 props 包含 4 个 mesh
+  // 牌桌 + 周边 props + 粒子 = 3 个 group；周边 props 包含 6 个 mesh
   assert.equal(scene.children.length, 3);
   const props = scene.children[1];
-  assert.equal(props.children.length, 4, '电梯 props 应有 4 个按钮');
+  assert.equal(props.children.length, 6, '电梯 props 应有 6 个按钮');
 });
 
 test('createDinnerScene 包含烛台 + 烛光 + 酒杯', () => {

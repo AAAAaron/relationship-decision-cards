@@ -39,71 +39,86 @@
     return group;
   }
 
-  // 会议室周边：笔记本 + 钢笔 + 文件
+  // 物件沿圆盘边缘环（半径 2.0）放射状布置
+  // 圆盘半径 2.5，物件放在圆盘内 1.9 半径圈环上，避开 UI 中央
+  function placeOnRing(THREE, mesh, radius, angle) {
+    mesh.position.x = radius * Math.cos(angle);
+    mesh.position.z = radius * Math.sin(angle);
+    return mesh;
+  }
+
+  // 会议室周边：笔记本 + 钢笔 + 文件（沿圆盘边缘环）
   function createMeetingProps(THREE) {
     const group = new THREE.Group();
-    // 笔记本（左侧，木质封皮）
+    // 笔记本（右上方，亮木质黄）
     const notebook = new THREE.Mesh(
-      new THREE.BoxGeometry(0.8, 0.05, 1.2),
-      new THREE.MeshBasicMaterial({ color: 0x4a3a2c })
+      new THREE.BoxGeometry(0.8, 0.08, 1.2),
+      new THREE.MeshBasicMaterial({ color: 0xb8956a })
     );
-    notebook.position.set(-3.2, 0.05, -1.5);
+    placeOnRing(THREE, notebook, 1.9, -PI / 4);
+    notebook.rotation.y = -PI / 4 + Math.PI / 2;
     group.add(notebook);
-    // 钢笔（笔记本旁，黑色细长）
+    // 钢笔（左上方，亮金属灰）
     const pen = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.04, 0.04, 1.0, 8),
-      new THREE.MeshBasicMaterial({ color: 0x1a1410 })
+      new THREE.CylinderGeometry(0.05, 0.05, 1.0, 8),
+      new THREE.MeshBasicMaterial({ color: 0xc8c8d6 })
     );
-    pen.position.set(-2.4, 0.08, -0.5);
+    placeOnRing(THREE, pen, 1.8, -3 * PI / 4);
+    pen.rotation.z = Math.PI / 2;
     group.add(pen);
-    // 文件（右上，米黄色纸）
+    // 文件（右下方，米黄纸）
     const file = new THREE.Mesh(
-      new THREE.BoxGeometry(0.7, 0.02, 1.0),
-      new THREE.MeshBasicMaterial({ color: 0xe8d8a6 })
+      new THREE.BoxGeometry(0.7, 0.05, 1.0),
+      new THREE.MeshBasicMaterial({ color: 0xf6dda0 })
     );
-    file.position.set(3.0, 0.05, 1.8);
+    placeOnRing(THREE, file, 1.9, PI / 4);
+    file.rotation.y = PI / 4 - Math.PI / 2;
     group.add(file);
     return group;
   }
 
-  // 电梯周边：4 个楼层按钮（第二个高亮表示当前层）
+  // 电梯周边：6 个楼层按钮（沿圆盘下方弧形）
   function createElevatorProps(THREE) {
     const group = new THREE.Group();
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
+      const t = i / 5; // 0..1
+      const angle = PI * 0.7 + t * PI * 0.6; // 从 0.7π 到 1.3π (下方弧)
       const btn = new THREE.Mesh(
-        new THREE.CircleGeometry(0.25, 16),
-        new THREE.MeshBasicMaterial({ color: i === 1 ? 0xf6dda0 : 0x4a556a })
+        new THREE.CircleGeometry(0.22, 16),
+        new THREE.MeshBasicMaterial({ color: i === 2 ? 0xf6dda0 : 0x6a7a8a })
       );
       btn.rotation.x = -PI / 2;
-      btn.position.set(-3.5 + i * 0.7, 0.05, -2.5);
+      placeOnRing(THREE, btn, 1.9, angle);
+      btn.position.y = 0.06; // 抬高于圆盘 ring(0.02) 避免 z-fighting
       group.add(btn);
     }
     return group;
   }
 
-  // 晚餐周边：烛台 + 烛光 + 酒杯
+  // 晚餐周边：烛台 + 烛光 + 酒杯（沿圆盘两侧）
   function createDinnerProps(THREE) {
     const group = new THREE.Group();
-    // 烛台（左侧，金属托盘）
+    // 烛台（左下，金属托盘）
     const candle = new THREE.Mesh(
       new THREE.CylinderGeometry(0.15, 0.2, 0.5, 8),
-      new THREE.MeshBasicMaterial({ color: 0x8a6a3a })
+      new THREE.MeshBasicMaterial({ color: 0xb8956a })
     );
-    candle.position.set(-3.0, 0.25, 1.8);
+    placeOnRing(THREE, candle, 1.9, 3 * PI / 4);
     group.add(candle);
     // 烛光（橙色小球）
     const flame = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 8, 8),
+      new THREE.SphereGeometry(0.1, 8, 8),
       new THREE.MeshBasicMaterial({ color: 0xff9500 })
     );
-    flame.position.set(-3.0, 0.6, 1.8);
+    placeOnRing(THREE, flame, 1.9, 3 * PI / 4);
+    flame.position.y = 0.6;
     group.add(flame);
     // 酒杯（右下，透明玻璃）
     const glass = new THREE.Mesh(
       new THREE.CylinderGeometry(0.2, 0.15, 0.5, 8),
-      new THREE.MeshBasicMaterial({ color: 0x6a8aa6, transparent: true, opacity: 0.7 })
+      new THREE.MeshBasicMaterial({ color: 0x8aa6c8, transparent: true, opacity: 0.7 })
     );
-    glass.position.set(3.0, 0.25, 1.5);
+    placeOnRing(THREE, glass, 1.9, PI / 4);
     group.add(glass);
     return group;
   }

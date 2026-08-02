@@ -48,7 +48,7 @@
 
     const scene = new THREE.Scene();
     // 俯视正交相机：中央桌面 y=0 平面，z>0 朝向相机
-    const VIEW_SIZE = 6;
+    const VIEW_SIZE = 4.5;
     const aspect = (canvas.clientWidth || 1) / (canvas.clientHeight || 1);
     const camera = new THREE.OrthographicCamera(
       -VIEW_SIZE * aspect, VIEW_SIZE * aspect,
