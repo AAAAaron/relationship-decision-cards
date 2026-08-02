@@ -143,7 +143,7 @@
           <div class="card-core"><h3>${esc(scene.title)}</h3>${lead}</div>
           <div class="card-insight">${esc(scene.focus || scene.round_goal || '识别对方真正关注的问题')}</div>
         </section>
-        <section class="card-face card-back">
+        <section class="card-face card-back card-back-scene">
           <button class="flip-button" data-flip type="button">↻</button>
           <div class="back-list">
             <div><span>地点</span><strong>${esc(scene.location || '—')}</strong></div>
@@ -170,7 +170,7 @@
           <div class="card-core"><h3>${esc(player.title)}</h3><blockquote>“${esc(player.reply)}”</blockquote></div>
           <div class="card-insight">${esc(player.ai_reason || player.choice_title || (saved ? '★ 已收藏，可在卡包中复用' : '当前采用的回应'))}</div>
         </section>
-        <section class="card-face card-back">
+        <section class="card-face card-back card-back-player">
           <button class="flip-button" data-flip type="button">↻</button>
           <div class="back-list">
             <div><span>采用路线</span><strong>${esc(player.title)}</strong></div>
@@ -360,7 +360,7 @@
           <div class="card-core"><h3>${esc(c.title)}</h3><div class="hand-quote">“${esc(quote)}”</div></div>
           <div class="not-reason card-insight">${candidate.rank === 'primary' ? '为什么推荐：' : candidate.rank === 'backup' ? '切换条件：' : '当前不选：'}${esc(candidate.rank === 'backup' ? (candidate.condition || candidate.reason) : candidate.reason)}</div>
         </section>
-        <section class="card-face card-back">
+        <section class="card-face card-back card-back-hand">
           <button class="flip-button" data-flip type="button">↻</button>
           <div class="back-list">
             <div><span>解法路线</span><strong>${esc(c.title)}</strong></div>
@@ -616,7 +616,7 @@
             <div class="card-insight"><strong>${esc(opp.title)}</strong><span>${esc(m.name)} · ${esc(r.outcome || '结果待验证')}</span></div>
             <button class="star-toggle saved" data-record-save="${esc(r.id)}" type="button" aria-label="取消收藏">★</button>
           </section>
-          <section class="card-face card-back">
+          <section class="card-face card-back card-back-saved">
             <button class="flip-button" data-flip type="button" aria-label="返回收藏卡正面">↻</button>
             <div class="back-list">
               <div><span>人物与事项</span><strong>${esc(p.name)} · ${esc(m.name)}</strong></div>
