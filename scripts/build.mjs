@@ -22,6 +22,7 @@ const builtHtml = sourceHtml
   .replace('src="src/backgrounds.js"', 'src="assets/backgrounds.js"')
   .replace('src="src/motion-preferences.js"', 'src="assets/motion-preferences.js"')
   .replace('src="src/stage-fx-scenes.js"', 'src="assets/stage-fx-scenes.js"')
+  .replace('src="src/stage-fx-effects.js"', 'src="assets/stage-fx-effects.js"')
   .replace('src="src/stage-fx.js"', 'src="assets/stage-fx.js"')
   .replace('src="src/stage-fx-controller.js"', 'src="assets/stage-fx-controller.js"')
   .replace('src="src/stage-fx-bootstrap.js"', 'src="assets/stage-fx-bootstrap.js"');
@@ -35,6 +36,7 @@ await cp(path.join(root, 'src', 'ai-client.js'), path.join(assets, 'ai-client.js
 await cp(path.join(root, 'src', 'backgrounds.js'), path.join(assets, 'backgrounds.js'));
 await cp(path.join(root, 'src', 'motion-preferences.js'), path.join(assets, 'motion-preferences.js'));
 await cp(path.join(root, 'src', 'stage-fx-scenes.js'), path.join(assets, 'stage-fx-scenes.js'));
+await cp(path.join(root, 'src', 'stage-fx-effects.js'), path.join(assets, 'stage-fx-effects.js'));
 await cp(path.join(root, 'src', 'stage-fx.js'), path.join(assets, 'stage-fx.js'));
 await cp(path.join(root, 'src', 'stage-fx-controller.js'), path.join(assets, 'stage-fx-controller.js'));
 await cp(path.join(root, 'src', 'stage-fx-bootstrap.js'), path.join(assets, 'stage-fx-bootstrap.js'));

@@ -68,7 +68,10 @@
       const dt = lastFrame ? (time - lastFrame) / 1000 : 0.016;
       lastFrame = time;
       advanceParticles(particles, dt, controller.getCurrentPreset());
-      if (bus) bus.update(dt);
+      if (bus) {
+        bus.update(dt);
+        bus.render(THREE, scene);
+      }
       if (controller.isAnimating()) controller.releaseRender();
       renderer.render(scene, camera);
       const keepAlive = controller.isAnimating() || (bus && bus.activeCount() > 0);
@@ -119,12 +122,12 @@
     }
 
     function handleResize() {
-      const rect = canvas.getBoundingClientRect();
-      const width = Math.max(1, rect.width);
-      const height = Math.max(1, rect.height);
+      const width = Math.max(1, (typeof window !== 'undefined' && window.innerWidth) || (canvas && canvas.clientWidth) || 1);
+      const height = Math.max(1, (typeof window !== 'undefined' && window.innerHeight) || (canvas && canvas.clientHeight) || 1);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height, false);
+      if (canvas && canvas.style) { canvas.style.width = width + 'px'; canvas.style.height = height + 'px'; }
     }
 
     function onVisibility() {
@@ -150,11 +153,16 @@
     handleResize();
 
     return {
-      isAnimating: () => controller.isAnimating(),
+      isAnimating: () => controller.isAnimating() || (bus && bus.activeCount() > 0),
       requestRender: () => { controller.requestRender(); startLoop(); },
       releaseRender: () => controller.releaseRender(),
       handleResize,
       setPreset: (id) => controller.setPreset(id),
+      getStats: () => ({
+        controllerAnimating: controller.isAnimating(),
+        busActive: bus ? bus.activeCount() : 0,
+        sceneChildren: scene.children ? scene.children.length : 0
+      }),
       dispose
     };
   }

@@ -13,25 +13,33 @@ if (!api || !prefs || !scenes || !ctrlFactory) {
   // 缺前置模块，不显示 fallback（业务已可工作）
 } else {
   const canvas = document.getElementById('stageFxCanvas');
-  const board = canvas && canvas.closest('.battlefield.board-stage');
   const fallback = {
-    show() { if (board) board.classList.add('stage-fx-fallback'); }
+    show() { document.body.classList.add('stage-fx-fallback'); }
   };
   const controller = ctrlFactory.createStageController();
-  const stageFx = api.createStageFx({
-    THREE,
-    canvas,
-    fallback,
-    controller,
-    preferences: prefs
-  });
-  if (stageFx && board) {
-    board.classList.add('stage-fx-active');
+  let stageFx = null;
+  try {
+    stageFx = api.createStageFx({
+      THREE,
+      canvas,
+      fallback,
+      controller,
+      preferences: prefs
+    });
+    if (!stageFx) {
+      console.warn('[stage-fx] createStageFx 返回 null，启用 fallback');
+    }
+  } catch (error) {
+    console.error('[stage-fx] 初始化失败：', error && error.message ? error.message : error);
+    try { fallback.show(); } catch (e) { /* noop */ }
+  }
+  if (stageFx) {
+    document.body.classList.add('stage-fx-active');
     window.RelationshipStageFxInstance = stageFx;
     // 窗口尺寸变化重算
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(() => stageFx.handleResize());
-      ro.observe(board);
+      ro.observe(document.documentElement);
     } else {
       window.addEventListener('resize', () => stageFx.handleResize());
     }

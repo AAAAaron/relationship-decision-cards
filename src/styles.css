@@ -60,10 +60,10 @@ body.bg-fading .bg-layer { opacity:0; }
 body.bg-fading .bg-overlay { opacity:0; }
 #stageFxCanvas,
 .stage-fx-fallback {
-  position:absolute;
+  position:fixed;
   inset:0;
-  width:100%;
-  height:100%;
+  width:100vw;
+  height:100vh;
   pointer-events:none;
 }
 #stageFxCanvas {
@@ -76,8 +76,8 @@ body.bg-fading .bg-overlay { opacity:0; }
   background:radial-gradient(ellipse at 50% 45%,rgba(15,30,58,.32) 0%,rgba(7,17,33,.55) 100%);
   display:none;
 }
-.battlefield.board-stage.stage-fx-active #stageFxCanvas { opacity:1; }
-.battlefield.board-stage.stage-fx-fallback .stage-fx-fallback { display:block; }
+body.stage-fx-active #stageFxCanvas { opacity:1; }
+body.stage-fx-fallback .stage-fx-fallback { display:block; }
 .board-stage-content {
   position:relative;
   z-index:1;

@@ -11,6 +11,8 @@
 <body>
   <div class="bg-layer" id="bgLayer" aria-hidden="true"></div>
   <div class="bg-overlay" aria-hidden="true"></div>
+  <canvas id="stageFxCanvas" aria-hidden="true"></canvas>
+  <div class="stage-fx-fallback" aria-hidden="true"></div>
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
@@ -49,8 +51,6 @@
         </aside>
 
         <section class="battlefield board-stage">
-          <canvas id="stageFxCanvas" aria-hidden="true"></canvas>
-          <div class="stage-fx-fallback" aria-hidden="true"></div>
           <div class="board-stage-content">
           <div class="board-head">
             <span>对方当前场景</span><span>我的当前回应</span>
@@ -172,6 +172,6 @@
     }
   }
   </script>
-  <script src="data/demo-data.js"></script><script src="src/data-model.js"></script><script src="src/ai-client.js"></script><script src="src/storage.js"></script><script src="src/backgrounds.js"></script><script src="src/motion-preferences.js"></script><script src="src/stage-fx-scenes.js"></script><script src="src/stage-fx.js"></script><script src="src/stage-fx-controller.js"></script><script type="module" src="src/stage-fx-bootstrap.js"></script><script src="src/app.js"></script>
+  <script src="data/demo-data.js"></script><script src="src/data-model.js"></script><script src="src/ai-client.js"></script><script src="src/storage.js"></script><script src="src/backgrounds.js"></script><script src="src/motion-preferences.js"></script><script src="src/stage-fx-scenes.js"></script><script src="src/stage-fx-effects.js"></script><script src="src/stage-fx.js"></script><script src="src/stage-fx-controller.js"></script><script type="module" src="src/stage-fx-bootstrap.js"></script><script src="src/app.js"></script>
 </body>
 </html>
