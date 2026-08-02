@@ -428,7 +428,25 @@
       why_saved: s.current.saved ? '用户判断该场景—应对具有复用价值。' : ''
     };
   }
-  function toggleCurrentSave() { session().current.saved = !session().current.saved; renderBoard(); }
+  function toggleCurrentSave() {
+    const prev = session().current.saved;
+    session().current.saved = !prev;
+    renderBoard();
+    // 关键动作：从未收藏 → 收藏时派发星点飞卡包
+    if (!prev && session().current.saved) {
+      const opp = $('currentOpponentSlot');
+      const player = $('currentPlayerSlot');
+      const pack = $('packSpineButton');
+      if (opp && player && pack) {
+        dispatchStageEvent('rdc:round-save', {
+          saved: true,
+          sourceRect: opp.getBoundingClientRect(),
+          targetRect: player.getBoundingClientRect(),
+          packRect: pack.getBoundingClientRect()
+        });
+      }
+    }
+  }
   function finishRound(nextScene) {
     const s = session();
     if (!s.current.opponent || !s.current.player) return;
