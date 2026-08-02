@@ -16,9 +16,14 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
     'dist/assets/ai-client.js',
     'dist/assets/storage.js',
     'dist/assets/backgrounds.js',
+    'dist/assets/motion-preferences.js',
+    'dist/assets/stage-fx-scenes.js',
+    'dist/assets/stage-fx-controller.js',
+    'dist/assets/stage-fx-bootstrap.js',
     'dist/assets/styles.css',
     'dist/assets/backgrounds/manifest.json',
     'dist/assets/backgrounds/candlelit-table.png',
+    'dist/vendor/three/three.module.js',
     'dist/data/demo-data.js'
   ];
   required.forEach(file => assert.equal(fs.existsSync(path.join(root, file)), true, `${file} 应存在`));
@@ -27,6 +32,8 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(html, /assets\/styles\.css/);
   assert.match(html, /assets\/storage\.js/);
   assert.match(html, /assets\/backgrounds\.js/);
+  assert.match(html, /assets\/stage-fx-bootstrap\.js/);
   assert.match(html, /assets\/app\.js/);
+  assert.match(html, /three\.module\.js/);
   assert.doesNotMatch(html, /node_modules|localhost/);
 });
