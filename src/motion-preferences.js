@@ -63,11 +63,52 @@
     return 'full';
   }
 
+  const MOTION_STORAGE_KEY = 'relationship-decision-cards:motion-level';
+  const MOTION_LEVELS = ['full', 'reduced', 'off'];
+
+  function readStoredMotionLevel() {
+    if (typeof globalThis === 'undefined' || !globalThis.localStorage) return null;
+    try {
+      const v = globalThis.localStorage.getItem(MOTION_STORAGE_KEY);
+      return MOTION_LEVELS.indexOf(v) >= 0 ? v : null;
+    } catch (error) { return null; }
+  }
+
+  function writeStoredMotionLevel(level) {
+    if (typeof globalThis === 'undefined' || !globalThis.localStorage) return;
+    try {
+      if (level && MOTION_LEVELS.indexOf(level) >= 0) globalThis.localStorage.setItem(MOTION_STORAGE_KEY, level);
+      else globalThis.localStorage.removeItem(MOTION_STORAGE_KEY);
+    } catch (error) { /* noop */ }
+  }
+
+  // 计算实际生效的 level：用户设置 > reduced-motion > WebGL 探针
+  function getEffectiveMotionLevel() {
+    const stored = readStoredMotionLevel();
+    if (stored === 'off') return 'off';
+    if (!isWebGLAvailable()) return 'off';
+    if (stored === 'reduced') return 'reduced';
+    if (shouldReduceMotion()) return 'reduced';
+    return 'full';
+  }
+
+  function setMotionLevel(level) {
+    if (MOTION_LEVELS.indexOf(level) < 0) return null;
+    writeStoredMotionLevel(level);
+    if (typeof globalThis !== 'undefined' && globalThis.dispatchEvent) {
+      try { globalThis.dispatchEvent(new CustomEvent('rdc:motion-level', { detail: { level } })); } catch (e) { /* noop */ }
+    }
+    return level;
+  }
+
   return {
     shouldReduceMotion,
     isWebGLAvailable,
     isDocumentHidden,
     isLowPerformance,
-    getMotionLevel
+    getMotionLevel,
+    getEffectiveMotionLevel,
+    setMotionLevel,
+    MOTION_LEVELS
   };
 });
