@@ -987,9 +987,13 @@
     grid.querySelectorAll('[data-theme-id]').forEach(card => {
       card.addEventListener('click', () => {
         BG.setCurrentId(card.dataset.themeId);
-        if (status) status.textContent = `已切换至「${card.querySelector('.theme-card-title').textContent}」。`;
       });
     });
+  }
+
+  function syncThemeModalOnSwitch() {
+    const modal = $('themeModal');
+    if (modal && !modal.hidden) renderThemeModal();
   }
 
   function openThemeSettings() {
@@ -1011,11 +1015,11 @@
     if (!BG) return;
     const manifest = await BG.loadManifest();
     BG.applyManifest(manifest);
-    BG.subscribe((prevId, nextId) => { setBackgroundLayer(); announceBackgroundSwitch(prevId, nextId); });
+    BG.subscribe((prevId, nextId) => { setBackgroundLayer(); announceBackgroundSwitch(prevId, nextId); syncThemeModalOnSwitch(); });
     setBackgroundLayer({ animate: false });
     if ($('themeButton')) $('themeButton').addEventListener('click', openThemeSettings);
-    if ($('themePrevButton')) $('themePrevButton').addEventListener('click', () => { BG.cyclePrevId(); renderThemeModal(); });
-    if ($('themeNextButton')) $('themeNextButton').addEventListener('click', () => { BG.cycleNextId(); renderThemeModal(); });
+    if ($('themePrevButton')) $('themePrevButton').addEventListener('click', () => BG.cyclePrevId());
+    if ($('themeNextButton')) $('themeNextButton').addEventListener('click', () => BG.cycleNextId());
   }
 
   renderAll();

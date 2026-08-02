@@ -3991,6 +3991,8 @@ body {
   border-bottom:0;
   background:transparent;
   box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
 }
 .opponent-action-zone,
 .battlefield.board-stage,
