@@ -71,15 +71,27 @@ test('loadManifest 支持注入的 fetcher，且失败时降级为空清单', ()
 test('setCurrentId 写入存储后 getCurrentId 能读回，订阅者收到回调', () => {
   const { api } = loadBackgroundsWith();
   let called = 0;
-  let lastId = null;
-  const unsubscribe = api.subscribe(id => { called += 1; lastId = id; });
+  let lastPrev = null;
+  let lastNext = null;
+  const unsubscribe = api.subscribe((prev, next) => { called += 1; lastPrev = prev; lastNext = next; });
   api.setCurrentId('moonlit');
   assert.equal(api.getCurrentId(), 'moonlit');
   assert.equal(called, 1);
-  assert.equal(lastId, 'moonlit');
+  assert.equal(lastPrev, null, '首次切换的 prev 应为 null');
+  assert.equal(lastNext, 'moonlit');
   unsubscribe();
   api.setCurrentId('candlelit-table');
   assert.equal(called, 1, '取消订阅后不应再触发');
+});
+
+test('setCurrentId 连续切换时订阅者收到正确的 prev → next', () => {
+  const { api } = loadBackgroundsWith();
+  const events = [];
+  api.subscribe((prev, next) => events.push([prev, next]));
+  api.setCurrentId('a');
+  api.setCurrentId('b');
+  api.setCurrentId('a');
+  assert.deepEqual(events, [[null, 'a'], ['a', 'b'], ['b', 'a']]);
 });
 
 test('setCurrentId 拒绝清单外的 id 并写入 fallback', () => {
@@ -141,6 +153,30 @@ test('cycleNextId 在多个背景时切换到下一张', () => {
   assert.equal(api.cycleNextId(), 'candlelit-table');
 });
 
+test('cyclePrevId 回到上一张，并支持多张环绕', () => {
+  const { api } = loadBackgroundsWith();
+  api.applyManifest(validManifest);
+  // 当前 candlelit-table → 月光
+  assert.equal(api.cyclePrevId(), 'moonlit');
+  assert.equal(api.getCurrentId(), 'moonlit');
+  // 再 prev → candlelit-table
+  assert.equal(api.cyclePrevId(), 'candlelit-table');
+});
+
+test('cycleStep 接受任意 delta 并按 length 取模', () => {
+  const { api } = loadBackgroundsWith();
+  api.applyManifest(validManifest);
+  // delta = 2 等价于 next 两次
+  assert.equal(api.cycleStep(2), 'candlelit-table');
+  // delta = -1 等价于 prev 一次
+  api.applyManifest(validManifest);
+  assert.equal(api.cycleStep(-1), 'moonlit');
+  // delta = -1000 也安全（多次取模）
+  api.applyManifest(validManifest);
+  const huge = api.cycleStep(-1000);
+  assert.ok(huge === 'candlelit-table' || huge === 'moonlit', 'cycleStep 在大负值下仍返回合法 id');
+});
+
 test('resolveBackgroundImageUrl 根据 manifest 与 baseUrl 拼出正确 URL', () => {
   const { api } = loadBackgroundsWith();
   api.applyManifest(validManifest);
@@ -156,5 +192,16 @@ test('assets/backgrounds 目录与 manifest.json 物理存在', () => {
   manifest.backgrounds.forEach(entry => {
     const file = path.join(dir, entry.file);
     assert.equal(fs.existsSync(file), true, `${entry.file} 应存在`);
+  });
+});
+
+test('manifest 中所有 background 的 file 字段均能与物理文件一一对应', () => {
+  const root = path.resolve(__dirname, '..');
+  const dir = path.join(root, 'assets', 'backgrounds');
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+  const ids = new Set(manifest.backgrounds.map(b => b.id));
+  assert.equal(ids.size, manifest.backgrounds.length, 'id 应互不重复');
+  manifest.backgrounds.forEach(entry => {
+    assert.equal(fs.existsSync(path.join(dir, entry.file)), true, `${entry.file} 应存在`);
   });
 });

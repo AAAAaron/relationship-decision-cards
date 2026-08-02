@@ -997,13 +997,25 @@
     openModal('themeModal');
   }
 
+  function announceBackgroundSwitch(prevId, nextId) {
+    const status = $('themeStatus');
+    if (!status || !BG) return;
+    const next = BG.getCurrent();
+    const title = next && (next.title || next.id);
+    const prevEntry = BG.getManifest().backgrounds.find(b => b.id === prevId);
+    const prevTitle = prevEntry ? (prevEntry.title || prevEntry.id) : prevId;
+    status.textContent = `已切换：${prevTitle} → ${title || nextId}`;
+  }
+
   async function initBackgrounds() {
     if (!BG) return;
     const manifest = await BG.loadManifest();
     BG.applyManifest(manifest);
-    BG.subscribe(() => setBackgroundLayer());
+    BG.subscribe((prevId, nextId) => { setBackgroundLayer(); announceBackgroundSwitch(prevId, nextId); });
     setBackgroundLayer({ animate: false });
     if ($('themeButton')) $('themeButton').addEventListener('click', openThemeSettings);
+    if ($('themePrevButton')) $('themePrevButton').addEventListener('click', () => { BG.cyclePrevId(); renderThemeModal(); });
+    if ($('themeNextButton')) $('themeNextButton').addEventListener('click', () => { BG.cycleNextId(); renderThemeModal(); });
   }
 
   renderAll();

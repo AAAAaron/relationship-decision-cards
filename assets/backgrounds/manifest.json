@@ -9,6 +9,30 @@
       "credit": "用户原稿（2026-08-01）",
       "mood": "warm-night",
       "recommendedFor": ["深夜决策", "情感沟通"]
+    },
+    {
+      "id": "constellation-orb",
+      "title": "星盘与对话",
+      "file": "constellation-orb.png",
+      "credit": "ChatGPT 出图（2026-08-02）",
+      "mood": "mystic",
+      "recommendedFor": ["复盘", "关系推演"]
+    },
+    {
+      "id": "oak-desk",
+      "title": "橡木书桌上的牌局",
+      "file": "oak-desk.png",
+      "credit": "ChatGPT 出图（2026-08-02）",
+      "mood": "warm-day",
+      "recommendedFor": ["日常协作", "家庭事项"]
+    },
+    {
+      "id": "arcane-sanctum",
+      "title": "魔法圣所",
+      "file": "arcane-sanctum.png",
+      "credit": "ChatGPT 出图（2026-08-02）",
+      "mood": "arcane-night",
+      "recommendedFor": ["关键谈判", "仪式感沟通"]
     }
   ]
 }

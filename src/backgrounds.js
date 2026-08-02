@@ -104,13 +104,14 @@
       if (!valid) finalId = manifest.default;
     }
     if (!finalId) return;
+    const prevId = currentId;
     currentId = finalId;
     writeStoredId(finalId);
     if (typeof document !== 'undefined' && document.body) {
       document.body.dataset.background = finalId;
     }
     subscribers.forEach(fn => {
-      try { fn(finalId); } catch (error) { /* 单个订阅者异常不影响其他 */ }
+      try { fn(prevId, finalId); } catch (error) { /* 单个订阅者异常不影响其他 */ }
     });
   }
 
@@ -127,15 +128,20 @@
     return () => subscribers.delete(fn);
   }
 
-  function cycleNextId() {
+  function cycleStep(delta) {
     if (!manifest || manifest.backgrounds.length === 0) return null;
+    const length = manifest.backgrounds.length;
     const current = getCurrentId();
     const idx = manifest.backgrounds.findIndex(b => b.id === current);
-    const nextIdx = idx < 0 ? 0 : (idx + 1) % manifest.backgrounds.length;
+    const step = ((delta % length) + length) % length;
+    const nextIdx = idx < 0 ? 0 : (idx + step) % length;
     const next = manifest.backgrounds[nextIdx];
     setCurrentId(next.id);
     return next.id;
   }
+
+  function cycleNextId() { return cycleStep(1); }
+  function cyclePrevId() { return cycleStep(-1); }
 
   function resolveBackgroundImageUrl({ baseUrl = DEFAULT_BASE_URL } = {}) {
     const entry = getCurrent();
@@ -154,7 +160,9 @@
     setCurrentId,
     getCurrent,
     subscribe,
+    cycleStep,
     cycleNextId,
+    cyclePrevId,
     resolveBackgroundImageUrl
   };
 });
