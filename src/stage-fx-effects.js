@@ -200,31 +200,52 @@
           if (rank === 'other') return; // 其他牌不做持续高亮
           const pt = rectToPoint(rect, canvasRect);
           if (!pt) return;
-          // 短光束：从牌位上方 (y + 0.4) 向下 (y + 0.1)
-          const points = [
-            new THREE.Vector3(pt.x, pt.y + 0.4, 0),
-            new THREE.Vector3(pt.x, pt.y + 0.1, 0)
-          ];
-          const geom = new THREE.BufferGeometry().setFromPoints(points);
-          const mat = new THREE.LineBasicMaterial({ color: RANK_COLOR[rank] || RANK_COLOR.other, transparent: true, opacity: 0 });
-          beams.push({ line: new THREE.Line(geom, mat), mat });
+          // 短光束：上方 8 个金色/蓝色点云
+          const beamCount = 8;
+          const positions = new Float32Array(beamCount * 3);
+          for (let j = 0; j < beamCount; j += 1) {
+            positions[j * 3] = pt.x;
+            positions[j * 3 + 1] = pt.y + 0.15 + (j / beamCount) * 0.3;
+            positions[j * 3 + 2] = 0;
+          }
+          const geom = new THREE.BufferGeometry();
+          geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+          const mat = new THREE.PointsMaterial({
+            color: RANK_COLOR[rank] || RANK_COLOR.other,
+            size: 0.05,
+            sizeAttenuation: true,
+            transparent: true,
+            opacity: 0
+          });
+          beams.push({ points: new THREE.Points(geom, mat), mat });
         });
-        // 上方流光：横贯整个手牌区的金色细线
-        let topLine = null;
+        // 上方流光：横贯手牌区上方的点云（40 个点）
+        let topPoints = null;
         if (rects.length) {
           const first = rectToPoint(rects[0], canvasRect);
           const last = rectToPoint(rects[rects.length - 1], canvasRect);
           if (first && last) {
-            const points = [
-              new THREE.Vector3(first.x - 0.1, first.y + 0.55, 0),
-              new THREE.Vector3(last.x + 0.1, last.y + 0.55, 0)
-            ];
-            const geom = new THREE.BufferGeometry().setFromPoints(points);
-            const mat = new THREE.LineBasicMaterial({ color: 0xe7bd65, transparent: true, opacity: 0 });
-            topLine = { line: new THREE.Line(geom, mat), mat };
+            const topCount = 40;
+            const positions = new Float32Array(topCount * 3);
+            for (let j = 0; j < topCount; j += 1) {
+              const t = j / (topCount - 1);
+              positions[j * 3] = first.x - 0.1 + t * (last.x - first.x + 0.2);
+              positions[j * 3 + 1] = (first.y + last.y) / 2 + 0.55;
+              positions[j * 3 + 2] = 0;
+            }
+            const geom = new THREE.BufferGeometry();
+            geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const mat = new THREE.PointsMaterial({
+              color: 0xe7bd65,
+              size: 0.04,
+              sizeAttenuation: true,
+              transparent: true,
+              opacity: 0
+            });
+            topPoints = { points: new THREE.Points(geom, mat), mat };
           }
         }
-        objects = { beams, topLine };
+        objects = { beams, topPoints };
       },
       update(dt) {
         if (!alive) return;
@@ -238,29 +259,28 @@
       render(THREE, scene) {
         if (!objects) return;
         const p = effect.getProgress();
-        if (objects.topLine) {
-          if (!objects.topLine.line.parent) scene.add(objects.topLine.line);
-          // 流光：0-0.4 渐显，0.4-0.7 渐隐
-          if (p < 0.4) objects.topLine.mat.opacity = p / 0.4 * 0.7;
-          else objects.topLine.mat.opacity = Math.max(0, 0.7 * (1 - (p - 0.4) / 0.3));
+        if (objects.topPoints) {
+          if (!objects.topPoints.points.parent) scene.add(objects.topPoints.points);
+          if (p < 0.4) objects.topPoints.mat.opacity = p / 0.4 * 0.75;
+          else objects.topPoints.mat.opacity = Math.max(0, 0.75 * (1 - (p - 0.4) / 0.3));
         }
         objects.beams.forEach(b => {
-          if (!b.line.parent) scene.add(b.line);
-          if (p < 0.6) b.mat.opacity = p / 0.6 * 0.9;
-          else b.mat.opacity = Math.max(0, 0.9 * (1 - (p - 0.6) / 0.4));
+          if (!b.points.parent) scene.add(b.points);
+          if (p < 0.6) b.mat.opacity = p / 0.6 * 0.95;
+          else b.mat.opacity = Math.max(0, 0.95 * (1 - (p - 0.6) / 0.4));
         });
       },
       dispose(scene) {
         if (!objects) return;
-        if (objects.topLine) {
-          if (scene) scene.remove(objects.topLine.line);
-          if (objects.topLine.line.geometry) objects.topLine.line.geometry.dispose();
-          objects.topLine.line.material.dispose();
+        if (objects.topPoints) {
+          if (scene) scene.remove(objects.topPoints.points);
+          if (objects.topPoints.points.geometry) objects.topPoints.points.geometry.dispose();
+          objects.topPoints.points.material.dispose();
         }
         objects.beams.forEach(b => {
-          if (scene) scene.remove(b.line);
-          if (b.line.geometry) b.line.geometry.dispose();
-          b.line.material.dispose();
+          if (scene) scene.remove(b.points);
+          if (b.points.geometry) b.points.geometry.dispose();
+          b.points.material.dispose();
         });
         objects = null;
       }
