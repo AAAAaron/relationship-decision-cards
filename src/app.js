@@ -253,6 +253,17 @@
     $('handFan').innerHTML = plan.candidates.map((c, i) => handCardHtml(c, i)).join('');
     layoutHand(-1);
     bindFlips($('handFan'));
+    // 关键动作：手牌重新发出 → 派发 stage-fx 流光 + 主推荐光束
+    const hand = $('handFan');
+    if (hand && state.justDealt) {
+      const rects = [...hand.querySelectorAll('.hand-card')].map(c => c.getBoundingClientRect());
+      dispatchStageEvent('rdc:hand-deal', {
+        count: rects.length,
+        ranks: plan.candidates.map(c => c.rank),
+        rects
+      });
+      state.justDealt = false;
+    }
     $$('.hand-card').forEach(el => {
       el.addEventListener('mouseenter', () => { state.handFocus = Number(el.dataset.index); layoutHand(state.handFocus); });
       el.addEventListener('mouseleave', () => { state.handFocus = -1; layoutHand(-1); el.style.setProperty('--tilt-rx', '0deg'); el.style.setProperty('--tilt-ry', '0deg'); });
