@@ -406,6 +406,16 @@
     } else {
       renderAll();
     }
+    // 关键动作：我方出牌 → 派发 stage-fx 关系光路
+    const playerSlot = $('currentPlayerSlot');
+    const oppSlot = $('currentOpponentSlot');
+    if (playerSlot && oppSlot) {
+      dispatchStageEvent('rdc:player-play', {
+        rank: state.selectedCandidate && state.selectedCandidate.rank,
+        sourceRect: oppSlot.getBoundingClientRect(),
+        targetRect: playerSlot.getBoundingClientRect()
+      });
+    }
   }
   function recordFromCurrent() {
     const s = session(), p = person(), m = matter(), opp = s.current.opponent || {};
