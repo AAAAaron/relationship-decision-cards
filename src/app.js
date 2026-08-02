@@ -457,12 +457,29 @@
     else { s.current = { opponent: scene, player: null, saved: false }; state.justDealt = true; renderAll(); }
     closeModal('opponentDeckModal');
     dispatchSceneChange({ sceneType: scene && scene.scene_type });
+    // 关键动作：对方出牌 → 派发 stage-fx 光轨 + 波纹
+    const deck = $('opponentDeckButton');
+    const target = $('currentOpponentSlot');
+    if (deck && target) {
+      dispatchStageEvent('rdc:opponent-play', {
+        sourceRect: deck.getBoundingClientRect(),
+        targetRect: target.getBoundingClientRect(),
+        sceneType: scene && scene.scene_type
+      });
+    }
   }
 
   function dispatchSceneChange(detail) {
     if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
     try {
       window.dispatchEvent(new CustomEvent('rdc:scene-change', { detail: detail || {} }));
+    } catch (error) { /* 静默降级 */ }
+  }
+
+  function dispatchStageEvent(name, detail) {
+    if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function' || !name) return;
+    try {
+      window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
     } catch (error) { /* 静默降级 */ }
   }
   function genericPlan() {
