@@ -8,14 +8,14 @@ function makeMockThree() {
   return {
     Vector2: class { constructor(x, y) { this.x = x; this.y = y; } },
     Vector3: class { constructor(x = 0, y = 0, z = 0) { this.x = x; this.y = y; this.z = z; } },
-    BufferGeometry: class { setAttribute() {} get attributes() { return { position: { needsUpdate: false } }; } },
+    BufferGeometry: class { setAttribute() {} setFromPoints() { return this; } get attributes() { return { position: { needsUpdate: false } }; } },
     BufferAttribute: class {},
     Points: class { constructor() { this.material = {}; this.geometry = {}; } },
     PointsMaterial: class { constructor(opts) { Object.assign(this, opts || {}); } },
     Line: class { constructor() { this.material = {}; this.geometry = {}; } },
     LineBasicMaterial: class { constructor(opts) { Object.assign(this, opts || {}); } },
     RingGeometry: class {},
-    Mesh: class { constructor() { this.material = {}; this.geometry = {}; this.position = new this.constructor.Vector3(); this.scale = new this.constructor.Vector3(1,1,1); this.rotation = new this.constructor.Vector3(); } },
+    Mesh: class { constructor() { this.material = {}; this.geometry = {}; this.position = { x: 0, y: 0, z: 0, set() {} }; this.scale = { x: 1, y: 1, z: 1, set() {} }; this.rotation = { x: 0, y: 0, z: 0, set() {} }; } },
     MeshBasicMaterial: class { constructor(opts) { Object.assign(this, opts || {}); this.transparent = opts && opts.transparent; this.opacity = opts && opts.opacity || 1; } },
     Color: class { constructor(hex) { this.hex = hex; } }
   };

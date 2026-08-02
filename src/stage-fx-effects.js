@@ -24,12 +24,23 @@
     return {
       add(effect) { if (effect) effects.add(effect); },
       remove(effect) { effects.delete(effect); },
-      clear() { effects.clear(); },
+      clear() {
+        for (const e of effects) {
+          try { if (typeof e.dispose === 'function') e.dispose(); } catch (error) { /* noop */ }
+        }
+        effects.clear();
+      },
       activeCount() { return effects.size; },
+      getEffects() { return [...effects]; },
       update(dt) {
         for (const e of effects) {
           try { e.update(dt); } catch (error) { /* 单个 effect 异常不影响其他 */ }
-          if (!e.isAlive()) effects.delete(e);
+        }
+        for (const e of [...effects]) {
+          if (!e.isAlive()) {
+            try { if (typeof e.dispose === 'function') e.dispose(); } catch (error) { /* noop */ }
+            effects.delete(e);
+          }
         }
       },
       render(THREE, scene) {
@@ -42,20 +53,50 @@
     };
   }
 
-  // 8.2 对方出牌：左侧聚集粒子 + 弧形光轨 + 落点波纹
+  // 8.2 对方出牌：弧形光轨 + 落点波纹
   // 总时长 900ms
   function createOpponentPlayEffect(ctx) {
+    const THREE = ctx && ctx.THREE;
+    const canvas = ctx && ctx.canvas;
     let elapsed = 0;
     let alive = false;
-    let objects = null; // 渲染时由 stage-fx 注入
+    let objects = null;
     const DURATION = 0.9;
-    return {
+    function rectToPoint(rect, canvasRect) {
+      if (!rect || !canvasRect || canvasRect.width === 0 || canvasRect.height === 0) return null;
+      const cx = rect.left + rect.width / 2 - canvasRect.left;
+      const cy = rect.top + rect.height / 2 - canvasRect.top;
+      return { x: (cx / canvasRect.width) * 2 - 1, y: -(cy / canvasRect.height) * 2 + 1 };
+    }
+    const effect = {
       start(detail) {
         elapsed = 0;
         alive = true;
-        this.detail = detail || {};
-        this.targetPoint = null;
-        this.sourcePoint = null;
+        effect.detail = detail || {};
+        if (!THREE) return;
+        const canvasRect = canvas && typeof canvas.getBoundingClientRect === 'function' ? canvas.getBoundingClientRect() : null;
+        const src = rectToPoint(detail && detail.sourceRect, canvasRect);
+        const dst = rectToPoint(detail && detail.targetRect, canvasRect);
+        if (!src || !dst) return;
+        const points = THREE.QuadraticBezierCurve3
+          ? new THREE.QuadraticBezierCurve3(
+              new THREE.Vector3(src.x, src.y, 0),
+              new THREE.Vector3((src.x + dst.x) / 2, Math.max(src.y, dst.y) + 0.6, 0),
+              new THREE.Vector3(dst.x, dst.y, 0)
+            ).getPoints(32)
+          : [
+              new THREE.Vector3(src.x, src.y, 0),
+              new THREE.Vector3((src.x + dst.x) / 2, Math.max(src.y, dst.y) + 0.6, 0),
+              new THREE.Vector3(dst.x, dst.y, 0)
+            ];
+        const arcGeom = new THREE.BufferGeometry().setFromPoints(points);
+        const arcMat = new THREE.LineBasicMaterial({ color: 0xf6dda0, transparent: true, opacity: 0 });
+        const arc = new THREE.Line(arcGeom, arcMat);
+        const ringGeom = new THREE.RingGeometry(0.05, 0.07, 32);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x7594ff, side: THREE.DoubleSide || 0, transparent: true, opacity: 0 });
+        const ring = new THREE.Mesh(ringGeom, ringMat);
+        ring.position.set(dst.x, dst.y, -0.1);
+        objects = { arc, arcMat, ring, ringMat };
       },
       update(dt) {
         if (!alive) return;
@@ -64,8 +105,38 @@
       },
       isAlive() { return alive; },
       getProgress() { return alive ? Math.min(1, elapsed / DURATION) : 1; },
-      getDuration() { return DURATION; }
+      getDuration() { return DURATION; },
+      getElapsed() { return elapsed; },
+      render(THREE, scene) {
+        if (!objects || !THREE) return;
+        if (objects.arc && !objects.arc.parent) scene.add(objects.arc);
+        if (objects.ring && !objects.ring.parent) scene.add(objects.ring);
+        const p = effect.getProgress();
+        if (objects.arcMat) {
+          if (p < 0.78) objects.arcMat.opacity = Math.min(0.9, p / 0.4);
+          else objects.arcMat.opacity = Math.max(0, 0.9 * (1 - (p - 0.78) / 0.22));
+        }
+        if (objects.ringMat && objects.ring) {
+          if (p >= 0.55) {
+            const k = (p - 0.55) / 0.45;
+            objects.ring.scale.set(1 + k * 8, 1 + k * 8, 1);
+            objects.ringMat.opacity = Math.max(0, 0.85 * (1 - k));
+          }
+        }
+      },
+      dispose(scene) {
+        if (!objects) return;
+        ['arc', 'arcMat', 'ring', 'ringMat'].forEach(k => {
+          const obj = objects[k];
+          if (!obj) return;
+          if (scene && scene.remove) scene.remove(obj);
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) obj.material.dispose();
+        });
+        objects = null;
+      }
     };
+    return effect;
   }
 
   // 8.3 手牌重新发出：上方短暂流光 + 主推荐金色光束 + 备选蓝光
