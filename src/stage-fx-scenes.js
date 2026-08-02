@@ -65,6 +65,17 @@
     }
   };
 
+  // 把 data/demo-data.js 中的 scene_type 映射到 3 个核心预设
+  // meeting 直接命中；encounter → elevator；meal → dinner；其余 → default
+  const SCENE_TYPE_ALIASES = {
+    encounter: 'elevator',
+    meal: 'dinner',
+    private: 'default',
+    phone: 'default',
+    async_message: 'default',
+    event: 'default'
+  };
+
   function getScenePreset(sceneType) {
     if (!sceneType || !SCENE_PRESETS[sceneType]) return SCENE_PRESETS.default;
     return SCENE_PRESETS[sceneType];
@@ -73,7 +84,10 @@
   function resolveScenePresetFromEvent(detail) {
     if (!detail || typeof detail !== 'object') return SCENE_PRESETS.default;
     if (detail.presetId && SCENE_PRESETS[detail.presetId]) return SCENE_PRESETS[detail.presetId];
-    if (detail.sceneType && SCENE_PRESETS[detail.sceneType]) return SCENE_PRESETS[detail.sceneType];
+    if (detail.sceneType) {
+      const aliasKey = SCENE_TYPE_ALIASES[detail.sceneType] || detail.sceneType;
+      if (SCENE_PRESETS[aliasKey]) return SCENE_PRESETS[aliasKey];
+    }
     return SCENE_PRESETS.default;
   }
 

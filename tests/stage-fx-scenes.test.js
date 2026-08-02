@@ -43,6 +43,16 @@ test('resolveScenePresetFromEvent 把 rdc:scene-change 的 detail 映射到预�
   assert.equal(explicit.id, 'dinner');
 });
 
+test('resolveScenePresetFromEvent 把 demo-data 中的 scene_type 经别名映射到核心预设', () => {
+  assert.equal(mod.resolveScenePresetFromEvent({ sceneType: 'meeting' }).id, 'meeting');
+  assert.equal(mod.resolveScenePresetFromEvent({ sceneType: 'encounter' }).id, 'elevator');
+  assert.equal(mod.resolveScenePresetFromEvent({ sceneType: 'meal' }).id, 'dinner');
+  assert.equal(mod.resolveScenePresetFromEvent({ sceneType: 'private' }).id, 'default');
+  assert.equal(mod.resolveScenePresetFromEvent({ sceneType: 'phone' }).id, 'default');
+  assert.equal(mod.resolveScenePresetFromEvent({ sceneType: 'async_message' }).id, 'default');
+  assert.equal(mod.resolveScenePresetFromEvent({ sceneType: 'event' }).id, 'default');
+});
+
 test('每个预设至少 30 个粒子且不超过 400', () => {
   Object.values(mod.SCENE_PRESETS).forEach(preset => {
     assert.ok(preset.particleCount >= 30, `${preset.id} 粒子数 ${preset.particleCount} 过少`);
