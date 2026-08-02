@@ -367,14 +367,54 @@
   // 8.5 回合收藏：场景牌和回应牌连接光 + 中央金色星点 + 飞向卡包
   // 总时长 1200ms
   function createRoundSaveEffect(ctx) {
+    const THREE = ctx && ctx.THREE;
+    const canvas = ctx && ctx.canvas;
     let elapsed = 0;
     let alive = false;
+    let objects = null;
     const DURATION = 1.2;
-    return {
+    function rectToPoint(rect, canvasRect) {
+      if (!rect || !canvasRect || canvasRect.width === 0 || canvasRect.height === 0) return null;
+      const cx = rect.left + rect.width / 2 - canvasRect.left;
+      const cy = rect.top + rect.height / 2 - canvasRect.top;
+      return { x: (cx / canvasRect.width) * 2 - 1, y: -(cy / canvasRect.height) * 2 + 1 };
+    }
+    const effect = {
       start(detail) {
         elapsed = 0;
         alive = true;
-        this.detail = detail || {};
+        effect.detail = detail || {};
+        if (!THREE) return;
+        const canvasRect = canvas && typeof canvas.getBoundingClientRect === 'function' ? canvas.getBoundingClientRect() : null;
+        const opp = rectToPoint(detail && detail.sourceRect, canvasRect);
+        const player = rectToPoint(detail && detail.targetRect, canvasRect);
+        const pack = rectToPoint(detail && detail.packRect, canvasRect);
+        if (!opp || !player || !pack) return;
+        // 连接光：场景牌 ↔ 我方牌
+        const connectPoints = [
+          new THREE.Vector3(opp.x, opp.y, 0),
+          new THREE.Vector3(player.x, player.y, 0)
+        ];
+        const connectGeom = new THREE.BufferGeometry().setFromPoints(connectPoints);
+        const connectMat = new THREE.LineBasicMaterial({ color: 0xe7bd65, transparent: true, opacity: 0 });
+        const connectLine = new THREE.Line(connectGeom, connectMat);
+        // 中央金色星点
+        const midX = (opp.x + player.x) / 2;
+        const midY = (opp.y + player.y) / 2;
+        const starGeom = new THREE.SphereGeometry(0.04, 12, 12);
+        const starMat = new THREE.MeshBasicMaterial({ color: 0xf6dda0, transparent: true, opacity: 0 });
+        const star = new THREE.Mesh(starGeom, starMat);
+        star.position.set(midX, midY, 0.1);
+        // 星点飞向卡包的轨迹
+        const flightPoints = [
+          new THREE.Vector3(midX, midY, 0),
+          new THREE.Vector3((midX + pack.x) / 2, Math.max(midY, pack.y) + 0.4, 0),
+          new THREE.Vector3(pack.x, pack.y, 0)
+        ];
+        const flightGeom = new THREE.BufferGeometry().setFromPoints(flightPoints);
+        const flightMat = new THREE.LineBasicMaterial({ color: 0xf6dda0, transparent: true, opacity: 0 });
+        const flightLine = new THREE.Line(flightGeom, flightMat);
+        objects = { connectLine, connectMat, star, starMat, flightLine, flightMat, midX, midY, packX: pack.x, packY: pack.y, startX: midX, startY: midY };
       },
       update(dt) {
         if (!alive) return;
@@ -382,8 +422,53 @@
         if (elapsed >= DURATION) alive = false;
       },
       isAlive() { return alive; },
-      getProgress() { return alive ? Math.min(1, elapsed / DURATION) : 1; }
+      getProgress() { return alive ? Math.min(1, elapsed / DURATION) : 1; },
+      getDuration() { return DURATION; },
+      getElapsed() { return elapsed; },
+      render(THREE, scene) {
+        if (!objects) return;
+        const p = effect.getProgress();
+        // 0-0.3s 连接光渐显，0.3-0.5s 星点出现
+        if (objects.connectLine && !objects.connectLine.parent) scene.add(objects.connectLine);
+        if (objects.connectMat) {
+          if (p < 0.3) objects.connectMat.opacity = p / 0.3 * 0.9;
+          else if (p < 0.5) objects.connectMat.opacity = 0.9;
+          else objects.connectMat.opacity = Math.max(0, 0.9 * (1 - (p - 0.5) / 0.5));
+        }
+        // 星点：0.3-0.5s 出现，0.5-1.0s 沿轨迹飞向 pack
+        if (objects.star && !objects.star.parent) scene.add(objects.star);
+        if (objects.starMat) {
+          if (p < 0.3) objects.starMat.opacity = 0;
+          else if (p < 0.5) objects.starMat.opacity = (p - 0.3) / 0.2;
+          else if (p < 1.0) objects.starMat.opacity = 1;
+          else objects.starMat.opacity = 0;
+          // 沿弧线飞向 packRect
+          if (p >= 0.5 && p < 1.0) {
+            const k = (p - 0.5) / 0.5;
+            objects.star.position.x = objects.startX + (objects.packX - objects.startX) * k;
+            objects.star.position.y = objects.startY + (objects.packY - objects.startY) * k + Math.sin(k * Math.PI) * 0.4;
+          }
+        }
+        // 飞行轨迹：0.5-1.0s 渐显
+        if (objects.flightLine && !objects.flightLine.parent) scene.add(objects.flightLine);
+        if (objects.flightMat) {
+          if (p >= 0.5 && p < 0.9) objects.flightMat.opacity = (p - 0.5) / 0.4 * 0.7;
+          else if (p >= 0.9) objects.flightMat.opacity = Math.max(0, 0.7 * (1 - (p - 0.9) / 0.1));
+        }
+      },
+      dispose(scene) {
+        if (!objects) return;
+        ['connectLine', 'star', 'flightLine'].forEach(k => {
+          const obj = objects[k];
+          if (!obj) return;
+          if (scene) scene.remove(obj);
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) obj.material.dispose();
+        });
+        objects = null;
+      }
     };
+    return effect;
   }
 
   return {

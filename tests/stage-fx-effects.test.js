@@ -15,6 +15,7 @@ function makeMockThree() {
     Line: class { constructor() { this.material = {}; this.geometry = {}; } },
     LineBasicMaterial: class { constructor(opts) { Object.assign(this, opts || {}); } },
     RingGeometry: class {},
+    SphereGeometry: class {},
     Mesh: class { constructor() { this.material = {}; this.geometry = {}; this.position = { x: 0, y: 0, z: 0, set() {} }; this.scale = { x: 1, y: 1, z: 1, set() {} }; this.rotation = { x: 0, y: 0, z: 0, set() {} }; } },
     MeshBasicMaterial: class { constructor(opts) { Object.assign(this, opts || {}); this.transparent = opts && opts.transparent; this.opacity = opts && opts.opacity || 1; } },
     Color: class { constructor(hex) { this.hex = hex; } }
