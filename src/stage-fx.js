@@ -16,6 +16,14 @@
     ? cancelAnimationFrame.bind(typeof globalThis !== 'undefined' ? globalThis : null)
     : (id) => clearTimeout(id);
 
+  // 延迟取 effects 模块（避免在 Node 测试中循环依赖）
+  function effectsApi() {
+    if (typeof require === 'function') {
+      try { return require('./stage-fx-effects.js'); } catch (e) { return globalScope && globalScope.RelationshipStageFxEffects; }
+    }
+    return globalScope && globalScope.RelationshipStageFxEffects;
+  }
+
   function createStageFx({ THREE, canvas, fallback, controller, preferences } = {}) {
     function showFallbackAndReturn() {
       if (fallback && typeof fallback.show === 'function') fallback.show();
@@ -45,20 +53,26 @@
     const particles = createParticleField(THREE, scene, particleCountBase);
     applyPresetBackground(THREE, scene, controller.getCurrentPreset());
 
+    // 关键动作特效总线
+    const fx = effectsApi();
+    const bus = (fx && fx.createEffectBus) ? fx.createEffectBus() : null;
+
     let rafId = null;
     let lastFrame = 0;
     function loop(time) {
       rafId = null;
-      if (!controller.isAnimating() && documentHidden()) {
+      if (!controller.isAnimating() && documentHidden() && (!bus || bus.activeCount() === 0)) {
         stopLoop();
         return;
       }
       const dt = lastFrame ? (time - lastFrame) / 1000 : 0.016;
       lastFrame = time;
       advanceParticles(particles, dt, controller.getCurrentPreset());
+      if (bus) bus.update(dt);
       if (controller.isAnimating()) controller.releaseRender();
       renderer.render(scene, camera);
-      if (controller.isAnimating()) rafId = raf(loop);
+      const keepAlive = controller.isAnimating() || (bus && bus.activeCount() > 0);
+      if (keepAlive) rafId = raf(loop);
     }
     function startLoop() {
       if (rafId !== null) return;
@@ -82,6 +96,28 @@
       });
     } catch (error) { /* noop */ }
 
+    // 订阅关键动作事件
+    function triggerEffect(kind, detail) {
+      if (!bus || !fx) return;
+      let effect = null;
+      if (kind === 'opponent-play') effect = fx.createOpponentPlayEffect({ THREE, canvas });
+      else if (kind === 'hand-deal') effect = fx.createHandDealEffect({ THREE, canvas });
+      else if (kind === 'player-play') effect = fx.createPlayerPlayEffect({ THREE, canvas });
+      else if (kind === 'round-save') effect = fx.createRoundSaveEffect({ THREE, canvas });
+      if (!effect) return;
+      try { effect.start(detail || {}); } catch (error) { /* noop */ }
+      bus.add(effect);
+      startLoop();
+    }
+    const eventUnsubs = [];
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      ['rdc:opponent-play', 'rdc:hand-deal', 'rdc:player-play', 'rdc:round-save'].forEach(name => {
+        const handler = (e) => triggerEffect(name.replace('rdc:', ''), (e && e.detail) || {});
+        window.addEventListener(name, handler);
+        eventUnsubs.push(() => window.removeEventListener(name, handler));
+      });
+    }
+
     function handleResize() {
       const rect = canvas.getBoundingClientRect();
       const width = Math.max(1, rect.width);
@@ -102,6 +138,8 @@
     function dispose() {
       stopLoop();
       if (typeof unsubController === 'function') unsubController();
+      eventUnsubs.forEach(fn => { try { fn(); } catch (e) { /* noop */ } });
+      if (bus) bus.clear();
       if (typeof document !== 'undefined' && document.removeEventListener) {
         document.removeEventListener('visibilitychange', onVisibility);
       }
