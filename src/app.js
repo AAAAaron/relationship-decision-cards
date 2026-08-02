@@ -456,6 +456,14 @@
     if (s.current.player) finishRound(scene);
     else { s.current = { opponent: scene, player: null, saved: false }; state.justDealt = true; renderAll(); }
     closeModal('opponentDeckModal');
+    dispatchSceneChange({ sceneType: scene && scene.scene_type });
+  }
+
+  function dispatchSceneChange(detail) {
+    if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+    try {
+      window.dispatchEvent(new CustomEvent('rdc:scene-change', { detail: detail || {} }));
+    } catch (error) { /* 静默降级 */ }
   }
   function genericPlan() {
     const list = scenariosFor();
@@ -1025,4 +1033,13 @@
   renderAll();
   bind();
   initBackgrounds();
+  // 启动时派发初始场景，让 stage-fx 切到对应预设
+  try {
+    const initialOpp = session() && session().current && session().current.opponent;
+    if (initialOpp && initialOpp.scene_type) {
+      dispatchSceneChange({ sceneType: initialOpp.scene_type });
+    } else {
+      dispatchSceneChange({ sceneType: 'meeting' });
+    }
+  } catch (error) { /* 静默降级 */ }
 })();

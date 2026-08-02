@@ -35,5 +35,11 @@ if (!api || !prefs || !scenes || !ctrlFactory) {
     } else {
       window.addEventListener('resize', () => stageFx.handleResize());
     }
+    // 业务事件 → stage-fx 切换预设
+    window.addEventListener('rdc:scene-change', (event) => {
+      const detail = (event && event.detail) || {};
+      const preset = scenes.resolveScenePresetFromEvent(detail);
+      controller.setPreset(preset.id);
+    });
   }
 }
