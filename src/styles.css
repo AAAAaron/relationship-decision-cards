@@ -544,12 +544,72 @@ box-shadow:0 10px 30px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.12),inset
 .card-back {
   transform:rotateY(180deg);
   border:1px solid var(--line2);
-background:
+  /* 鼠标视差：--shine-x/y 由 JS mousemove 设置；默认中心 */
+  --shine-x: 50%;
+  --shine-y: 25%;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  background:
+    radial-gradient(circle at var(--shine-x) var(--shine-y),
+      rgba(246,221,160,.14),transparent 38%),
     radial-gradient(circle at 30% 20%,rgba(117,148,255,.12),transparent 40%),
     repeating-linear-gradient(45deg,transparent,transparent 5px,rgba(117,148,255,.025) 5px,rgba(117,148,255,.025) 6px),
     repeating-linear-gradient(-45deg,transparent,transparent 5px,rgba(231,189,101,.02) 5px,rgba(231,189,101,.02) 6px),
     linear-gradient(160deg,#172945,#0d1c32);
-box-shadow:inset 0 1px 0 rgba(255,255,255,.04),inset 0 0 30px rgba(0,0,0,.15);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04),inset 0 0 30px rgba(0,0,0,.15);
+  transform-style:preserve-3d;
+  transition:transform .25s ease;
+}
+/* 桌面端悬停轻微视差 */
+@media (hover:hover) and (pointer:fine) {
+  [data-flippable-card]:hover .card-back {
+    transform:rotateY(180deg) rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg));
+  }
+}
+/* 翻面瞬间扫光：仅执行一次 */
+[data-flippable-card].is-flipped .card-back::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(115deg,transparent 46%,rgba(246,221,160,.35) 50%,transparent 54%);
+  transform:translateX(-100%);
+  animation:cardBackSweep .65s ease-out .15s both;
+  pointer-events:none;
+}
+@keyframes cardBackSweep {
+  from { transform:translateX(-100%); }
+  to { transform:translateX(100%); }
+}
+/* 9.5 不同牌背面差异 */
+.card-back.card-back-scene {
+  background:
+    radial-gradient(circle at var(--shine-x) var(--shine-y),
+      rgba(117,148,255,.16),transparent 38%),
+    repeating-linear-gradient(0deg,transparent,transparent 4px,rgba(117,148,255,.04) 4px,rgba(117,148,255,.04) 5px),
+    linear-gradient(160deg,#15243f,#0d1c32);
+}
+.card-back.card-back-player {
+  background:
+    radial-gradient(circle at var(--shine-x) var(--shine-y),
+      rgba(231,189,101,.18),transparent 38%),
+    repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(231,189,101,.05) 4px,rgba(231,189,101,.05) 5px),
+    linear-gradient(160deg,#1f1a0e,#15110a);
+}
+.card-back.card-back-primary {
+  border-color:rgba(231,189,101,.6);
+  box-shadow:inset 0 0 30px rgba(231,189,101,.12),inset 0 0 0 2px rgba(231,189,101,.18);
+}
+.card-back.card-back-backup {
+  border-color:rgba(117,148,255,.6);
+  box-shadow:inset 0 0 0 2px rgba(117,148,255,.2);
+}
+.card-back.card-back-risk {
+  border-color:rgba(215,134,141,.6);
+  box-shadow:inset 0 0 0 2px rgba(215,134,141,.18);
+}
+.card-back.card-back-saved {
+  border-color:rgba(231,189,101,.7);
+  box-shadow:inset 0 0 0 2px rgba(231,189,101,.3),0 0 14px rgba(231,189,101,.18);
 }
 .source-badge,.rank-badge {
   display:inline-flex;
