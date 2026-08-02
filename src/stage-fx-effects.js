@@ -450,31 +450,58 @@
         const player = rectToPoint(detail && detail.targetRect, canvasRect);
         const pack = rectToPoint(detail && detail.packRect, canvasRect);
         if (!opp || !player || !pack) return;
-        // 连接光：场景牌 ↔ 我方牌
-        const connectPoints = [
-          new THREE.Vector3(opp.x, opp.y, 0),
-          new THREE.Vector3(player.x, player.y, 0)
-        ];
-        const connectGeom = new THREE.BufferGeometry().setFromPoints(connectPoints);
-        const connectMat = new THREE.LineBasicMaterial({ color: 0xe7bd65, transparent: true, opacity: 0 });
-        const connectLine = new THREE.Line(connectGeom, connectMat);
-        // 中央金色星点
         const midX = (opp.x + player.x) / 2;
         const midY = (opp.y + player.y) / 2;
-        const starGeom = new THREE.SphereGeometry(0.04, 12, 12);
-        const starMat = new THREE.MeshBasicMaterial({ color: 0xf6dda0, transparent: true, opacity: 0 });
-        const star = new THREE.Mesh(starGeom, starMat);
-        star.position.set(midX, midY, 0.1);
-        // 星点飞向卡包的轨迹
-        const flightPoints = [
+        // 连接光：Points 沿 opp-player 分布
+        const connectCount = 16;
+        const connectPos = new Float32Array(connectCount * 3);
+        for (let j = 0; j < connectCount; j += 1) {
+          const t = j / (connectCount - 1);
+          connectPos[j * 3] = opp.x + t * (player.x - opp.x);
+          connectPos[j * 3 + 1] = opp.y + t * (player.y - opp.y);
+          connectPos[j * 3 + 2] = 0;
+        }
+        const connectGeom = new THREE.BufferGeometry();
+        connectGeom.setAttribute('position', new THREE.BufferAttribute(connectPos, 3));
+        const connectMat = new THREE.PointsMaterial({ color: 0xe7bd65, size: 0.05, sizeAttenuation: true, transparent: true, opacity: 0 });
+        const connectPoints = new THREE.Points(connectGeom, connectMat);
+        // 中央金色星点：Points 沿小圆环 + 中心亮点
+        const starSize = 0.08;
+        const starGeom = new THREE.BufferGeometry();
+        const starPos = new Float32Array([
+          midX, midY, 0.1,
+          midX + 0.02, midY + 0.02, 0.1,
+          midX - 0.02, midY - 0.02, 0.1,
+          midX + 0.02, midY - 0.02, 0.1,
+          midX - 0.02, midY + 0.02, 0.1
+        ]);
+        starGeom.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xf6dda0, size: starSize, sizeAttenuation: true, transparent: true, opacity: 0 });
+        const star = new THREE.Points(starGeom, starMat);
+        // 飞行轨迹：Points 沿贝塞尔曲线
+        const flightCurve = THREE.QuadraticBezierCurve3
+          ? new THREE.QuadraticBezierCurve3(
+              new THREE.Vector3(midX, midY, 0),
+              new THREE.Vector3((midX + pack.x) / 2, Math.max(midY, pack.y) + 0.4, 0),
+              new THREE.Vector3(pack.x, pack.y, 0)
+            )
+          : null;
+        const flightPts = flightCurve ? flightCurve.getPoints(24) : [
           new THREE.Vector3(midX, midY, 0),
           new THREE.Vector3((midX + pack.x) / 2, Math.max(midY, pack.y) + 0.4, 0),
           new THREE.Vector3(pack.x, pack.y, 0)
         ];
-        const flightGeom = new THREE.BufferGeometry().setFromPoints(flightPoints);
-        const flightMat = new THREE.LineBasicMaterial({ color: 0xf6dda0, transparent: true, opacity: 0 });
-        const flightLine = new THREE.Line(flightGeom, flightMat);
-        objects = { connectLine, connectMat, star, starMat, flightLine, flightMat, midX, midY, packX: pack.x, packY: pack.y, startX: midX, startY: midY };
+        const flightPos = new Float32Array(flightPts.length * 3);
+        for (let j = 0; j < flightPts.length; j += 1) {
+          flightPos[j * 3] = flightPts[j].x;
+          flightPos[j * 3 + 1] = flightPts[j].y;
+          flightPos[j * 3 + 2] = 0;
+        }
+        const flightGeom = new THREE.BufferGeometry();
+        flightGeom.setAttribute('position', new THREE.BufferAttribute(flightPos, 3));
+        const flightMat = new THREE.PointsMaterial({ color: 0xf6dda0, size: 0.045, sizeAttenuation: true, transparent: true, opacity: 0 });
+        const flightPoints = new THREE.Points(flightGeom, flightMat);
+        objects = { connectPoints, connectMat, star, starMat, flightPoints, flightMat, midX, midY, packX: pack.x, packY: pack.y, startX: midX, startY: midY };
       },
       update(dt) {
         if (!alive) return;
@@ -489,11 +516,11 @@
         if (!objects) return;
         const p = effect.getProgress();
         // 0-0.3s 连接光渐显，0.3-0.5s 星点出现
-        if (objects.connectLine && !objects.connectLine.parent) scene.add(objects.connectLine);
+        if (objects.connectPoints && !objects.connectPoints.parent) scene.add(objects.connectPoints);
         if (objects.connectMat) {
-          if (p < 0.3) objects.connectMat.opacity = p / 0.3 * 0.9;
-          else if (p < 0.5) objects.connectMat.opacity = 0.9;
-          else objects.connectMat.opacity = Math.max(0, 0.9 * (1 - (p - 0.5) / 0.5));
+          if (p < 0.3) objects.connectMat.opacity = p / 0.3 * 0.95;
+          else if (p < 0.5) objects.connectMat.opacity = 0.95;
+          else objects.connectMat.opacity = Math.max(0, 0.95 * (1 - (p - 0.5) / 0.5));
         }
         // 星点：0.3-0.5s 出现，0.5-1.0s 沿轨迹飞向 pack
         if (objects.star && !objects.star.parent) scene.add(objects.star);
@@ -502,23 +529,17 @@
           else if (p < 0.5) objects.starMat.opacity = (p - 0.3) / 0.2;
           else if (p < 1.0) objects.starMat.opacity = 1;
           else objects.starMat.opacity = 0;
-          // 沿弧线飞向 packRect
-          if (p >= 0.5 && p < 1.0) {
-            const k = (p - 0.5) / 0.5;
-            objects.star.position.x = objects.startX + (objects.packX - objects.startX) * k;
-            objects.star.position.y = objects.startY + (objects.packY - objects.startY) * k + Math.sin(k * Math.PI) * 0.4;
-          }
         }
         // 飞行轨迹：0.5-1.0s 渐显
-        if (objects.flightLine && !objects.flightLine.parent) scene.add(objects.flightLine);
+        if (objects.flightPoints && !objects.flightPoints.parent) scene.add(objects.flightPoints);
         if (objects.flightMat) {
-          if (p >= 0.5 && p < 0.9) objects.flightMat.opacity = (p - 0.5) / 0.4 * 0.7;
-          else if (p >= 0.9) objects.flightMat.opacity = Math.max(0, 0.7 * (1 - (p - 0.9) / 0.1));
+          if (p >= 0.5 && p < 0.9) objects.flightMat.opacity = (p - 0.5) / 0.4 * 0.75;
+          else if (p >= 0.9) objects.flightMat.opacity = Math.max(0, 0.75 * (1 - (p - 0.9) / 0.1));
         }
       },
       dispose(scene) {
         if (!objects) return;
-        ['connectLine', 'star', 'flightLine'].forEach(k => {
+        ['connectPoints', 'star', 'flightPoints'].forEach(k => {
           const obj = objects[k];
           if (!obj) return;
           if (scene) scene.remove(obj);
