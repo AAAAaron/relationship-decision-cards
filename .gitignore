@@ -3,6 +3,7 @@ node_modules/
 serve.log
 .DS_Store
 .playwright-cli/
+.playwright-mcp/
 .workbuddy/
 output/
 scripts/deploy-server.sh

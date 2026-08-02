@@ -8,6 +8,7 @@ const assets = path.join(dist, 'assets');
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(assets, { recursive: true });
+await mkdir(path.join(assets, 'backgrounds'), { recursive: true });
 await mkdir(path.join(dist, 'data'), { recursive: true });
 
 const sourceHtml = await readFile(path.join(root, 'index.html'), 'utf8');
@@ -16,7 +17,8 @@ const builtHtml = sourceHtml
   .replace('src="src/data-model.js"', 'src="assets/data-model.js"')
   .replace('src="src/ai-client.js"', 'src="assets/ai-client.js"')
   .replace('src="src/app.js"', 'src="assets/app.js"')
-  .replace('src="src/storage.js"', 'src="assets/storage.js"');
+  .replace('src="src/storage.js"', 'src="assets/storage.js"')
+  .replace('src="src/backgrounds.js"', 'src="assets/backgrounds.js"');
 
 await writeFile(path.join(dist, 'index.html'), builtHtml);
 await cp(path.join(root, 'src', 'styles.css'), path.join(assets, 'styles.css'));
@@ -24,7 +26,9 @@ await cp(path.join(root, 'src', 'app.js'), path.join(assets, 'app.js'));
 await cp(path.join(root, 'src', 'storage.js'), path.join(assets, 'storage.js'));
 await cp(path.join(root, 'src', 'data-model.js'), path.join(assets, 'data-model.js'));
 await cp(path.join(root, 'src', 'ai-client.js'), path.join(assets, 'ai-client.js'));
+await cp(path.join(root, 'src', 'backgrounds.js'), path.join(assets, 'backgrounds.js'));
 await cp(path.join(root, 'data', 'demo-data.js'), path.join(dist, 'data', 'demo-data.js'));
+await cp(path.join(root, 'assets', 'backgrounds'), path.join(assets, 'backgrounds'), { recursive: true });
 await cp(path.join(root, 'preview.png'), path.join(dist, 'preview.png'));
 
 console.log(`已生成静态部署目录：${path.relative(root, dist)}/`);

@@ -2,6 +2,7 @@
   'use strict';
   const MODEL = window.RelationshipDataModel;
   const AI = window.RelationshipAI;
+  const BG = window.RelationshipBackgrounds;
   const DATA = MODEL ? MODEL.normalizeData(window.DEMO_DATA) : window.DEMO_DATA;
   const STORAGE = window.RelationshipStorage;
   if (!DATA) { document.body.innerHTML = '<p style="padding:24px;color:white">数据加载失败。</p>'; return; }
@@ -942,6 +943,70 @@
       }
     }, { passive: false });
   }
+
+  // ---------- 背景主题 ----------
+  function setBackgroundLayer({ animate = true } = {}) {
+    const layer = $('bgLayer');
+    if (!layer || !BG) return;
+    const url = BG.resolveBackgroundImageUrl({ baseUrl: 'assets/backgrounds/' });
+    if (!url) return;
+    if (!animate) {
+      layer.style.backgroundImage = `url(${url})`;
+      document.body.classList.add('bg-ready');
+      return;
+    }
+    document.body.classList.add('bg-fading');
+    window.setTimeout(() => {
+      layer.style.backgroundImage = `url(${url})`;
+      document.body.classList.remove('bg-fading');
+    }, 400);
+  }
+
+  function renderThemeModal() {
+    if (!BG) return;
+    const grid = $('themeGrid');
+    const status = $('themeStatus');
+    if (!grid) return;
+    const manifest = BG.getManifest() || { backgrounds: [] };
+    const current = BG.getCurrentId();
+    if (!manifest.backgrounds.length) {
+      grid.innerHTML = '<p class="data-status">暂无可用背景主题。</p>';
+      if (status) status.textContent = '';
+      return;
+    }
+    grid.innerHTML = manifest.backgrounds.map(entry => {
+      const thumb = `assets/backgrounds/${entry.file}`;
+      const meta = [entry.mood, entry.credit].filter(Boolean).join(' · ');
+      const active = entry.id === current ? 'active' : '';
+      return `<button class="theme-card ${active}" type="button" data-theme-id="${esc(entry.id)}">
+        <span class="theme-card-thumb" style="background-image:url(${esc(thumb)})"></span>
+        <span class="theme-card-title">${esc(entry.title || entry.id)}</span>
+        <span class="theme-card-meta">${esc(meta || entry.id)}</span>
+      </button>`;
+    }).join('');
+    grid.querySelectorAll('[data-theme-id]').forEach(card => {
+      card.addEventListener('click', () => {
+        BG.setCurrentId(card.dataset.themeId);
+        if (status) status.textContent = `已切换至「${card.querySelector('.theme-card-title').textContent}」。`;
+      });
+    });
+  }
+
+  function openThemeSettings() {
+    renderThemeModal();
+    openModal('themeModal');
+  }
+
+  async function initBackgrounds() {
+    if (!BG) return;
+    const manifest = await BG.loadManifest();
+    BG.applyManifest(manifest);
+    BG.subscribe(() => setBackgroundLayer());
+    setBackgroundLayer({ animate: false });
+    if ($('themeButton')) $('themeButton').addEventListener('click', openThemeSettings);
+  }
+
   renderAll();
   bind();
+  initBackgrounds();
 })();

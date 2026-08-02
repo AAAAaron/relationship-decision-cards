@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="src/styles.css" />
 </head>
 <body>
+  <div class="bg-layer" id="bgLayer" aria-hidden="true"></div>
+  <div class="bg-overlay" aria-hidden="true"></div>
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
@@ -30,6 +32,7 @@
 
       <div class="top-actions">
         <button id="historyButton" class="ghost-button" type="button">回合 <span id="historyCount">1</span></button>
+        <button id="themeButton" class="round-icon theme-button" type="button" aria-label="切换背景主题" title="切换背景主题">🎨</button>
         <button id="aiButton" class="round-icon" type="button" aria-label="AI 接入设置" title="AI 接入设置">AI</button>
         <button id="dataButton" class="round-icon data-button" type="button" aria-label="导入或导出数据" title="导入或导出数据">⇅</button>
       </div>
@@ -146,6 +149,14 @@
     </section>
   </div>
 
-  <script src="data/demo-data.js"></script><script src="src/data-model.js"></script><script src="src/ai-client.js"></script><script src="src/storage.js"></script><script src="src/app.js"></script>
+  <div id="themeModal" class="modal-backdrop" hidden>
+    <section class="modal-panel compact-panel" role="dialog" aria-modal="true">
+      <header class="modal-header"><div><span>背景主题</span><h2>切换桌面氛围</h2><p>桌面背景会随选择实时更换；偏好会保存在当前浏览器。</p></div><button class="modal-close" data-close="themeModal" type="button">×</button></header>
+      <div id="themeGrid" class="theme-grid"></div>
+      <p id="themeStatus" class="data-status" role="status"></p>
+    </section>
+  </div>
+
+  <script src="data/demo-data.js"></script><script src="src/data-model.js"></script><script src="src/ai-client.js"></script><script src="src/storage.js"></script><script src="src/backgrounds.js"></script><script src="src/app.js"></script>
 </body>
 </html>
