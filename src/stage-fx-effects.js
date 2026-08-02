@@ -142,15 +142,65 @@
   // 8.3 手牌重新发出：上方短暂流光 + 主推荐金色光束 + 备选蓝光
   // 总时长 700ms
   function createHandDealEffect(ctx) {
+    const THREE = ctx && ctx.THREE;
+    const canvas = ctx && ctx.canvas;
     let elapsed = 0;
     let alive = false;
+    let objects = null;
     let ranks = [];
     const DURATION = 0.7;
-    return {
+    const RANK_COLOR = {
+      primary: 0xf6dda0,
+      backup: 0x7594ff,
+      other: 0xc8d2e0,
+      risk: 0xd7868d
+    };
+    function rectToPoint(rect, canvasRect) {
+      if (!rect || !canvasRect || canvasRect.width === 0 || canvasRect.height === 0) return null;
+      const cx = rect.left + rect.width / 2 - canvasRect.left;
+      const cy = rect.top + rect.height / 2 - canvasRect.top;
+      return { x: (cx / canvasRect.width) * 2 - 1, y: -(cy / canvasRect.height) * 2 + 1 };
+    }
+    const effect = {
       start(detail) {
         elapsed = 0;
         alive = true;
         ranks = (detail && detail.ranks) || [];
+        effect.detail = detail || {};
+        if (!THREE) return;
+        const canvasRect = canvas && typeof canvas.getBoundingClientRect === 'function' ? canvas.getBoundingClientRect() : null;
+        const rects = (detail && detail.rects) || [];
+        const beams = [];
+        rects.forEach((rect, i) => {
+          const rank = ranks[i] || 'other';
+          if (rank === 'other') return; // 其他牌不做持续高亮
+          const pt = rectToPoint(rect, canvasRect);
+          if (!pt) return;
+          // 短光束：从牌位上方 (y + 0.4) 向下 (y + 0.1)
+          const points = [
+            new THREE.Vector3(pt.x, pt.y + 0.4, 0),
+            new THREE.Vector3(pt.x, pt.y + 0.1, 0)
+          ];
+          const geom = new THREE.BufferGeometry().setFromPoints(points);
+          const mat = new THREE.LineBasicMaterial({ color: RANK_COLOR[rank] || RANK_COLOR.other, transparent: true, opacity: 0 });
+          beams.push({ line: new THREE.Line(geom, mat), mat });
+        });
+        // 上方流光：横贯整个手牌区的金色细线
+        let topLine = null;
+        if (rects.length) {
+          const first = rectToPoint(rects[0], canvasRect);
+          const last = rectToPoint(rects[rects.length - 1], canvasRect);
+          if (first && last) {
+            const points = [
+              new THREE.Vector3(first.x - 0.1, first.y + 0.55, 0),
+              new THREE.Vector3(last.x + 0.1, last.y + 0.55, 0)
+            ];
+            const geom = new THREE.BufferGeometry().setFromPoints(points);
+            const mat = new THREE.LineBasicMaterial({ color: 0xe7bd65, transparent: true, opacity: 0 });
+            topLine = { line: new THREE.Line(geom, mat), mat };
+          }
+        }
+        objects = { beams, topLine };
       },
       update(dt) {
         if (!alive) return;
@@ -159,8 +209,39 @@
       },
       isAlive() { return alive; },
       getProgress() { return alive ? Math.min(1, elapsed / DURATION) : 1; },
-      getRanks() { return ranks.slice(); }
+      getDuration() { return DURATION; },
+      getRanks() { return ranks.slice(); },
+      render(THREE, scene) {
+        if (!objects) return;
+        const p = effect.getProgress();
+        if (objects.topLine) {
+          if (!objects.topLine.line.parent) scene.add(objects.topLine.line);
+          // 流光：0-0.4 渐显，0.4-0.7 渐隐
+          if (p < 0.4) objects.topLine.mat.opacity = p / 0.4 * 0.7;
+          else objects.topLine.mat.opacity = Math.max(0, 0.7 * (1 - (p - 0.4) / 0.3));
+        }
+        objects.beams.forEach(b => {
+          if (!b.line.parent) scene.add(b.line);
+          if (p < 0.6) b.mat.opacity = p / 0.6 * 0.9;
+          else b.mat.opacity = Math.max(0, 0.9 * (1 - (p - 0.6) / 0.4));
+        });
+      },
+      dispose(scene) {
+        if (!objects) return;
+        if (objects.topLine) {
+          if (scene) scene.remove(objects.topLine.line);
+          if (objects.topLine.line.geometry) objects.topLine.line.geometry.dispose();
+          objects.topLine.line.material.dispose();
+        }
+        objects.beams.forEach(b => {
+          if (scene) scene.remove(b.line);
+          if (b.line.geometry) b.line.geometry.dispose();
+          b.line.material.dispose();
+        });
+        objects = null;
+      }
     };
+    return effect;
   }
 
   // 8.4 我方出牌：DOM 卡抬起 + 沿曲线移 + 关系光路 + 落点光圈
