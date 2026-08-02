@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "default": "candlelit-table",
+  "backgrounds": [
+    {
+      "id": "candlelit-table",
+      "title": "烛光下的牌桌",
+      "file": "candlelit-table.png",
+      "credit": "用户原稿（2026-08-01）",
+      "mood": "warm-night",
+      "recommendedFor": ["深夜决策", "情感沟通"]
+    }
+  ]
+}
