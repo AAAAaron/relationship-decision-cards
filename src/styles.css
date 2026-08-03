@@ -80,6 +80,9 @@ body.bg-fading .bg-overlay { opacity:0; }
   display:none;
 }
 body.stage-fx-active #stageFxCanvas { opacity:1; }
+/* 关闭动效: canvas 仍可见(最后一帧), 但 rAF 停止, 视为静态桌面 */
+body.stage-fx-static #stageFxCanvas { opacity:1; }
+/* WebGL 不可用时 fallback 接管 */
 body.stage-fx-fallback .stage-fx-fallback { display:block; }
 .board-stage-content {
   position:relative;

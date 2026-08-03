@@ -34,7 +34,6 @@ if (!api || !prefs || !scenes || !ctrlFactory) {
     try { fallback.show(); } catch (e) { /* noop */ }
   }
   if (stageFx) {
-    document.body.classList.add('stage-fx-active');
     window.RelationshipStageFxInstance = stageFx;
     // 窗口尺寸变化重算
     if (typeof ResizeObserver !== 'undefined') {
@@ -61,7 +60,13 @@ if (!api || !prefs || !scenes || !ctrlFactory) {
     // 启动时按存储的 level 应用
     try {
       const stored = prefs.getEffectiveMotionLevel();
-      if (stored === 'off') stageFx.setEnabled(false);
-    } catch (e) { /* noop */ }
+      if (stored === 'off') {
+        stageFx.setEnabled(false);
+      } else {
+        document.body.classList.add('stage-fx-active');
+      }
+    } catch (e) {
+      document.body.classList.add('stage-fx-active');
+    }
   }
 }

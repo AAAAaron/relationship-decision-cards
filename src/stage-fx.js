@@ -225,12 +225,15 @@
       setEnabled(on) {
         if (on) {
           document.body.classList.add('stage-fx-active');
+          document.body.classList.remove('stage-fx-static');
           document.body.classList.remove('stage-fx-fallback');
           startLoop();
         } else {
+          // 关闭动效: 保留 canvas 最后一帧作为静态桌面, 停止 rAF 循环
           stopLoop();
           document.body.classList.remove('stage-fx-active');
-          document.body.classList.add('stage-fx-fallback');
+          document.body.classList.remove('stage-fx-fallback');
+          document.body.classList.add('stage-fx-static');
           if (bus) bus.clear();
         }
       },
