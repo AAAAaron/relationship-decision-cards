@@ -1,8 +1,8 @@
 {
-  "name": "relationship-decision-cards",
+  "name": "ai-zui-ti-card",
   "version": "0.9.0",
   "private": true,
-  "description": "关系决策牌组静态原型",
+  "description": "AI 嘴替卡：场景化表达教练，替你在不同人、不同场合说出最合适的话",
   "scripts": {
     "test": "node --test tests/*.test.js",
     "build": "node scripts/build.mjs",
