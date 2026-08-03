@@ -17,6 +17,9 @@
   --paper2:#fffaf0;
   --ink:#172137;
   --ink2:#6f6a60;
+  /* 主题色：默认金(stage-fx 启动时按 preset 覆盖): meeting=#f6dda0 / elevator=#c8d2e0 / dinner=#ffb366 / default=#7da3ff */
+  --accent:#f6dda0;
+  --accent-soft:rgba(246,221,160,.2);
 --shadow:0 24px 70px rgba(0,0,0,.34);
 }
 
@@ -144,8 +147,8 @@ body.stage-fx-fallback .stage-fx-fallback { display:block; }
   box-shadow:0 12px 30px rgba(0,0,0,.32);
 }
 .theme-card.active {
-  border-color:var(--gold);
-  box-shadow:0 0 0 1px var(--gold),0 12px 30px rgba(231,189,101,.18);
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent),0 12px 30px rgba(231,189,101,.18);
 }
 .theme-card-thumb,
 .theme-card-swatch {

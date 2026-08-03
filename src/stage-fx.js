@@ -71,6 +71,7 @@
     // 程序生成桌面场景：中央固定牌桌垫 + 周边装饰按 preset 切换
     const sceneFactory = sceneFactoryApi();
     let currentSceneGroup = null;
+    let currentAccentColor = null;
     function applyScenePreset(preset) {
       if (!sceneFactory || typeof sceneFactory.createScene !== 'function') return;
       // 卸载旧 Group
@@ -90,6 +91,20 @@
         currentSceneGroup = sceneFactory.createScene(THREE, preset.id, preset);
         if (currentSceneGroup) scene.add(currentSceneGroup);
       } catch (error) { /* noop */ }
+      // 同步当前 preset 的 accentColor 到 CSS 变量, 让 UI 主题色联动
+      const accent = preset && preset.accentColor ? preset.accentColor : null;
+      currentAccentColor = accent;
+      try {
+        if (typeof document !== 'undefined' && document.body && document.body.style) {
+          if (accent) {
+            document.body.style.setProperty('--accent', accent);
+            document.body.style.setProperty('--accent-soft', accent + '33'); // 20% alpha
+          } else {
+            document.body.style.removeProperty('--accent');
+            document.body.style.removeProperty('--accent-soft');
+          }
+        }
+      } catch (e) { /* noop */ }
     }
     applyScenePreset(controller.getCurrentPreset());
 
@@ -224,6 +239,7 @@
         busActive: bus ? bus.activeCount() : 0,
         sceneChildren: scene.children ? scene.children.length : 0
       }),
+      getAccentColor: () => currentAccentColor,
       dispose
     };
   }

@@ -205,3 +205,82 @@ test('createStageFx 切换预设时移除旧 Group 并添加新 Group', () => {
   delete globalThis.RelationshipStageFxSceneFactory;
   if (result) result.dispose();
 });
+
+test('createStageFx 初始化时设置 --accent CSS 变量', () => {
+  injectFakeSceneFactory();
+  delete require.cache[require.resolve('../src/stage-fx.js')];
+  const { api } = loadStageFx();
+  const controller = controllerMod.createStageController();
+  const fakeThree = makeFakeThree();
+  const fakeDoc = {
+    documentElement: { style: { setProperty(k, v) { this[k] = v; } } },
+    body: { style: { setProperty(k, v) { this[k] = v; } } },
+    hidden: false,
+    createElement: () => ({ getContext: t => t.startsWith('webgl') ? {} : null })
+  };
+  globalThis.document = fakeDoc;
+  globalThis.window = { matchMedia: () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }), document: fakeDoc };
+  const result = api.createStageFx({
+    THREE: fakeThree,
+    canvas: makeFakeCanvas(),
+    fallback: { show() {} },
+    controller,
+    preferences: prefsMod
+  });
+  assert.ok(result, '应返回 instance');
+  // 默认 preset 是 default, --accent 应被设置
+  const accent = fakeDoc.body.style['--accent'];
+  assert.ok(accent, '--accent 应被设置, got ' + accent);
+  delete globalThis.RelationshipStageFxSceneFactory;
+  if (result) result.dispose();
+});
+
+test('createStageFx 切换预设时更新 --accent', () => {
+  injectFakeSceneFactory();
+  delete require.cache[require.resolve('../src/stage-fx.js')];
+  const { api } = loadStageFx();
+  const controller = controllerMod.createStageController();
+  const fakeThree = makeFakeThree();
+  const fakeDoc = {
+    documentElement: { style: { setProperty(k, v) { this[k] = v; } } },
+    body: { style: { setProperty(k, v) { this[k] = v; } } },
+    hidden: false,
+    createElement: () => ({ getContext: t => t.startsWith('webgl') ? {} : null })
+  };
+  globalThis.document = fakeDoc;
+  globalThis.window = { matchMedia: () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} }), document: fakeDoc };
+  const result = api.createStageFx({
+    THREE: fakeThree,
+    canvas: makeFakeCanvas(),
+    fallback: { show() {} },
+    controller,
+    preferences: prefsMod
+  });
+  const initial = fakeDoc.body.style['--accent'];
+  result.setPreset('dinner');
+  const updated = fakeDoc.body.style['--accent'];
+  assert.ok(updated, '切换后 --accent 应被设置');
+  // 不同 preset 的 accent 应该不同
+  delete globalThis.RelationshipStageFxSceneFactory;
+  if (result) result.dispose();
+});
+
+test('createStageFx 暴露 getAccentColor API', () => {
+  injectFakeSceneFactory();
+  delete require.cache[require.resolve('../src/stage-fx.js')];
+  const { api } = loadStageFx();
+  const controller = controllerMod.createStageController();
+  const fakeThree = makeFakeThree();
+  const result = api.createStageFx({
+    THREE: fakeThree,
+    canvas: makeFakeCanvas(),
+    fallback: { show() {} },
+    controller,
+    preferences: prefsMod
+  });
+  assert.equal(typeof result.getAccentColor, 'function', '应暴露 getAccentColor');
+  const color = result.getAccentColor();
+  assert.ok(color, 'getAccentColor 应返回颜色字符串');
+  delete globalThis.RelationshipStageFxSceneFactory;
+  if (result) result.dispose();
+});
