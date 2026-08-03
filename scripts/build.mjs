@@ -44,6 +44,7 @@ await cp(path.join(root, 'src', 'stage-fx-controller.js'), path.join(assets, 'st
 await cp(path.join(root, 'src', 'stage-fx-bootstrap.js'), path.join(assets, 'stage-fx-bootstrap.js'));
 await cp(path.join(root, 'data', 'demo-data.js'), path.join(dist, 'data', 'demo-data.js'));
 await cp(path.join(root, 'assets', 'backgrounds'), path.join(assets, 'backgrounds'), { recursive: true });
+await cp(path.join(root, 'assets', 'icons'), path.join(assets, 'icons'), { recursive: true });
 await cp(path.join(root, 'vendor', 'three'), path.join(dist, 'vendor', 'three'), { recursive: true });
 await cp(path.join(root, 'preview.png'), path.join(dist, 'preview.png'));
 
