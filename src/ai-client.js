@@ -43,15 +43,17 @@
       },
       async chat(messages, options = {}) {
         if (!model) throw new Error('请填写模型名称。');
+        const body = {
+          model,
+          messages,
+          temperature: options.temperature ?? 0.7
+        };
+        if (options.responseFormat) body.response_format = options.responseFormat;
+        if (options.thinking) body.thinking = options.thinking;
         const response = await fetchImpl(`${baseUrl}/chat/completions`, {
           method: 'POST',
           headers: headers(),
-          body: JSON.stringify({
-            model,
-            messages,
-            temperature: options.temperature ?? 0.7,
-            ...(options.responseFormat ? { response_format: options.responseFormat } : {})
-          })
+          body: JSON.stringify(body)
         });
         const payload = await readResponse(response);
         return {

@@ -118,7 +118,13 @@
 
   function stripCodeFence(text) {
     if (typeof text !== 'string') return text;
-    const trimmed = text.trim();
+    let trimmed = text.trim();
+    // 去除 thinking 标签 (支持 多种模型: <think>...</think>, <thinking>...</thinking>, 《think》...《/think》)
+    for (let i = 0; i < 3; i++) {
+      const before = trimmed;
+      trimmed = trimmed.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>|〈think〉[\s\S]*?〈\/think〉/g, '').trim();
+      if (trimmed === before) break;
+    }
     const fence = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```\s*$/);
     return fence ? fence[1] : trimmed;
   }
@@ -207,7 +213,9 @@
     if (typeof aiClient.chat === 'function') {
       const result = await aiClient.chat(messages, {
         temperature: 0.6,
-        responseFormat: { type: 'json_object' }
+        // M3 支持 thinking:disabled 跳过思考段；M2.x 不支持但会被服务端忽略,
+        // 这里仍依赖 stripCodeFence 兜底清洗, 兼容两个模型家族。
+        thinking: { type: 'disabled' }
       });
       if (result && typeof result.text === 'string') return result.text;
       if (typeof result === 'string') return result;

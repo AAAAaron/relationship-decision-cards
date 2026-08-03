@@ -1079,6 +1079,42 @@
     }
   }
 
+  async function probeAiDeal() {
+    if (!AI) return showAiStatus('AI 客户端未加载。', true);
+    if (!AI_ENGINE) return showAiStatus('AI 引擎未加载。', true);
+    const button = $('probeAiButton');
+    button.disabled = true;
+    showAiStatus('正在用当前场景试发一张牌……');
+    try {
+      const config = readAiConfigForm();
+      if (!config.baseUrl || !config.model || !config.apiKey || !config.enabled) {
+        showAiStatus('请先填写 Base URL / 模型 / Key，并勾选"启用真实 AI 接口"。', true);
+        return;
+      }
+      const scene = session().current.opponent || customScene('hypothesis', '请帮我把问题想清楚', '试发场景');
+      const aiClient = AI.createOpenAICompatibleClient(config);
+      const fallback = scene.hand_plan || genericPlan() || { axis: '本地兜底', coverage: '', candidates: [] };
+      const result = await AI_ENGINE.generateHandPlan({
+        person: person(),
+        matter: matter(),
+        scene,
+        history: [],
+        aiClient,
+        fallback
+      });
+      if (result.source === 'ai') {
+        const ranks = result.plan.candidates.map(c => c.rank).join(' / ');
+        showAiStatus(`✓ 试发成功：${result.plan.candidates.length} 张牌（rank：${ranks}）。关闭弹窗后切换场景即可看到 AI 实时生成。`);
+      } else {
+        showAiStatus(`× 试发失败：${result.reason || '未知原因'}`, true);
+      }
+    } catch (error) {
+      showAiStatus(`× 试发异常：${error.message}`, true);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   function exportData() {
     const snapshot = STORAGE.createSnapshot(state, DATA);
     const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
@@ -1127,8 +1163,13 @@
       state.aiConfig = readAiConfigForm();
       persistState();
       showAiStatus('AI 设置已保存。导出数据时不会包含 API Key。');
+      const currentScene = session().current.opponent;
+      if (currentScene && aiEngaged()) {
+        refillHandPlanWithAi(currentScene);
+      }
     });
     $('testAiButton').addEventListener('click', testAiConnection);
+    $('probeAiButton').addEventListener('click', probeAiDeal);
     const openPack = () => { $('packSearch').value = ''; state.packSearch = ''; renderPack(); openModal('packModal'); };
     $('packSpineButton').addEventListener('click', openPack);
     $('archiveHistoryButton').addEventListener('click', () => { renderHistory(); openModal('historyModal'); });

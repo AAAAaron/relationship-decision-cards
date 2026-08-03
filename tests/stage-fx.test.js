@@ -120,7 +120,8 @@ function makeFakeThree() {
     BufferAttribute: class {},
     Points: class { constructor() { this.material = {}; } },
     PointsMaterial: class {},
-    Color: class { constructor(hex) { this.hex = hex; } }
+    Color: class { constructor(hex) { this.hex = hex; } },
+    TextureLoader: class { load(url, ok) { setTimeout(() => ok && ok({ colorSpace: '', dispose: () => {} }), 0); return this; } }
   };
 }
 
