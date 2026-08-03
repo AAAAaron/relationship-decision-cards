@@ -1061,12 +1061,17 @@
     }, { passive: false });
   }
 
-  // ---------- 背景主题 ----------
+  // ---------- 桌面风格（PNG 已废弃，stage-fx 主导） ----------
   function setBackgroundLayer({ animate = true } = {}) {
     const layer = $('bgLayer');
     if (!layer || !BG) return;
+    // V0.9 阶段：style 切换由 stage-fx 桌面场景承载，.bg-layer 保留作为暗背景容器
     const url = BG.resolveBackgroundImageUrl({ baseUrl: 'assets/backgrounds/' });
-    if (!url) return;
+    if (!url) {
+      // 新格式无 file：保留透明背景，让 stage-fx 主导
+      layer.style.backgroundImage = '';
+      return;
+    }
     if (!animate) {
       layer.style.backgroundImage = `url(${url})`;
       document.body.classList.add('bg-ready');
@@ -1084,19 +1089,20 @@
     const grid = $('themeGrid');
     const status = $('themeStatus');
     if (!grid) return;
-    const manifest = BG.getManifest() || { backgrounds: [] };
+    const manifest = BG.getManifest() || { styles: [] };
+    const list = manifest.styles || manifest.backgrounds || [];
     const current = BG.getCurrentId();
-    if (!manifest.backgrounds.length) {
-      grid.innerHTML = '<p class="data-status">暂无可用背景主题。</p>';
+    if (!list.length) {
+      grid.innerHTML = '<p class="data-status">暂无可用桌面风格。</p>';
       if (status) status.textContent = '';
       return;
     }
-    grid.innerHTML = manifest.backgrounds.map(entry => {
-      const thumb = `assets/backgrounds/${entry.file}`;
-      const meta = [entry.mood, entry.credit].filter(Boolean).join(' · ');
+    grid.innerHTML = list.map(entry => {
+      const accent = entry.accentColor || '#7da3ff';
+      const meta = [entry.mood, entry.recommendedFor && entry.recommendedFor.join('/')].filter(Boolean).join(' · ');
       const active = entry.id === current ? 'active' : '';
-      return `<button class="theme-card ${active}" type="button" data-theme-id="${esc(entry.id)}">
-        <span class="theme-card-thumb" style="background-image:url(${esc(thumb)})"></span>
+      return `<button class="theme-card ${active}" type="button" data-theme-id="${esc(entry.id)}" style="--theme-accent:${esc(accent)}">
+        <span class="theme-card-swatch" style="background:${esc(accent)}"></span>
         <span class="theme-card-title">${esc(entry.title || entry.id)}</span>
         <span class="theme-card-meta">${esc(meta || entry.id)}</span>
       </button>`;
@@ -1146,8 +1152,9 @@
     if (!status || !BG) return;
     const next = BG.getCurrent();
     const title = next && (next.title || next.id);
-    const prevEntry = BG.getManifest().backgrounds.find(b => b.id === prevId);
-    const prevTitle = prevEntry ? (prevEntry.title || prevEntry.id) : prevId;
+    const list = BG.getManifest().styles || BG.getManifest().backgrounds || [];
+    const prevEntry = list.find(b => b.id === prevId);
+    const prevTitle = prevEntry ? (prevEntry.title || prevEntry.id) : (prevId ? prevId : '初始');
     status.textContent = `已切换：${prevTitle} → ${title || nextId}`;
   }
 
@@ -1155,7 +1162,13 @@
     if (!BG) return;
     const manifest = await BG.loadManifest();
     BG.applyManifest(manifest);
-    BG.subscribe((prevId, nextId) => { setBackgroundLayer(); announceBackgroundSwitch(prevId, nextId); syncThemeModalOnSwitch(); });
+    BG.subscribe((prevId, nextId) => {
+      setBackgroundLayer();
+      // 桌面风格切换 → 派发 rdc:scene-change 让 stage-fx 切换桌面预设
+      window.dispatchEvent(new CustomEvent('rdc:scene-change', { detail: { presetId: nextId } }));
+      announceBackgroundSwitch(prevId, nextId);
+      syncThemeModalOnSwitch();
+    });
     setBackgroundLayer({ animate: false });
     if ($('themeButton')) $('themeButton').addEventListener('click', openThemeSettings);
     if ($('themePrevButton')) $('themePrevButton').addEventListener('click', () => BG.cyclePrevId());

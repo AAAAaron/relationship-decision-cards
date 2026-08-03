@@ -1,38 +1,38 @@
 {
-  "version": 1,
-  "default": "candlelit-table",
-  "backgrounds": [
+  "version": 2,
+  "default": "meeting",
+  "styles": [
     {
-      "id": "candlelit-table",
-      "title": "烛光下的牌桌",
-      "file": "candlelit-table.png",
-      "credit": "用户原稿（2026-08-01）",
-      "mood": "warm-night",
-      "recommendedFor": ["深夜决策", "情感沟通"]
+      "id": "meeting",
+      "title": "正式会议",
+      "accentColor": "#f6dda0",
+      "mood": "cold",
+      "description": "桌面有笔记本、钢笔与文件，氛围沉静",
+      "recommendedFor": ["决策评审", "工作推进"]
     },
     {
-      "id": "constellation-orb",
-      "title": "星盘与对话",
-      "file": "constellation-orb.png",
-      "credit": "ChatGPT 出图（2026-08-02）",
-      "mood": "mystic",
-      "recommendedFor": ["复盘", "关系推演"]
+      "id": "elevator",
+      "title": "电梯偶遇",
+      "accentColor": "#c8d2e0",
+      "mood": "cool",
+      "description": "桌面有 6 个楼层按钮，第二层高亮",
+      "recommendedFor": ["短平快沟通", "临时决策"]
     },
     {
-      "id": "oak-desk",
-      "title": "橡木书桌上的牌局",
-      "file": "oak-desk.png",
-      "credit": "ChatGPT 出图（2026-08-02）",
-      "mood": "warm-day",
-      "recommendedFor": ["日常协作", "家庭事项"]
+      "id": "dinner",
+      "title": "烛光晚餐",
+      "accentColor": "#ffb366",
+      "mood": "warm",
+      "description": "桌面有烛台、烛光与酒杯，氛围温暖",
+      "recommendedFor": ["感谢", "关系修复"]
     },
     {
-      "id": "arcane-sanctum",
-      "title": "魔法圣所",
-      "file": "arcane-sanctum.png",
-      "credit": "ChatGPT 出图（2026-08-02）",
-      "mood": "arcane-night",
-      "recommendedFor": ["关键谈判", "仪式感沟通"]
+      "id": "default",
+      "title": "默认桌面",
+      "accentColor": "#7da3ff",
+      "mood": "neutral",
+      "description": "纯净中央圆盘，无周边装饰",
+      "recommendedFor": ["通用"]
     }
   ]
 }

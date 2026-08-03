@@ -27,6 +27,15 @@ function loadBackgroundsWith({ storage = new Map(), globalScope = {} } = {}) {
 }
 
 const validManifest = {
+  version: 2,
+  default: 'meeting',
+  styles: [
+    { id: 'meeting', title: '正式会议', accentColor: '#f6dda0', mood: 'cold' },
+    { id: 'elevator', title: '电梯偶遇', accentColor: '#c8d2e0', mood: 'cool' }
+  ]
+};
+
+const legacyManifest = {
   version: 1,
   default: 'candlelit-table',
   backgrounds: [
@@ -38,16 +47,26 @@ const validManifest = {
 test('parseManifest 接受合法清单并返回不可变快照', () => {
   const { api } = loadBackgroundsWith();
   const parsed = api.parseManifest(JSON.stringify(validManifest));
-  assert.equal(parsed.default, 'candlelit-table');
-  assert.equal(parsed.backgrounds.length, 2);
-  assert.equal(parsed.backgrounds[0].id, 'candlelit-table');
+  assert.equal(parsed.default, 'meeting');
+  assert.equal(parsed.styles.length, 2);
+  assert.equal(parsed.styles[0].id, 'meeting');
+  assert.equal(parsed.styles[0].accentColor, '#f6dda0');
 });
 
-test('parseManifest 拒绝非 JSON / 缺字段 / backgrounds 非数组', () => {
+test('parseManifest 兼容旧版 backgrounds 字段', () => {
+  const { api } = loadBackgroundsWith();
+  const parsed = api.parseManifest(JSON.stringify(legacyManifest));
+  assert.equal(parsed.default, 'candlelit-table');
+  assert.equal(parsed.styles.length, 2);
+  assert.equal(parsed.styles[0].id, 'candlelit-table');
+  assert.equal(parsed.styles[0].file, 'candlelit-table.png');
+});
+
+test('parseManifest 拒绝非 JSON / 缺字段 / 数组字段', () => {
   const { api } = loadBackgroundsWith();
   assert.throws(() => api.parseManifest('not json'), /JSON/);
-  assert.throws(() => api.parseManifest(JSON.stringify({ version: 1, default: 'x' })), /backgrounds/);
-  assert.throws(() => api.parseManifest(JSON.stringify({ version: 1, default: 'x', backgrounds: {} })), /backgrounds/);
+  assert.throws(() => api.parseManifest(JSON.stringify({ version: 1, default: 'x' })), /styles/);
+  assert.throws(() => api.parseManifest(JSON.stringify({ version: 1, default: 'x', styles: {} })), /styles/);
 });
 
 test('loadManifest 支持注入的 fetcher，且失败时降级为空清单', () => {
@@ -56,13 +75,13 @@ test('loadManifest 支持注入的 fetcher，且失败时降级为空清单', ()
     fetcher: () => Promise.resolve({ ok: true, text: () => JSON.stringify(validManifest) })
   });
   return ok.then(manifest => {
-    assert.equal(manifest.default, 'candlelit-table');
-    assert.equal(manifest.backgrounds.length, 2);
+    assert.equal(manifest.default, 'meeting');
+    assert.equal(manifest.styles.length, 2);
 
     return api.loadManifest({
       fetcher: () => Promise.reject(new Error('network down'))
     }).then(fallback => {
-      assert.equal(fallback.backgrounds.length, 0);
+      assert.equal(fallback.styles.length, 0);
       assert.equal(fallback.default, null);
     });
   });
@@ -74,13 +93,13 @@ test('setCurrentId 写入存储后 getCurrentId 能读回，订阅者收到回�
   let lastPrev = null;
   let lastNext = null;
   const unsubscribe = api.subscribe((prev, next) => { called += 1; lastPrev = prev; lastNext = next; });
-  api.setCurrentId('moonlit');
-  assert.equal(api.getCurrentId(), 'moonlit');
+  api.setCurrentId('elevator');
+  assert.equal(api.getCurrentId(), 'elevator');
   assert.equal(called, 1);
   assert.equal(lastPrev, null, '首次切换的 prev 应为 null');
-  assert.equal(lastNext, 'moonlit');
+  assert.equal(lastNext, 'elevator');
   unsubscribe();
-  api.setCurrentId('candlelit-table');
+  api.setCurrentId('meeting');
   assert.equal(called, 1, '取消订阅后不应再触发');
 });
 
@@ -88,25 +107,25 @@ test('setCurrentId 连续切换时订阅者收到正确的 prev → next', () =>
   const { api } = loadBackgroundsWith();
   const events = [];
   api.subscribe((prev, next) => events.push([prev, next]));
-  api.setCurrentId('a');
-  api.setCurrentId('b');
-  api.setCurrentId('a');
-  assert.deepEqual(events, [[null, 'a'], ['a', 'b'], ['b', 'a']]);
+  api.setCurrentId('meeting');
+  api.setCurrentId('elevator');
+  api.setCurrentId('meeting');
+  assert.deepEqual(events, [[null, 'meeting'], ['meeting', 'elevator'], ['elevator', 'meeting']]);
 });
 
 test('setCurrentId 拒绝清单外的 id 并写入 fallback', () => {
   const { api, fakeGlobal } = loadBackgroundsWith();
   api.applyManifest(validManifest);
   api.setCurrentId('not-in-list');
-  assert.equal(api.getCurrentId(), 'candlelit-table');
-  assert.equal(fakeGlobal.document.body.dataset.background, 'candlelit-table');
+  assert.equal(api.getCurrentId(), 'meeting');
+  assert.equal(fakeGlobal.document.body.dataset.background, 'meeting');
 });
 
 test('getCurrentId 在 localStorage 中的 id 已失效时回退到 default', () => {
   const storage = new Map([['relationship-decision-cards:background', 'obsolete']]);
   const { api } = loadBackgroundsWith({ storage });
   api.applyManifest(validManifest);
-  assert.equal(api.getCurrentId(), 'candlelit-table');
+  assert.equal(api.getCurrentId(), 'meeting');
 });
 
 test('localStorage 抛错时 setCurrentId 静默降级不抛异常', () => {
@@ -122,8 +141,8 @@ test('localStorage 抛错时 setCurrentId 静默降级不抛异常', () => {
   delete require.cache[require.resolve('../src/backgrounds.js')];
   const api = require('../src/backgrounds.js');
   api.applyManifest(validManifest);
-  assert.doesNotThrow(() => api.setCurrentId('moonlit'));
-  assert.equal(api.getCurrentId(), 'moonlit');
+  assert.doesNotThrow(() => api.setCurrentId('elevator'));
+  assert.equal(api.getCurrentId(), 'elevator');
 });
 
 test('getCurrent 在尚未应用 manifest 时返回 null', () => {
@@ -131,55 +150,61 @@ test('getCurrent 在尚未应用 manifest 时返回 null', () => {
   assert.equal(api.getCurrent(), null);
 });
 
-test('getCurrent 返回当前背景的完整条目', () => {
+test('getCurrent 返回当前风格的完整条目', () => {
   const { api } = loadBackgroundsWith();
   api.applyManifest(validManifest);
-  assert.deepEqual(api.getCurrent(), validManifest.backgrounds[0]);
+  assert.deepEqual(api.getCurrent(), validManifest.styles[0]);
 });
 
-test('cycleNextId 在只有 1 个背景时返回当前 id', () => {
+test('cycleNextId 在只有 1 个风格时返回当前 id', () => {
   const { api } = loadBackgroundsWith();
-  api.applyManifest({ default: 'only', backgrounds: [{ id: 'only', file: 'x.png' }] });
+  api.applyManifest({ default: 'only', styles: [{ id: 'only', accentColor: '#fff' }] });
   assert.equal(api.cycleNextId(), 'only');
 });
 
-test('cycleNextId 在多个背景时切换到下一张', () => {
+test('cycleNextId 在多个风格时切换到下一个', () => {
   const { api } = loadBackgroundsWith();
   api.applyManifest(validManifest);
-  // 默认 candlelit-table → moonlit
-  assert.equal(api.cycleNextId(), 'moonlit');
-  assert.equal(api.getCurrentId(), 'moonlit');
-  // 再切 → candlelit-table
-  assert.equal(api.cycleNextId(), 'candlelit-table');
+  // 默认 meeting → elevator
+  assert.equal(api.cycleNextId(), 'elevator');
+  assert.equal(api.getCurrentId(), 'elevator');
+  // 再切 → meeting
+  assert.equal(api.cycleNextId(), 'meeting');
 });
 
-test('cyclePrevId 回到上一张，并支持多张环绕', () => {
+test('cyclePrevId 回到上一个，并支持多张环绕', () => {
   const { api } = loadBackgroundsWith();
   api.applyManifest(validManifest);
-  // 当前 candlelit-table → 月光
-  assert.equal(api.cyclePrevId(), 'moonlit');
-  assert.equal(api.getCurrentId(), 'moonlit');
-  // 再 prev → candlelit-table
-  assert.equal(api.cyclePrevId(), 'candlelit-table');
+  // 当前 meeting → elevator
+  assert.equal(api.cyclePrevId(), 'elevator');
+  assert.equal(api.getCurrentId(), 'elevator');
+  // 再 prev → meeting
+  assert.equal(api.cyclePrevId(), 'meeting');
 });
 
 test('cycleStep 接受任意 delta 并按 length 取模', () => {
   const { api } = loadBackgroundsWith();
   api.applyManifest(validManifest);
   // delta = 2 等价于 next 两次
-  assert.equal(api.cycleStep(2), 'candlelit-table');
+  assert.equal(api.cycleStep(2), 'meeting');
   // delta = -1 等价于 prev 一次
   api.applyManifest(validManifest);
-  assert.equal(api.cycleStep(-1), 'moonlit');
+  assert.equal(api.cycleStep(-1), 'elevator');
   // delta = -1000 也安全（多次取模）
   api.applyManifest(validManifest);
   const huge = api.cycleStep(-1000);
-  assert.ok(huge === 'candlelit-table' || huge === 'moonlit', 'cycleStep 在大负值下仍返回合法 id');
+  assert.ok(huge === 'meeting' || huge === 'elevator', 'cycleStep 在大负值下仍返回合法 id');
 });
 
-test('resolveBackgroundImageUrl 根据 manifest 与 baseUrl 拼出正确 URL', () => {
+test('resolveBackgroundImageUrl 在新格式无 file 字段时返回 null', () => {
   const { api } = loadBackgroundsWith();
   api.applyManifest(validManifest);
+  assert.equal(api.resolveBackgroundImageUrl({ baseUrl: '/assets/backgrounds/' }), null);
+});
+
+test('resolveBackgroundImageUrl 在旧格式有 file 字段时返回 URL', () => {
+  const { api } = loadBackgroundsWith();
+  api.applyManifest(legacyManifest);
   assert.equal(api.resolveBackgroundImageUrl({ baseUrl: '/assets/backgrounds/' }), '/assets/backgrounds/candlelit-table.png');
 });
 
@@ -188,20 +213,8 @@ test('assets/backgrounds 目录与 manifest.json 物理存在', () => {
   const dir = path.join(root, 'assets', 'backgrounds');
   assert.equal(fs.existsSync(dir), true, 'assets/backgrounds 目录应存在');
   const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
-  assert.equal(manifest.version, 1);
-  manifest.backgrounds.forEach(entry => {
-    const file = path.join(dir, entry.file);
-    assert.equal(fs.existsSync(file), true, `${entry.file} 应存在`);
-  });
-});
-
-test('manifest 中所有 background 的 file 字段均能与物理文件一一对应', () => {
-  const root = path.resolve(__dirname, '..');
-  const dir = path.join(root, 'assets', 'backgrounds');
-  const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
-  const ids = new Set(manifest.backgrounds.map(b => b.id));
-  assert.equal(ids.size, manifest.backgrounds.length, 'id 应互不重复');
-  manifest.backgrounds.forEach(entry => {
-    assert.equal(fs.existsSync(path.join(dir, entry.file)), true, `${entry.file} 应存在`);
-  });
+  assert.equal(manifest.version, 2);
+  assert.ok(Array.isArray(manifest.styles), 'manifest.styles 数组应存在');
+  const ids = new Set(manifest.styles.map(b => b.id));
+  assert.equal(ids.size, manifest.styles.length, 'id 应互不重复');
 });

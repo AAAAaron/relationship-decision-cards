@@ -54,11 +54,17 @@
       throw new Error(`背景清单 JSON 解析失败：${error.message}`);
     }
     if (!parsed || typeof parsed !== 'object') throw new Error('背景清单格式错误。');
-    if (!Array.isArray(parsed.backgrounds)) throw new Error('背景清单缺少 backgrounds 数组。');
+    // 兼容 v1 (backgrounds + file) 和 v2 (styles + accentColor)
+    const list = Array.isArray(parsed.styles)
+      ? parsed.styles
+      : Array.isArray(parsed.backgrounds)
+        ? parsed.backgrounds
+        : null;
+    if (!list) throw new Error('背景清单缺少 styles 或 backgrounds 数组。');
     return {
       version: parsed.version ?? 1,
       default: parsed.default || null,
-      backgrounds: parsed.backgrounds.map(entry => ({ ...entry }))
+      styles: list.map(entry => ({ ...entry }))
     };
   }
 
@@ -70,22 +76,23 @@
           return response.text();
         })
         .then(text => parseManifest(text))
-        .catch(() => ({ version: 1, default: null, backgrounds: [] }));
+        .catch(() => ({ version: 1, default: null, styles: [] }));
     }
-    if (typeof fetch === 'undefined') return Promise.resolve({ version: 1, default: null, backgrounds: [] });
+    if (typeof fetch === 'undefined') return Promise.resolve({ version: 1, default: null, styles: [] });
     return fetch(`${DEFAULT_BASE_URL}manifest.json`, { cache: 'no-cache' })
       .then(response => {
         if (!response || !response.ok) throw new Error(`HTTP ${response && response.status}`);
         return response.text();
       })
       .then(text => parseManifest(text))
-      .catch(() => ({ version: 1, default: null, backgrounds: [] }));
+      .catch(() => ({ version: 1, default: null, styles: [] }));
   }
 
   function applyManifest(next) {
     manifest = next;
     const stored = readStoredId();
-    const valid = next.backgrounds.find(b => b.id === stored);
+    const list = next.styles || next.backgrounds || [];
+    const valid = list.find(b => b.id === stored);
     currentId = valid ? valid.id : next.default;
   }
 
@@ -100,7 +107,8 @@
   function setCurrentId(id) {
     let finalId = id;
     if (manifest) {
-      const valid = manifest.backgrounds.find(b => b.id === id);
+      const list = manifest.styles || manifest.backgrounds || [];
+      const valid = list.find(b => b.id === id);
       if (!valid) finalId = manifest.default;
     }
     if (!finalId) return;
@@ -119,7 +127,8 @@
     if (!manifest) return null;
     const id = getCurrentId();
     if (!id) return null;
-    return manifest.backgrounds.find(b => b.id === id) || null;
+    const list = manifest.styles || manifest.backgrounds || [];
+    return list.find(b => b.id === id) || null;
   }
 
   function subscribe(fn) {
@@ -129,13 +138,15 @@
   }
 
   function cycleStep(delta) {
-    if (!manifest || manifest.backgrounds.length === 0) return null;
-    const length = manifest.backgrounds.length;
+    if (!manifest) return null;
+    const list = manifest.styles || manifest.backgrounds || [];
+    if (list.length === 0) return null;
+    const length = list.length;
     const current = getCurrentId();
-    const idx = manifest.backgrounds.findIndex(b => b.id === current);
+    const idx = list.findIndex(b => b.id === current);
     const step = ((delta % length) + length) % length;
     const nextIdx = idx < 0 ? 0 : (idx + step) % length;
-    const next = manifest.backgrounds[nextIdx];
+    const next = list[nextIdx];
     setCurrentId(next.id);
     return next.id;
   }
@@ -145,7 +156,7 @@
 
   function resolveBackgroundImageUrl({ baseUrl = DEFAULT_BASE_URL } = {}) {
     const entry = getCurrent();
-    if (!entry) return null;
+    if (!entry || !entry.file) return null;
     return baseUrl.replace(/\/$/, '') + '/' + entry.file;
   }
 

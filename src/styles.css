@@ -147,13 +147,13 @@ body.stage-fx-fallback .stage-fx-fallback { display:block; }
   border-color:var(--gold);
   box-shadow:0 0 0 1px var(--gold),0 12px 30px rgba(231,189,101,.18);
 }
-.theme-card-thumb {
+.theme-card-thumb,
+.theme-card-swatch {
   width:100%;
   aspect-ratio:16/9;
   border-radius:9px;
   background-size:cover;
   background-position:center;
-  background-color:#0a1626;
   border:1px solid var(--line);
 }
 .theme-card-title {
