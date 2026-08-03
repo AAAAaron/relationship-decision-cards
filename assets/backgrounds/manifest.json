@@ -5,33 +5,32 @@
     {
       "id": "meeting",
       "title": "正式会议",
-      "accentColor": "#f6dda0",
+      "textureUrl": "../assets/textures/wood-oak.png",
       "mood": "cold",
-      "description": "桌面有笔记本、钢笔与文件，氛围沉静",
+      "description": "Oak wood conference table texture, programmatic 3D props (notebook, pen, file)",
       "recommendedFor": ["决策评审", "工作推进"]
     },
     {
       "id": "elevator",
       "title": "电梯偶遇",
-      "accentColor": "#c8d2e0",
+      "textureUrl": "../assets/textures/marble-blue.png",
       "mood": "cool",
-      "description": "桌面有 6 个楼层按钮，第二层高亮",
+      "description": "Dark blue marble texture, programmatic 3D props (6 floor buttons)",
       "recommendedFor": ["短平快沟通", "临时决策"]
     },
     {
       "id": "dinner",
       "title": "烛光晚餐",
-      "accentColor": "#ffb366",
+      "textureUrl": "../assets/textures/wood-walnut.png",
       "mood": "warm",
-      "description": "桌面有烛台、烛光与酒杯，氛围温暖",
+      "description": "Walnut wood texture, programmatic 3D props (candlestick, wineglass, dual flame)",
       "recommendedFor": ["感谢", "关系修复"]
     },
     {
       "id": "default",
       "title": "默认桌面",
-      "accentColor": "#7da3ff",
       "mood": "neutral",
-      "description": "纯净中央圆盘，无周边装饰",
+      "description": "Programmatic 3D props only (pen holder, memo), no background texture",
       "recommendedFor": ["通用"]
     }
   ]

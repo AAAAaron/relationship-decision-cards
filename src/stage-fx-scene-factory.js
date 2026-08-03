@@ -10,9 +10,10 @@
 
   const PI = Math.PI;
 
-  // 固定牌桌垫:外圈深色底盘 + 中央凸起牌桌垫(LatheGeometry) + 边缘暖橙光环
-  // 中央牌桌垫用 LatheGeometry 让中央凸起边缘渐低, 类似 Hearthstone 战场
-  function createTabletop(THREE) {
+  // 固定牌桌垫:外圈深色底盘 + 中央凸起牌桌垫(顶面+侧面) + 边缘暖橙光环
+  // 顶面是 CircleGeometry(贴木纹/大理石纹理), 侧面是 LatheGeometry(凸起曲线)
+  // texture 是已经按 presetId 取出的 THREE.Texture
+  function createTabletop(THREE, texture) {
     const group = new THREE.Group();
     // 1. 外圈深色底盘(半径 4)
     const base = new THREE.Mesh(
@@ -21,22 +22,33 @@
     );
     base.position.y = 0;
     group.add(base);
-    // 2. 中央凸起牌桌垫: LatheGeometry 旋转体
-    // 中心 y=0.18(凸起), 边缘 y=0(渐低), 类似牌池
+    // 2. 中央凸起: 顶面 (CircleGeometry) + 侧面 (LatheGeometry)
+    const TOP_Y = 0.18;
+    // 2a. 顶面 - CircleGeometry (有贴图, DoubleSide 因为旋转后法线可能朝下)
+    const topMaterial = texture
+      ? new THREE.MeshBasicMaterial({ map: texture, color: 0xffffff, side: THREE.DoubleSide })
+      : new THREE.MeshBasicMaterial({ color: 0x1a2c4a, side: THREE.DoubleSide });
+    const top = new THREE.Mesh(
+      new THREE.CircleGeometry(2.5, 64),
+      topMaterial
+    );
+    top.rotation.x = -PI / 2;
+    top.position.y = TOP_Y;
+    group.add(top);
+    // 2b. 侧面 - LatheGeometry 旋转体
     const lathePoints = [];
     const STEPS = 24;
     for (let i = 0; i <= STEPS; i++) {
-      const t = i / STEPS;          // 0=中心, 1=边缘
-      const r = t * 2.5;            // 半径
-      // 中心最高, 边缘最低, 中间凸起曲线
-      const y = 0.18 * (1 - Math.pow(t, 2)) + 0.02;
+      const t = i / STEPS;
+      const r = t * 2.5;
+      const y = TOP_Y * (1 - t * t);
       lathePoints.push(new THREE.Vector2(r, y));
     }
-    const table = new THREE.Mesh(
+    const side = new THREE.Mesh(
       new THREE.LatheGeometry(lathePoints, 64),
-      new THREE.MeshBasicMaterial({ color: 0x1a2c4a })
+      new THREE.MeshBasicMaterial({ color: 0x0d1c34 })
     );
-    group.add(table);
+    group.add(side);
     // 3. 边缘光环(暖橙 RingGeometry)
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(2.48, 2.6, 64),
@@ -331,30 +343,31 @@
   }
 
   // 4 个场景工厂：每个 = 牌桌 + 周边装饰 + 粒子
-  function createMeetingScene(THREE, preset) {
+  // textureMap: { meeting: Texture, dinner: Texture, ... } 按 presetId 索引
+  function createMeetingScene(THREE, preset, textureMap) {
     const g = new THREE.Group();
-    g.add(createTabletop(THREE));
+    g.add(createTabletop(THREE, textureMap && textureMap.meeting));
     g.add(createMeetingProps(THREE));
     g.add(createAmbientParticles(THREE, preset));
     return g;
   }
-  function createElevatorScene(THREE, preset) {
+  function createElevatorScene(THREE, preset, textureMap) {
     const g = new THREE.Group();
-    g.add(createTabletop(THREE));
+    g.add(createTabletop(THREE, textureMap && textureMap.elevator));
     g.add(createElevatorProps(THREE));
     g.add(createAmbientParticles(THREE, preset));
     return g;
   }
-  function createDinnerScene(THREE, preset) {
+  function createDinnerScene(THREE, preset, textureMap) {
     const g = new THREE.Group();
-    g.add(createTabletop(THREE));
+    g.add(createTabletop(THREE, textureMap && textureMap.dinner));
     g.add(createDinnerProps(THREE));
     g.add(createAmbientParticles(THREE, preset));
     return g;
   }
-  function createDefaultScene(THREE, preset) {
+  function createDefaultScene(THREE, preset, textureMap) {
     const g = new THREE.Group();
-    g.add(createTabletop(THREE));
+    g.add(createTabletop(THREE, textureMap && textureMap.default));
     g.add(createDefaultProps(THREE));
     g.add(createAmbientParticles(THREE, preset));
     return g;
@@ -367,9 +380,11 @@
     default: createDefaultScene
   };
 
-  function createScene(THREE, presetId, preset) {
+  // textureMap 预加载: { meeting: Texture, dinner: Texture, ... }
+  // 不传则纯色桌垫
+  function createScene(THREE, presetId, preset, textureMap) {
     const factory = SCENE_FACTORIES[presetId] || SCENE_FACTORIES.default;
-    return factory(THREE, preset);
+    return factory(THREE, preset, textureMap);
   }
 
   return {

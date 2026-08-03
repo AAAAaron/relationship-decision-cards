@@ -989,7 +989,7 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `关系决策牌组-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `AI嘴替卡-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -1065,10 +1065,14 @@
   function setBackgroundLayer({ animate = true } = {}) {
     const layer = $('bgLayer');
     if (!layer || !BG) return;
-    // V0.9 阶段：style 切换由 stage-fx 桌面场景承载，.bg-layer 保留作为暗背景容器
-    const url = BG.resolveBackgroundImageUrl({ baseUrl: 'assets/backgrounds/' });
+    // V0.9 阶段：style 切换由 stage-fx 桌面场景承载, .bg-layer 显示 minimax 生成纹理作远景
+    const entry = BG.getCurrent();
+    if (!entry) return;
+    // 优先用 textureUrl (新格式, minimax 生成), 回退 file (旧格式)
+    const url = entry.textureUrl
+      ? entry.textureUrl
+      : (entry.file ? `assets/backgrounds/${entry.file}` : null);
     if (!url) {
-      // 新格式无 file：保留透明背景，让 stage-fx 主导
       layer.style.backgroundImage = '';
       return;
     }

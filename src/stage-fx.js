@@ -1,4 +1,4 @@
-// 关系决策牌组：Three.js 舞台视觉层（依赖注入 THREE，便于测试）
+// AI 嘴替卡：Three.js 舞台视觉层（依赖注入 THREE，便于测试）
 // 第一阶段：唯一 Renderer + 基础粒子 + 按需渲染 + resize + reduced-motion
 // 浏览器中通过 import('three') 拿到 THREE 后调 createStageFx({ THREE, ... })
 (function initStageFx(globalScope, factory) {
@@ -72,9 +72,34 @@
     const sceneFactory = sceneFactoryApi();
     let currentSceneGroup = null;
     let currentAccentColor = null;
+    // 淡入淡出动画状态
+    const FADE_DURATION = 0.32; // 320ms
+    let fadeStart = 0;
+    let fadeFromGroup = null;
+    let fadeToGroup = null;
+    function makeGroupTransparent(g, opacity) {
+      if (!g || !g.traverse) return;
+      g.traverse(obj => {
+        if (obj.material) {
+          // 保留原 transparent 值, 仅覆盖 opacity
+          obj.material.transparent = true;
+          obj.material.opacity = opacity;
+        }
+      });
+    }
+    function startFadeIn(newGroup) {
+      if (!newGroup) return;
+      makeGroupTransparent(newGroup, 0);
+      scene.add(newGroup);
+      fadeStart = performance.now() / 1000;
+      fadeFromGroup = null; // 同步替换, 不做交叉淡出(避免两套主题颜色叠加)
+      fadeToGroup = newGroup;
+      currentSceneGroup = newGroup;
+    }
+
     function applyScenePreset(preset) {
       if (!sceneFactory || typeof sceneFactory.createScene !== 'function') return;
-      // 卸载旧 Group
+      // 卸载旧 Group (同步 dispose)
       if (currentSceneGroup) {
         try { scene.remove(currentSceneGroup); } catch (e) { /* noop */ }
         try {
@@ -86,10 +111,13 @@
           }
         } catch (e) { /* noop */ }
       }
-      // 构建新 Group
+      // 构建新 Group + 淡入
       try {
-        currentSceneGroup = sceneFactory.createScene(THREE, preset.id, preset);
-        if (currentSceneGroup) scene.add(currentSceneGroup);
+        const newGroup = sceneFactory.createScene(THREE, preset.id, preset, textureMap);
+        if (typeof console !== 'undefined') {
+          console.log('[stage-fx] preset', preset.id, 'textureMap keys:', Object.keys(textureMap), 'dinner has tex:', !!textureMap.dinner, 'image loaded:', !!(textureMap.dinner && textureMap.dinner.image && textureMap.dinner.image.complete));
+        }
+        startFadeIn(newGroup);
       } catch (error) { /* noop */ }
       // 同步当前 preset 的 accentColor 到 CSS 变量, 让 UI 主题色联动
       const accent = preset && preset.accentColor ? preset.accentColor : null;
@@ -106,11 +134,68 @@
         }
       } catch (e) { /* noop */ }
     }
-    applyScenePreset(controller.getCurrentPreset());
 
     // 关键动作特效总线
     const fx = effectsApi();
     const bus = (fx && fx.createEffectBus) ? fx.createEffectBus() : null;
+
+    // 桌面纹理预加载(异步, 加载完后用 textureMap 重新生成场景)
+    const textureMap = {};
+    const TEXTURE_PRESETS = {
+      meeting: '../assets/textures/wood-oak.png',
+      dinner: '../assets/textures/wood-walnut.png',
+      elevator: '../assets/textures/marble-blue.png'
+    };
+    function loadImageTexture(threeArg, url) {
+      return new Promise((resolve) => {
+        if (typeof threeArg === 'undefined' || typeof threeArg.TextureLoader === 'undefined') {
+          resolve(null);
+          return;
+        }
+        // 先用 HTMLImageElement 验证可达, 再传给 TextureLoader
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const loader = new threeArg.TextureLoader();
+            loader.load(url, (tex) => {
+              if (tex) {
+                tex.colorSpace = threeArg.SRGBColorSpace || 'srgb';
+                tex.wrapS = tex.wrapT = threeArg.RepeatWrapping || 1000;
+                tex.repeat.set(1, 1);
+                tex.needsUpdate = true;
+                resolve(tex);
+              } else {
+                resolve(null);
+              }
+            }, undefined, () => resolve(null));
+          } catch (e) { resolve(null); }
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+      });
+    }
+    (async () => {
+      try {
+        const entries = await Promise.all(
+          Object.entries(TEXTURE_PRESETS).map(async ([k, url]) => {
+            const tex = await loadImageTexture(THREE, url);
+            return [k, tex];
+          })
+        );
+        for (const [k, tex] of entries) {
+          if (tex) textureMap[k] = tex;
+        }
+        if (typeof console !== 'undefined') {
+          console.log('[stage-fx] textureMap loaded:', Object.keys(textureMap));
+        }
+        // 纹理加载完, 重新刷一次当前场景(用新贴图)
+        if (Object.keys(textureMap).length > 0) {
+          applyScenePreset(controller.getCurrentPreset());
+        }
+      } catch (e) { /* noop */ }
+    })();
+
+    applyScenePreset(controller.getCurrentPreset());
 
     let rafId = null;
     let lastFrame = 0;
@@ -122,13 +207,35 @@
       }
       const dt = lastFrame ? (time - lastFrame) / 1000 : 0.016;
       lastFrame = time;
+      // 推进淡入动画
+      if (fadeToGroup) {
+        const elapsed = time / 1000 - fadeStart;
+        const t = Math.min(1, elapsed / FADE_DURATION);
+        // ease-out: t*(2-t)
+        const ease = t * (2 - t);
+        makeGroupTransparent(fadeToGroup, ease);
+        if (t >= 1) {
+          // 动画结束, 恢复 opacity=1, 但保留 transparent=true 以维持渲染管线状态
+          // (材质若有 map 走正常贴图, 没有就回退纯色)
+          if (fadeToGroup.traverse) {
+            fadeToGroup.traverse(obj => {
+              if (obj.material) {
+                obj.material.opacity = 1;
+                // 不强制 transparent = false, 因为某些材质(map)需要它
+                obj.material.needsUpdate = true;
+              }
+            });
+          }
+          fadeToGroup = null;
+        }
+      }
       if (bus) {
         bus.update(dt);
         bus.render(THREE, scene);
       }
       if (controller.isAnimating()) controller.releaseRender();
       renderer.render(scene, camera);
-      const keepAlive = controller.isAnimating() || (bus && bus.activeCount() > 0);
+      const keepAlive = controller.isAnimating() || (bus && bus.activeCount() > 0) || !!fadeToGroup;
       if (keepAlive) rafId = raf(loop);
     }
     function startLoop() {
@@ -243,6 +350,8 @@
         sceneChildren: scene.children ? scene.children.length : 0
       }),
       getAccentColor: () => currentAccentColor,
+      getScene: () => scene,
+      getTextureMap: () => textureMap,
       dispose
     };
   }

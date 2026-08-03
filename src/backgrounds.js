@@ -94,6 +94,25 @@
     const list = next.styles || next.backgrounds || [];
     const valid = list.find(b => b.id === stored);
     currentId = valid ? valid.id : next.default;
+    // 同步设置 body data-bg + bg-layer style
+    applyBackground();
+  }
+
+  function applyBackground() {
+    if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return;
+    const layer = document.getElementById('bgLayer');
+    if (!layer) return;
+    const entry = getCurrent();
+    if (!entry) return;
+    // 新格式: style.textureUrl (CSS 背景)
+    if (entry.textureUrl) {
+      layer.style.backgroundImage = `url(${entry.textureUrl})`;
+    } else if (entry.file) {
+      layer.style.backgroundImage = `url(assets/backgrounds/${entry.file})`;
+    }
+    if (document.body && entry.id) {
+      document.body.dataset.background = entry.id;
+    }
   }
 
   function getManifest() {
@@ -118,6 +137,7 @@
     if (typeof document !== 'undefined' && document.body) {
       document.body.dataset.background = finalId;
     }
+    applyBackground();
     subscribers.forEach(fn => {
       try { fn(prevId, finalId); } catch (error) { /* 单个订阅者异常不影响其他 */ }
     });
