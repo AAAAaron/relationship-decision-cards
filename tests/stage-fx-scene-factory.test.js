@@ -37,12 +37,24 @@ function createMockThree() {
   class BoxGeometry { constructor(w, h, d) { this.w = w; this.h = h; this.d = d; } }
   class CylinderGeometry { constructor(rt, rb, h, segments) { this.rt = rt; this.rb = rb; this.h = h; this.segments = segments; } }
   class SphereGeometry { constructor(r, ws, hs) { this.r = r; this.ws = ws; this.hs = hs; } }
+  class LatheGeometry { constructor(points, segments) { this.points = points; this.segments = segments; } }
+  class ExtrudeGeometry { constructor(shape, opts) { this.shape = shape; this.opts = opts; } }
+  class Shape {
+    constructor() { this.segments = []; }
+    moveTo(x, y) { this.segments.push(['M', x, y]); }
+    lineTo(x, y) { this.segments.push(['L', x, y]); }
+    quadraticCurveTo() { this.segments.push(['Q']); }
+  }
+  class ConeGeometry { constructor(r, h, segments) { this.r = r; this.h = h; this.segments = segments; } }
+  class Vector2 { constructor(x, y) { this.x = x; this.y = y; } }
+  class TubeGeometry { constructor() { this.kind = 'tube'; } }
   class MeshBasicMaterial { constructor(opts) { this.opts = opts || {}; } }
   class PointsMaterial { constructor(opts) { this.opts = opts || {}; } }
   class Color { constructor(hex) { this.hex = hex; } }
   return {
     Group, Mesh, BufferGeometry, BufferAttribute, Points,
     CircleGeometry, RingGeometry, BoxGeometry, CylinderGeometry, SphereGeometry,
+    ConeGeometry, LatheGeometry, ExtrudeGeometry, Shape, Vector2, TubeGeometry,
     MeshBasicMaterial, PointsMaterial, Color,
     DoubleSide: 2
   };
@@ -54,10 +66,10 @@ test('createTabletop 包含底盘 + 牌桌垫 + 边缘光环', () => {
   const THREE = createMockThree();
   const table = mod.createTabletop(THREE);
   assert.ok(table, '返回 group');
-  assert.equal(table.children.length, 3, '底盘 + 牌桌垫 + 边缘光环 = 3 个 mesh');
-  assert.equal(table.children[0].geometry.constructor.name, 'CircleGeometry');
-  assert.equal(table.children[1].geometry.constructor.name, 'CircleGeometry');
-  assert.equal(table.children[2].geometry.constructor.name, 'RingGeometry');
+  assert.equal(table.children.length, 3, '底盘 + 牌桌垫(LatheGeometry) + 边缘光环 = 3 个 mesh');
+  assert.equal(table.children[0].geometry.constructor.name, 'CircleGeometry', '底盘是 CircleGeometry');
+  assert.equal(table.children[1].geometry.constructor.name, 'LatheGeometry', '牌桌垫是 LatheGeometry(中央凸起)');
+  assert.equal(table.children[2].geometry.constructor.name, 'RingGeometry', '光环是 RingGeometry');
 });
 
 test('每个场景的工厂函数都返回 Group', () => {
@@ -69,13 +81,13 @@ test('每个场景的工厂函数都返回 Group', () => {
   });
 });
 
-test('createDefaultScene 周边装饰为空（牌桌 + 空 props + 粒子）', () => {
+test('createDefaultScene 周边装饰有笔筒 + 便签（牌桌 + 通用 props + 粒子）', () => {
   const THREE = createMockThree();
   const scene = mod.createScene(THREE, 'default', fakePreset);
-  // 牌桌 + 空 props group + 粒子 = 3 个 group
+  // 牌桌 + props group(含笔筒+便签) + 粒子 = 3 个 group
   assert.equal(scene.children.length, 3);
   const props = scene.children[1];
-  assert.equal(props.children.length, 0, 'default 场景的 props 工厂应该返回空 Group');
+  assert.ok(props.children.length > 0, 'default 场景现在有通用物件(笔筒+便签), 不再为空');
 });
 
 test('createMeetingScene 包含笔记本 + 钢笔 + 文件', () => {
