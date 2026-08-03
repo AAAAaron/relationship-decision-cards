@@ -1,4 +1,4 @@
-// 关系决策牌组：Three.js 关键动作特效（依赖注入 THREE，便于测试）
+// AI 嘴替卡：Three.js 关键动作特效（依赖注入 THREE，便于测试）
 // 8.2 对方出牌 / 8.3 手牌重新发出 / 8.4 我方出牌 / 8.5 回合收藏
 // 每个 effect 暴露 start(detail) / update(dt) / isAlive() 三个方法
 (function initStageFxEffects(globalScope, factory) {

@@ -1,4 +1,4 @@
-// 关系决策牌组：Three.js 舞台纯逻辑控制器（无 three 依赖，可测）
+// AI 嘴替卡：Three.js 舞台纯逻辑控制器（无 three 依赖，可测）
 // 负责：当前场景预设、按需渲染计数、订阅派发
 // 视觉层（renderer / scene / camera / particles）由 stage-fx.js 负责
 (function initStageFxController(globalScope, factory) {

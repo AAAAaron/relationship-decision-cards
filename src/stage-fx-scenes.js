@@ -1,4 +1,4 @@
-// 关系决策牌组：Three.js 舞台场景预设（纯数据，无 three.js 依赖，便于测试）
+// AI 嘴替卡：Three.js 舞台场景预设（纯数据，无 three.js 依赖，便于测试）
 // 第一阶段仅定义 meeting / elevator / dinner 三个核心场景，
 // 其余 sceneType 在 resolveScenePresetFromEvent 中回退到 default。
 (function initStageFxScenes(globalScope, factory) {

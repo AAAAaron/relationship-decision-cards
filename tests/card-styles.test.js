@@ -1,4 +1,4 @@
-// 关系决策牌组：卡牌视觉统一性测试
+// AI 嘴替卡：卡牌视觉统一性测试
 // 验证 styles.css 中所有卡牌位置(hand-card / dialog-card / pack-card / deck-card-option / previous-slot / record-card)
 // 共享统一基类样式 + rank 视觉权重 + 字号 hierarchy
 const test = require('node:test');

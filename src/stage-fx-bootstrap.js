@@ -1,4 +1,4 @@
-// 关系决策牌组：Three.js 舞台启动脚本（type=module）
+// AI 嘴替卡：Three.js 舞台启动脚本（type=module）
 // 唯一在浏览器中通过 import map 加载 three.js 的入口，
 // 拿到 THREE 后调 RelationshipStageFx.createStageFx 完成初始化。
 // 业务代码（app.js）通过 rdc:scene-change 事件驱动 stage-fx。

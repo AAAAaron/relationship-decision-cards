@@ -1,4 +1,4 @@
-// 关系决策牌组：Three.js 场景工厂的单测
+// AI 嘴替卡：Three.js 场景工厂的单测
 // 覆盖固定牌桌垫 + 4 个场景周边装饰 + 粒子
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -62,14 +62,15 @@ function createMockThree() {
 
 const fakePreset = { id: 'meeting', particleColor: '#7594ff', particleCount: 80 };
 
-test('createTabletop 包含底盘 + 牌桌垫 + 边缘光环', () => {
+test('createTabletop 包含底盘 + 牌桌垫顶面+侧面 + 边缘光环', () => {
   const THREE = createMockThree();
   const table = mod.createTabletop(THREE);
   assert.ok(table, '返回 group');
-  assert.equal(table.children.length, 3, '底盘 + 牌桌垫(LatheGeometry) + 边缘光环 = 3 个 mesh');
+  assert.equal(table.children.length, 4, '底盘 + 顶面 + 侧面 + 边缘光环 = 4 个 mesh');
   assert.equal(table.children[0].geometry.constructor.name, 'CircleGeometry', '底盘是 CircleGeometry');
-  assert.equal(table.children[1].geometry.constructor.name, 'LatheGeometry', '牌桌垫是 LatheGeometry(中央凸起)');
-  assert.equal(table.children[2].geometry.constructor.name, 'RingGeometry', '光环是 RingGeometry');
+  assert.equal(table.children[1].geometry.constructor.name, 'CircleGeometry', '牌桌垫顶面是 CircleGeometry(贴木纹)');
+  assert.equal(table.children[2].geometry.constructor.name, 'LatheGeometry', '牌桌垫侧面是 LatheGeometry(凸起)');
+  assert.equal(table.children[3].geometry.constructor.name, 'RingGeometry', '光环是 RingGeometry');
 });
 
 test('每个场景的工厂函数都返回 Group', () => {
