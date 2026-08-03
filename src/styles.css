@@ -721,21 +721,22 @@ box-shadow:0 10px 30px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.12),inset
 font-weight:760;
 letter-spacing:.02em;
 }
-/* rank 视觉图标(内联 SVG mask, 不依赖外部文件) */
+/* rank 视觉图标(minimax 生成的 PNG, 透明背景) */
 .rank-badge::before {
   content:"";
   display:inline-block;
-  width:11px;
-  height:11px;
+  width:13px;
+  height:13px;
   flex:0 0 auto;
-  background:currentColor;
-  -webkit-mask:var(--rank-icon) center/contain no-repeat;
-          mask:var(--rank-icon) center/contain no-repeat;
+  background-image:var(--rank-icon);
+  background-position:center;
+  background-size:contain;
+  background-repeat:no-repeat;
 }
-.rank-primary { --rank-icon:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 1.5l1.8 4.2L14 6.3l-3.2 3 1 4.4L8 11.6l-3.8 2.1 1-4.4L2 6.3l4.2-.6z'/></svg>"); }
-.rank-backup  { --rank-icon:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 2v8m0 0l-3-3m3 3l3-3M3 13h10' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
-.rank-other   { --rank-icon:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='5.5' fill='none' stroke='black' stroke-width='1.6'/><circle cx='8' cy='8' r='1.8'/></svg>"); }
-.rank-risk    { --rank-icon:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 1.5L14.5 13h-13z' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round'/><path d='M8 6v3.5M8 11.4v.1' stroke='black' stroke-width='1.6' stroke-linecap='round'/></svg>"); }
+.rank-primary { --rank-icon:url("../assets/icons/rank-primary.png"); }
+.rank-backup  { --rank-icon:url("../assets/icons/rank-backup.png"); }
+.rank-other   { --rank-icon:url("../assets/icons/rank-other.png"); }
+.rank-risk    { --rank-icon:url("../assets/icons/rank-risk.png"); }
 .source-real {
   color:#182039;
 background:var(--gold);
