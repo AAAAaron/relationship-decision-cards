@@ -79,9 +79,10 @@ test('rank 视觉权重: risk 应有红色警告动画', () => {
   assert.match(css, riskRedAnim, 'rank-risk 应有红色警告动画');
 });
 
-test('卡牌顶部文字标签: .rank-badge 有 chip 化样式(圆角 999px, padding 一致)', () => {
+test('卡牌顶部文字标签: .rank-badge 有 chip 化样式(圆角 999px + flex)', () => {
   assert.match(css, /\.rank-badge[\s\S]{0,200}border-radius:\s*999px/s, '.rank-badge 应是 pill 形');
-  assert.match(css, /\.rank-badge[\s\S]{0,200}padding:\s*3px\s+7px/s, '.rank-badge 内部 padding 应一致');
+  assert.match(css, /\.rank-badge[\s\S]{0,200}display:\s*inline-flex/s, '.rank-badge 应是 inline-flex');
+  assert.match(css, /\.rank-badge[\s\S]{0,300}padding:\s*3px/s, '.rank-badge 内部 padding 应一致');
 });
 
 test('统一卡牌容器: 圆角 14px 在多个卡牌类共用', () => {
