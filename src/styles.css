@@ -20,6 +20,12 @@
   /* 主题色：默认金(stage-fx 启动时按 preset 覆盖): meeting=#f6dda0 / elevator=#c8d2e0 / dinner=#ffb366 / default=#7da3ff */
   --accent:#f6dda0;
   --accent-soft:rgba(246,221,160,.2);
+  /* 卡牌基类变量: 14px 圆角 + 液体玻璃阴影 + 边框 */
+  --card-radius:14px;
+  --card-shadow:0 16px 38px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.06);
+  --card-border:1px solid var(--line);
+  --card-tint:rgba(255,255,255,.04);
+  --card-text:var(--text);
 --shadow:0 24px 70px rgba(0,0,0,.34);
 }
 
@@ -455,6 +461,73 @@ text-shadow:0 0 10px rgba(231,189,101,.25);
   width:150px;
   height:210px;
 }
+
+/* ===== 卡牌统一基类(所有卡牌位置继承) ===== */
+:where(.card-face, .hand-card, .pack-card, .deck-card-option, .record-card, .dialog-card, .deck-scene-card) {
+  border-radius:var(--card-radius,14px);
+  box-shadow:var(--card-shadow);
+}
+/* rank 调色(集中): 顶部 3px 高亮条 + 边框 tint */
+:where(.hand-card, .dialog-card, .pack-card, .record-card) {
+  position:relative;
+}
+:where(.hand-card, .dialog-card, .pack-card, .record-card)::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  z-index:4;
+  border:2px solid transparent;
+  transition:border-color .25s ease, box-shadow .25s ease;
+}
+:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-primary::before {
+  border-color:rgba(231,189,101,.75);
+  box-shadow:0 0 18px rgba(231,189,101,.32), inset 0 0 0 1px rgba(231,189,101,.22);
+  animation:rankPulseGold 2.4s ease-in-out infinite;
+}
+:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-backup::before {
+  border-color:rgba(117,148,255,.7);
+  box-shadow:0 0 14px rgba(117,148,255,.26), inset 0 0 0 1px rgba(117,148,255,.18);
+  animation:rankBreathBlue 2.8s ease-in-out infinite;
+}
+:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-risk::before {
+  border-color:rgba(215,134,141,.78);
+  box-shadow:0 0 14px rgba(215,134,141,.28), inset 0 0 0 1px rgba(215,134,141,.2);
+  animation:rankWarnRed 1.9s ease-in-out infinite;
+}
+:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-other::before {
+  border-color:rgba(150,165,185,.45);
+}
+/* rank 顶部 4px 高亮条(顶部 accent) */
+:where(.hand-card, .dialog-card, .pack-card, .record-card)::after {
+  content:"";
+  position:absolute;
+  top:0;
+  left:14px;
+  right:14px;
+  height:3px;
+  border-radius:0 0 4px 4px;
+  pointer-events:none;
+  z-index:5;
+  opacity:.85;
+}
+:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-primary::after {
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-backup::after {
+  background:linear-gradient(90deg,transparent,var(--blue),transparent);
+}
+:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-risk::after {
+  background:linear-gradient(90deg,transparent,var(--red),transparent);
+}
+:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-other::after {
+  background:linear-gradient(90deg,transparent,rgba(150,165,185,.5),transparent);
+}
+/* previous-slot 旧轮卡牌降透明度 */
+.previous-slot:where(.hand-card, .dialog-card, .pack-card, .record-card) {
+  opacity:.45;
+}
 .dialog-card {
   position:relative;
   width:176px;
@@ -525,7 +598,7 @@ transform:rotateY(180deg);
   position:absolute;
   inset:0;
   padding:13px;
-  border-radius:17px;
+  border-radius:14px;
   backface-visibility:hidden;
 overflow:hidden;
 }
@@ -870,6 +943,7 @@ height:100%;
   top:14px;
   width:200px;
   height:252px;
+  border-radius:14px;
   perspective:1000px;
   transform-origin:50% 100%;
   transition:transform .22s ease;
@@ -898,34 +972,12 @@ z-index:10;
 /* ===== 推荐等级边缘动效（手牌 + 战场应对卡）===== */
 .hand-card::before,
 .dialog-card[class*="rank-"]::before {
+  /* 已被上面的 :where() 集中规则覆盖, 保留空声明以便未来扩展 */
   content:"";
   position:absolute;
-  inset:-3px;
-  border-radius:20px;
+  inset:0;
   pointer-events:none;
   z-index:6;
-  border:2px solid transparent;
-  transition:border-color .3s ease, box-shadow .3s ease;
-}
-.hand-card.rank-primary::before,
-.dialog-card.rank-primary::before {
-  border-color:rgba(231,189,101,.8);
-  animation:rankPulseGold 2.4s ease-in-out infinite;
-}
-.hand-card.rank-backup::before,
-.dialog-card.rank-backup::before {
-  border-color:rgba(117,148,255,.8);
-  animation:rankBreathBlue 2.8s ease-in-out infinite;
-}
-.hand-card.rank-risk::before,
-.dialog-card.rank-risk::before {
-  border-color:rgba(215,134,141,.9);
-  animation:rankWarnRed 1.9s ease-in-out infinite;
-}
-.hand-card.rank-other::before,
-.dialog-card.rank-other::before {
-  border-color:rgba(150,165,185,.55);
-  box-shadow:0 0 8px rgba(150,165,185,.25);
 }
 @keyframes rankPulseGold {
   0%,100% { box-shadow:0 0 10px rgba(231,189,101,.3); }
@@ -3614,6 +3666,7 @@ body {
 .pack-card-front {
   color:var(--ink);
   border:1px solid rgba(145,102,44,.5);
+  border-radius:14px;
   background:
     radial-gradient(circle at 100% 0,rgba(246,221,160,.7),transparent 42%),
     repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(119,91,42,.018) 3px,rgba(119,91,42,.018) 4px),
@@ -3625,6 +3678,18 @@ body {
 }
 .pack-card .card-identity {
   justify-content:space-between;
+}
+.pack-card h3 {
+  margin:6px 0 4px;
+  font-size:16px;
+  font-weight:760;
+  line-height:1.2;
+}
+.pack-card .card-core h3 {
+  margin:6px 0 4px;
+  font-size:16px;
+  font-weight:760;
+  line-height:1.2;
 }
 .pack-card-core h3 {
   margin-top:30px;
