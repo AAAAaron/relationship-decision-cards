@@ -542,6 +542,7 @@
     s.current = { opponent: nextScene, player: null, saved: false };
     state.justDealt = true;
     renderAll();
+    if (nextScene && aiEngaged()) refillHandPlanWithAi(nextScene);
   }
   function buildSimulationScene() {
     const sc = session().current.opponent, base = scenariosFor()[0] || DATA.scenarios[Object.keys(DATA.scenarios)[0]][0];
@@ -553,7 +554,8 @@
       channel: 'AI模拟', title: src.title, quote: src.quote, tags: ['AI仿真', '非现实记录', '可继续推演'],
       constraints: sc ? sc.constraints : [], round_goal: '检验当前路线是否经得起下一轮沟通',
       focus: '根据上一轮回应继续追问', confidence: '中',
-      hand_plan: clone(base.hand_plan), simulation: fallback
+      hand_plan: clone(base.hand_plan), simulation: fallback,
+      hand_plan_source: 'local', hand_plan_reason: 'AI 未启用时使用本地模拟场景。'
     };
   }
   function openOpponentDeck() { renderOpponentDeck(); openModal('opponentDeckModal'); }
@@ -645,6 +647,7 @@
     };
     try {
       const result = await AI_ENGINE.generateHandPlan(input);
+      scene.hand_plan = result.plan;
       scene.hand_plan_source = result.source;
       scene.hand_plan_reason = result.source === 'ai' ? '' : (result.reason || 'AI 未启用或返回异常，已切换本地手牌。');
     } catch (error) {
@@ -654,6 +657,7 @@
     if (session().current.opponent === scene) {
       state.justDealt = true;
       renderHand();
+      persistState();
     }
   }
   function renderHandPlanSource() {
