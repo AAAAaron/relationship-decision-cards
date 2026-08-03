@@ -2,6 +2,7 @@
   'use strict';
   const MODEL = window.RelationshipDataModel;
   const AI = window.RelationshipAI;
+  const AI_ENGINE = window.RelationshipAiEngine;
   const BG = window.RelationshipBackgrounds;
   const DATA = MODEL ? MODEL.normalizeData(window.DEMO_DATA) : window.DEMO_DATA;
   const STORAGE = window.RelationshipStorage;
@@ -37,6 +38,17 @@
   const session = () => state.sessions[sessionKey()];
   const scenariosFor = () => DATA.scenarios[sessionKey()] || [];
   const card = id => DATA.cards.find(c => c.id === id);
+  function candidateCard(candidate) {
+    if (candidate && (candidate.front || candidate.back || candidate.title)) {
+      return {
+        id: candidate.card_id,
+        title: candidate.title || candidate.card_id,
+        front: candidate.front || {},
+        back: candidate.back || { logic: '', why: '', invalid: '', source: '' }
+      };
+    }
+    return card(candidate.card_id);
+  }
   const style = id => DATA.styles.find(s => s.id === id);
   const sceneTypeName = id => (DATA.scene_types.find(t => t.id === id) || {}).name || '场景';
   const matterKindName = id => (DATA.matter_kinds.find(k => k.id === id) || {}).name || '事项';
@@ -299,11 +311,12 @@
   }
   function renderHand() {
     const plan = handPlan();
-    if (!plan) { $('handAxis').textContent = '等待新的场景牌'; $('handCoverage').textContent = '对方出牌后，系统将重新生成当前场景的主要并行解法。'; $('handFan').innerHTML = ''; return; }
+    if (!plan) { $('handAxis').textContent = '等待新的场景牌'; $('handCoverage').textContent = '对方出牌后，系统将重新生成当前场景的主要并行解法。'; $('handFan').innerHTML = ''; renderHandPlanSource(); return; }
     plan.candidates = centerPrimaryCandidate(plan.candidates);
     $('handAxis').textContent = plan.axis;
     $('handCoverage').textContent = plan.coverage;
     $('handFan').innerHTML = plan.candidates.map((c, i) => handCardHtml(c, i)).join('');
+    renderHandPlanSource();
     layoutHand(-1);
     bindFlips($('handFan'));
     // 关键动作：手牌重新发出 → 派发 stage-fx 流光 + 主推荐光束
@@ -347,7 +360,8 @@
     state.justDealt = false;
   }
   function handCardHtml(candidate, index) {
-    const c = card(candidate.card_id), quote = c.front.my_voice;
+    const c = candidateCard(candidate);
+    const quote = (c.front && c.front.my_voice) || '';
     const ornament = candidate.rank === 'primary'
       ? '<div class="primary-ornament" aria-hidden="true"><i></i><i></i><i></i><i></i><b>✦</b><em></em></div>'
       : '';
@@ -393,9 +407,14 @@
     state.selectedCardId = id; state.selectedCandidate = candidateFor(id); state.selectedStyleId = 'my_voice'; state.selectedChoiceIndex = 0;
     renderPlayModal(); openModal('playModal');
   }
-  function selectedReply() { const c = card(state.selectedCardId); return c.front[state.selectedStyleId] || c.front.my_voice; }
+  function selectedReply() {
+    const cand = state.selectedCandidate;
+    const c = cand ? candidateCard(cand) : card(state.selectedCardId);
+    return c.front?.[state.selectedStyleId] || c.front?.my_voice || '';
+  }
   function renderPlayModal() {
-    const c = card(state.selectedCardId), cand = state.selectedCandidate;
+    const cand = state.selectedCandidate;
+    const c = cand ? candidateCard(cand) : card(state.selectedCardId);
     const choice = c.type === 'choice' ? `<section class="play-section"><h3>先选择具体路线</h3><div class="choice-list">${c.choices.map((x, i) => `<button class="choice-option ${i === state.selectedChoiceIndex ? 'active' : ''}" data-choice-index="${i}" type="button"><strong>${esc(x.title)}</strong><small>${esc(x.summary)}</small></button>`).join('')}</div></section>` : '';
     const warning = (cand.rank === 'risk' || cand.rank === 'other') ? `<div class="warning-box"><strong>${rankName(cand.rank)}：</strong>${esc(cand.reason)}<br/>仍可出牌；你可能掌握系统尚未记录的信息。</div>` : '';
     $('playModalContent').innerHTML = `<div class="play-layout">
@@ -414,11 +433,14 @@
     $('confirmPlay').addEventListener('click', confirmPlay);
   }
   function confirmPlay() {
-    const c = card(state.selectedCardId);
+    const cand = state.selectedCandidate;
+    const c = cand ? candidateCard(cand) : card(state.selectedCardId);
     const playerData = {
       card_id: c.id, title: c.title, reply: selectedReply(), style_name: style(state.selectedStyleId).name,
+      style_id: state.selectedStyleId,
       choice_title: c.type === 'choice' ? c.choices[state.selectedChoiceIndex].title : '',
-      ai_rank: state.selectedCandidate.rank, ai_reason: state.selectedCandidate.reason
+      ai_rank: cand.rank, ai_reason: cand.reason,
+      front: c.front || undefined
     };
     session().current.player = playerData;
     session().current.saved = false;
@@ -559,6 +581,7 @@
         sceneType: scene && scene.scene_type
       });
     }
+    if (aiEngaged()) refillHandPlanWithAi(scene);
   }
 
   function dispatchSceneChange(detail) {
@@ -579,14 +602,78 @@
     const found = list.find(s => s.hand_plan) || Object.values(DATA.scenarios).flat().find(s => s.hand_plan);
     return clone(found.hand_plan);
   }
+  function aiEngaged() {
+    if (!AI_ENGINE || !AI) return false;
+    const cfg = state.aiConfig || {};
+    return Boolean(cfg.enabled && cfg.baseUrl && cfg.model && cfg.apiKey);
+  }
+  function createConfiguredAiClient() {
+    if (!aiEngaged()) return null;
+    try {
+      return AI.createOpenAICompatibleClient(state.aiConfig);
+    } catch (error) {
+      return null;
+    }
+  }
+  async function refillHandPlanWithAi(scene) {
+    if (!scene) return;
+    const aiClient = createConfiguredAiClient();
+    if (!aiClient) {
+      if (session().current.opponent === scene) renderHandPlanSource();
+      return;
+    }
+    const fallback = scene.hand_plan || genericPlan() || { axis: '本地兜底', coverage: '', candidates: [] };
+    const input = {
+      person: person(),
+      matter: matter(),
+      scene,
+      history: (session().history || []).slice(-2).map(record => ({
+        title: record.opponent?.title || '',
+        outcome: record.player?.reply || ''
+      })),
+      aiClient,
+      fallback
+    };
+    try {
+      const result = await AI_ENGINE.generateHandPlan(input);
+      scene.hand_plan_source = result.source;
+      scene.hand_plan_reason = result.source === 'ai' ? '' : (result.reason || 'AI 未启用或返回异常，已切换本地手牌。');
+    } catch (error) {
+      scene.hand_plan_source = 'local';
+      scene.hand_plan_reason = `AI 调用失败：${error.message}`;
+    }
+    if (session().current.opponent === scene) {
+      state.justDealt = true;
+      renderHand();
+    }
+  }
+  function renderHandPlanSource() {
+    const el = $('handPlanSource');
+    if (!el) return;
+    const scene = session().current.opponent;
+    const source = scene?.hand_plan_source;
+    if (!source) { el.textContent = ''; el.className = 'hand-source'; return; }
+    if (source === 'ai') {
+      el.textContent = '✦ AI 实时生成';
+      el.className = 'hand-source hand-source-ai';
+      el.title = '本手牌由 LLM 实时生成';
+    } else {
+      el.textContent = '◇ 本地兜底';
+      el.className = 'hand-source hand-source-local';
+      el.title = scene?.hand_plan_reason || 'AI 不可用，已使用本地规则作为兜底';
+    }
+  }
   function customScene(source, quote, title) {
     const channelMap = { real: '用户录入', hypothesis: '我的疑问', simulation: 'AI模拟' };
-    return {
+    const scene = {
       id: `${source}-${Date.now()}`, source, scene_type: 'async_message', channel: channelMap[source] || '用户录入',
       title, quote, tags: [sourceName(source), source === 'real' ? '真实发生' : '待验证'],
       constraints: [], round_goal: '形成下一步合适回应', focus: '根据新输入重新判断', confidence: source === 'real' ? '中高' : '中',
-      hand_plan: genericPlan(), simulation: { title: '继续追问', quote: '你这个回答的前提是什么，能不能再明确一点？' }
+      hand_plan: genericPlan(), simulation: { title: '继续追问', quote: '你这个回答的前提是什么，能不能再明确一点？' },
+      hand_plan_source: 'local', hand_plan_reason: 'AI 未启用，使用本地规则生成。'
     };
+    if (aiEngaged()) refillHandPlanWithAi(scene);
+    return scene;
   }
 
   function toggleRecordSave(id) {

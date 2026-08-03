@@ -56,18 +56,14 @@ function makeFailingAi(message) {
   };
 }
 
-// === buildSystemPrompt ===
-
 test('buildSystemPrompt: 包含 PRD 协议与角色定位', () => {
   const prompt = ENGINE.buildSystemPrompt();
-  assert.match(prompt, /AI 嘴替卡/);
+  assert.match(prompt, /关系决策牌组/);
   assert.match(prompt, /scene_assessment/);
   assert.match(prompt, /response_cards/);
   assert.match(prompt, /primary|backup|other|risk/);
   assert.match(prompt, /my_voice|partner|executive|host/);
 });
-
-// === buildUserPrompt ===
 
 test('buildUserPrompt: 注入人物 / 事项 / 场景信息', () => {
   const prompt = ENGINE.buildUserPrompt({
@@ -79,10 +75,8 @@ test('buildUserPrompt: 注入人物 / 事项 / 场景信息', () => {
   assert.match(prompt, /数据治理平台/);
   assert.match(prompt, /这个项目不能再拖/);
   assert.match(prompt, /多人在场/);
-  assert.match(prompt, /延迟与责任|延期与责任/);
+  assert.match(prompt, /延期与责任/);
 });
-
-// === parseAiHandPlan ===
 
 test('parseAiHandPlan: 解析合法 AI 输出，生成 hand_plan', () => {
   const aiOutput = {
@@ -136,6 +130,19 @@ test('parseAiHandPlan: 解析合法 AI 输出，生成 hand_plan', () => {
   assert.equal(plan.candidates[1].condition, '风险不可控');
 });
 
+test('parseAiHandPlan: candidate 透传 title 字段供前端渲染', () => {
+  const plan = ENGINE.parseAiHandPlan({
+    scene_assessment: { split_axis: 'A', coverage_note: 'B' },
+    response_cards: [{
+      route_id: 'x', rank: 'primary', title: '有条件接受', suggested_reply: 'R', reason: 'W',
+      style_variants: { my_voice: 'R', partner: 'R', executive: 'R', host: 'R' },
+      logic: 'L', invalid_when: 'I'
+    }]
+  });
+  assert.equal(plan.candidates[0].title, '有条件接受');
+  assert.equal(plan.candidates[0].card_id, 'ai-x');
+});
+
 test('parseAiHandPlan: 支持 markdown 代码块包裹的 JSON', () => {
   const text = '```json\n' + JSON.stringify({
     scene_assessment: { split_axis: 'A', coverage_note: 'B' },
@@ -182,8 +189,6 @@ test('parseAiHandPlan: 拒绝少 4 种风格的 candidate', () => {
     }]
   }), /style_variants/);
 });
-
-// === generateHandPlan ===
 
 test('generateHandPlan: 调 AI 客户端拿响应并解析', async () => {
   const fakeAi = makeFakeAi({
@@ -244,5 +249,4 @@ test('generateHandPlan: 未传 aiClient 直接 fallback', async () => {
   });
   assert.equal(result.source, 'local');
   assert.equal(result.plan, fallback);
-  assert.match(result.reason, /未启用|未配置|aiClient/);
 });

@@ -946,6 +946,32 @@ font-size:15px;
   font-size:10px;
 line-height:1.5;
 }
+.hand-source {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:6px;
+  padding:3px 9px;
+  border-radius:999px;
+  font-size:9.5px;
+  font-weight:760;
+  letter-spacing:.02em;
+  background:rgba(125,163,255,.12);
+  color:var(--soft);
+  border:1px solid var(--line);
+  width:max-content;
+  cursor:help;
+}
+.hand-source-ai {
+  background:rgba(231,189,101,.16);
+  border-color:rgba(231,189,101,.55);
+  color:var(--gold2);
+}
+.hand-source-local {
+  background:rgba(215,134,141,.14);
+  border-color:rgba(215,134,141,.45);
+  color:#f0d4d6;
+}
 .hand-legend {
   display:flex;
   align-items:center;
