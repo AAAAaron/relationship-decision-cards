@@ -469,6 +469,75 @@ text-shadow:0 0 10px rgba(231,189,101,.25);
   border-radius:var(--card-radius,14px);
   box-shadow:var(--card-shadow);
 }
+/* 卡牌内部结构: top 头部 / title 标题 / body 正文 / foot 底部 */
+.card-top {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.card-title {
+  margin:0;
+  font-size:18px;
+  font-weight:800;
+  line-height:1.2;
+  letter-spacing:-.015em;
+  color:inherit;
+}
+.hand-card .card-title {
+  font-size:20px;
+}
+.card-body {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-height:0;
+  overflow:hidden;
+}
+.card-body blockquote {
+  margin:0;
+  font-size:13.5px;
+  font-weight:600;
+  line-height:1.55;
+  color:var(--soft);
+  letter-spacing:.005em;
+}
+.reply-front .card-body blockquote,
+.reply-front blockquote {
+  color:var(--ink2); /* 米黄底用深色字, 不要浅蓝 */
+}
+.card-foot {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+  padding-top:8px;
+  border-top:1px dashed rgba(255,255,255,.18);
+  font-size:11px;
+  color:var(--muted);
+  font-weight:600;
+  letter-spacing:.02em;
+}
+.reply-front .card-foot {
+  border-top-color:rgba(119,91,42,.22);
+  color:#5b5346;
+}
+.card-foot-meta {
+  letter-spacing:.02em;
+}
+.card-foot-divider {
+  color:rgba(255,255,255,.3);
+}
+.reply-front .card-foot-divider {
+  color:rgba(119,91,42,.32);
+}
+.rank-row {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
 /* rank 调色(集中): 顶部 3px 高亮条 + 边框 tint */
 :where(.hand-card, .dialog-card, .pack-card, .record-card) {
   position:relative;

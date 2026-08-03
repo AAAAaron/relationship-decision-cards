@@ -10,24 +10,16 @@
 
   const PI = Math.PI;
 
-  // 固定牌桌垫:外圈深色底盘 + 中央凸起牌桌垫(顶面+侧面) + 边缘暖橙光环
-  // 顶面是 CircleGeometry(贴木纹/大理石纹理), 侧面是 LatheGeometry(凸起曲线)
-  // texture 是已经按 presetId 取出的 THREE.Texture
+  // 固定牌桌垫: 中央凸起牌桌垫(顶面+侧面) + 边缘暖橙光环
+  // 不再画外圈深色底盘, 让圆盘自然淡出到背景纹理
   function createTabletop(THREE, texture) {
     const group = new THREE.Group();
-    // 1. 外圈深色底盘(半径 4)
-    const base = new THREE.Mesh(
-      new THREE.CircleGeometry(4, 64),
-      new THREE.MeshBasicMaterial({ color: 0x0a1626 })
-    );
-    base.position.y = 0;
-    group.add(base);
-    // 2. 中央凸起: 顶面 (CircleGeometry) + 侧面 (LatheGeometry)
     const TOP_Y = 0.18;
-    // 2a. 顶面 - CircleGeometry (有贴图, DoubleSide 因为旋转后法线可能朝下)
+    // 1. 中央凸起: 顶面 (CircleGeometry) + 侧面 (LatheGeometry)
+    // 顶面 - CircleGeometry (有贴图, DoubleSide 因为旋转后法线可能朝下)
     const topMaterial = texture
-      ? new THREE.MeshBasicMaterial({ map: texture, color: 0xffffff, side: THREE.DoubleSide })
-      : new THREE.MeshBasicMaterial({ color: 0x1a2c4a, side: THREE.DoubleSide });
+      ? new THREE.MeshBasicMaterial({ map: texture, color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+      : new THREE.MeshBasicMaterial({ color: 0x1a2c4a, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
     const top = new THREE.Mesh(
       new THREE.CircleGeometry(2.5, 64),
       topMaterial
@@ -35,7 +27,7 @@
     top.rotation.x = -PI / 2;
     top.position.y = TOP_Y;
     group.add(top);
-    // 2b. 侧面 - LatheGeometry 旋转体
+    // 2. 侧面 - LatheGeometry 旋转体(透明柔和)
     const lathePoints = [];
     const STEPS = 24;
     for (let i = 0; i <= STEPS; i++) {
@@ -46,13 +38,13 @@
     }
     const side = new THREE.Mesh(
       new THREE.LatheGeometry(lathePoints, 64),
-      new THREE.MeshBasicMaterial({ color: 0x0d1c34 })
+      new THREE.MeshBasicMaterial({ color: 0x142840, side: THREE.DoubleSide, transparent: true, opacity: 0.4 })
     );
     group.add(side);
-    // 3. 边缘光环(暖橙 RingGeometry)
+    // 3. 边缘光环(暖橙, 透明柔和)
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(2.48, 2.6, 64),
-      new THREE.MeshBasicMaterial({ color: 0xf6dda0, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
+      new THREE.RingGeometry(2.48, 2.65, 64),
+      new THREE.MeshBasicMaterial({ color: 0xf6dda0, transparent: true, opacity: 0.3, side: THREE.DoubleSide })
     );
     ring.rotation.x = -PI / 2;
     ring.position.y = 0.02;

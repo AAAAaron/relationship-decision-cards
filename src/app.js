@@ -151,9 +151,17 @@
       <div class="card-inner">
         <section class="card-face scene-front">
           <button class="flip-button" data-flip type="button">↻</button>
-          <div class="card-identity"><div class="opponent-avatar"><span>${esc(p.initial)}</span><small>${esc(p.name)} · 对方出牌</small></div><span class="source-badge ${sourceClass(scene.source)}">${sourceName(scene.source)} · ${esc(sceneTypeName(scene.scene_type))}</span></div>
-          <div class="card-core"><h3>${esc(scene.title)}</h3>${lead}</div>
-          <div class="card-insight">${esc(scene.focus || scene.round_goal || '识别对方真正关注的问题')}</div>
+          <div class="card-top">
+            <div class="opponent-avatar"><span>${esc(p.initial)}</span><small>${esc(p.name)} · 对方出牌</small></div>
+            <span class="source-badge ${sourceClass(scene.source)}">${sourceName(scene.source)}</span>
+          </div>
+          <h3 class="card-title">${esc(scene.title)}</h3>
+          <div class="card-body">${lead}</div>
+          <div class="card-foot">
+            <span class="card-foot-meta">${esc(sceneTypeName(scene.scene_type))}</span>
+            <span class="card-foot-divider">·</span>
+            <span class="card-foot-meta">置信度 ${esc(scene.confidence || '中')}</span>
+          </div>
         </section>
         <section class="card-face card-back card-back-scene">
           <button class="flip-button" data-flip type="button">↻</button>
@@ -178,9 +186,10 @@
       <div class="card-inner">
         <section class="card-face reply-front">
           <button class="flip-button" data-flip type="button">↻</button>
-          <div class="card-identity">${rank}</div>
-          <div class="card-core"><h3>${esc(player.title)}</h3><blockquote>“${esc(player.reply)}”</blockquote></div>
-          <div class="card-insight">${esc(player.ai_reason || player.choice_title || (saved ? '★ 已收藏，可在卡包中复用' : '当前采用的回应'))}</div>
+          <div class="card-top"><div class="rank-row">${rank}${saved ? '<span class="rank-badge rank-primary">已收藏</span>' : ''}</div></div>
+          <h3 class="card-title">${esc(player.title)}</h3>
+          <div class="card-body"><blockquote>“${esc(player.reply)}”</blockquote></div>
+          <div class="card-foot"><span class="card-foot-meta">${esc(player.style_name || '我的原声')}</span><span class="card-foot-divider">·</span><span class="card-foot-meta">${saved ? '已收藏，可复用' : '当前回合采用'}</span></div>
         </section>
         <section class="card-face card-back card-back-player">
           <button class="flip-button" data-flip type="button">↻</button>
@@ -1190,10 +1199,15 @@
     }
     grid.innerHTML = list.map(entry => {
       const accent = entry.accentColor || '#7da3ff';
+      // 新 swatch: 用 minimax 纹理作背景(若 textureUrl), + accent 渐变叠加 + 顶部高亮条
+      const textureUrl = entry.textureUrl || null;
+      const swatchStyle = textureUrl
+        ? `background-image:linear-gradient(180deg, ${esc(accent)}33 0%, transparent 30%, transparent 70%, ${esc(accent)}22 100%), url(${esc(textureUrl)});background-size:cover, cover;background-position:center, center;`
+        : `background:radial-gradient(circle at 50% 50%, ${esc(accent)} 0%, ${esc(accent)}66 60%, ${esc(accent)}11 100%);`;
       const meta = [entry.mood, entry.recommendedFor && entry.recommendedFor.join('/')].filter(Boolean).join(' · ');
       const active = entry.id === current ? 'active' : '';
       return `<button class="theme-card ${active}" type="button" data-theme-id="${esc(entry.id)}" style="--theme-accent:${esc(accent)}">
-        <span class="theme-card-swatch" style="background:${esc(accent)}"></span>
+        <span class="theme-card-swatch" style="${swatchStyle}"></span>
         <span class="theme-card-title">${esc(entry.title || entry.id)}</span>
         <span class="theme-card-meta">${esc(meta || entry.id)}</span>
       </button>`;
