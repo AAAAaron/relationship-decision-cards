@@ -250,3 +250,36 @@ test('generateHandPlan: 未传 aiClient 直接 fallback', async () => {
   assert.equal(result.source, 'local');
   assert.equal(result.plan, fallback);
 });
+
+// === quickAnalysis ===
+
+test('quickAnalysis: AI 返回文本', async () => {
+  const aiClient = { async chat() { return { text: '这是一条 AI 推断' }; } };
+  const result = await ENGINE.quickAnalysis({
+    systemPrompt: '你是助手',
+    userPrompt: '请帮我',
+    aiClient,
+    fallback: '兜底'
+  });
+  assert.equal(result.source, 'ai');
+  assert.equal(result.text, '这是一条 AI 推断');
+});
+
+test('quickAnalysis: AI 抛错回退到 fallback', async () => {
+  const aiClient = { async chat() { throw new Error('网络断了'); } };
+  const result = await ENGINE.quickAnalysis({
+    systemPrompt: '你是助手',
+    userPrompt: '请帮我',
+    aiClient,
+    fallback: '本地兜底'
+  });
+  assert.equal(result.source, 'local');
+  assert.equal(result.text, '本地兜底');
+  assert.match(result.reason, /网络断了/);
+});
+
+test('quickAnalysis: 未传 aiClient 回退', async () => {
+  const result = await ENGINE.quickAnalysis({ aiClient: null, fallback: '本地兜底' });
+  assert.equal(result.source, 'local');
+  assert.equal(result.text, '本地兜底');
+});

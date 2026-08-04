@@ -224,11 +224,34 @@
     throw new Error('AI 客户端不支持 chat()。');
   }
 
+  async function quickAnalysis(input) {
+    const fallback = input?.fallback || '';
+    const aiClient = input?.aiClient;
+    if (!aiClient) return { source: 'local', text: fallback, reason: 'AI 客户端未启用。' };
+    try {
+      const messages = [
+        { role: 'system', content: input.systemPrompt || '你是关系决策牌组的人物/事项分析助手。' },
+        { role: 'user', content: input.userPrompt || '' }
+      ];
+      const result = await aiClient.chat(messages, {
+        temperature: 0.5,
+        thinking: { type: 'disabled' }
+      });
+      const text = typeof result === 'string' ? result : (result?.text || '');
+      const cleaned = String(text).trim();
+      if (!cleaned) throw new Error('AI 返回空内容。');
+      return { source: 'ai', text: cleaned, reason: '' };
+    } catch (error) {
+      return { source: 'local', text: fallback, reason: `AI 调用失败：${error.message}` };
+    }
+  }
+
   return {
     buildSystemPrompt,
     buildUserPrompt,
     parseAiHandPlan,
     generateHandPlan,
+    quickAnalysis,
     VALID_RANKS,
     REQUIRED_STYLES
   };

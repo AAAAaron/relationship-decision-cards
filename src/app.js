@@ -318,9 +318,18 @@
     candidates.splice(Math.floor(candidates.length / 2), 0, primary);
     return candidates;
   }
-  function renderHand() {
+  function renderHand(options = {}) {
     const plan = handPlan();
-    if (!plan) { $('handAxis').textContent = '等待新的场景牌'; $('handCoverage').textContent = '对方出牌后，系统将重新生成当前场景的主要并行解法。'; $('handFan').innerHTML = ''; renderHandPlanSource(); return; }
+    if (!plan) {
+      const aiLoading = session().current.opponent?.hand_plan_source === 'loading';
+      $('handAxis').textContent = aiLoading ? 'AI 正在为你拆解当前场景' : '等待新的场景牌';
+      $('handCoverage').textContent = aiLoading ? '已发送当前人物、事项、上一轮信息，正在调用 LLM 重新发牌……' : '对方出牌后，系统将重新生成当前场景的主要并行解法。';
+      $('handFan').innerHTML = aiLoading
+        ? '<div class="hand-loading"><span class="hand-loading-dot"></span><span class="hand-loading-dot"></span><span class="hand-loading-dot"></span><span>AI 思考中…</span></div>'
+        : '';
+      renderHandPlanSource();
+      return;
+    }
     plan.candidates = centerPrimaryCandidate(plan.candidates);
     $('handAxis').textContent = plan.axis;
     $('handCoverage').textContent = plan.coverage;
@@ -328,9 +337,10 @@
     renderHandPlanSource();
     layoutHand(-1);
     bindFlips($('handFan'));
-    // 关键动作：手牌重新发出 → 派发 stage-fx 流光 + 主推荐光束
+    // 关键动作：手牌重新发出 → 派发 stage-fx 流光 + 主推荐光束;
+    // AI 替换时跳过 (options.skipStageFx) 避免二次触发导致卡顿
     const hand = $('handFan');
-    if (hand && state.justDealt) {
+    if (hand && state.justDealt && !options.skipStageFx) {
       const rects = [...hand.querySelectorAll('.hand-card')].map(c => c.getBoundingClientRect());
       dispatchStageEvent('rdc:hand-deal', {
         count: rects.length,
@@ -579,7 +589,15 @@
   function playNewScene(scene) {
     const s = session();
     if (s.current.player) finishRound(scene);
-    else { s.current = { opponent: scene, player: null, saved: false }; state.justDealt = true; renderAll(); }
+    else {
+      if (aiEngaged()) {
+        scene._preservedHandPlan = scene.hand_plan;
+        scene.hand_plan = null;
+      }
+      s.current = { opponent: scene, player: null, saved: false };
+      state.justDealt = true;
+      renderAll();
+    }
     closeModal('opponentDeckModal');
     dispatchSceneChange({ sceneType: scene && scene.scene_type });
     // 关键动作：对方出牌 → 派发 stage-fx 光轨 + 波纹
@@ -633,7 +651,7 @@
       if (session().current.opponent === scene) renderHandPlanSource();
       return;
     }
-    const fallback = scene.hand_plan || genericPlan() || { axis: '本地兜底', coverage: '', candidates: [] };
+    const fallback = scene._preservedHandPlan || scene.hand_plan || genericPlan() || { axis: '本地兜底', coverage: '', candidates: [] };
     const input = {
       person: person(),
       matter: matter(),
@@ -651,12 +669,14 @@
       scene.hand_plan_source = result.source;
       scene.hand_plan_reason = result.source === 'ai' ? '' : (result.reason || 'AI 未启用或返回异常，已切换本地手牌。');
     } catch (error) {
+      scene.hand_plan = fallback;
       scene.hand_plan_source = 'local';
       scene.hand_plan_reason = `AI 调用失败：${error.message}`;
     }
+    delete scene._preservedHandPlan;
     if (session().current.opponent === scene) {
-      state.justDealt = true;
-      renderHand();
+      state.justDealt = false;
+      renderHand({ skipStageFx: true });
       persistState();
     }
   }
@@ -665,7 +685,13 @@
     if (!el) return;
     const scene = session().current.opponent;
     const source = scene?.hand_plan_source;
-    if (!source) { el.textContent = ''; el.className = 'hand-source'; return; }
+    if (!source || source === 'preset') { el.textContent = ''; el.className = 'hand-source'; return; }
+    if (source === 'loading') {
+      el.textContent = '✦ AI 思考中';
+      el.className = 'hand-source hand-source-loading';
+      el.title = '正在调用 LLM 重新发牌';
+      return;
+    }
     if (source === 'ai') {
       el.textContent = '✦ AI 实时生成';
       el.className = 'hand-source hand-source-ai';
@@ -682,10 +708,13 @@
       id: `${source}-${Date.now()}`, source, scene_type: 'async_message', channel: channelMap[source] || '用户录入',
       title, quote, tags: [sourceName(source), source === 'real' ? '真实发生' : '待验证'],
       constraints: [], round_goal: '形成下一步合适回应', focus: '根据新输入重新判断', confidence: source === 'real' ? '中高' : '中',
-      hand_plan: genericPlan(), simulation: { title: '继续追问', quote: '你这个回答的前提是什么，能不能再明确一点？' },
-      hand_plan_source: 'local', hand_plan_reason: 'AI 未启用，使用本地规则生成。'
+      hand_plan: aiEngaged() ? null : genericPlan(), simulation: { title: '继续追问', quote: '你这个回答的前提是什么，能不能再明确一点？' },
+      hand_plan_source: aiEngaged() ? 'loading' : 'local', hand_plan_reason: ''
     };
-    if (aiEngaged()) refillHandPlanWithAi(scene);
+    if (aiEngaged()) {
+      scene._preservedHandPlan = genericPlan();
+      refillHandPlanWithAi(scene);
+    }
     return scene;
   }
 
@@ -885,7 +914,24 @@
     const fi = $('personFactInput');
     if (fi) {
       $('personDetail').querySelector('[data-person-add]').addEventListener('click', () => { const v = fi.value.trim(); if (v) { p.facts.push(v); state._personSuggestion = ''; persistState(); renderPersonDetail(); } });
-      $('personDetail').querySelector('[data-person-sim]').addEventListener('click', () => { state._personSuggestion = `（模拟分析）基于近期沟通，建议补充事实：该人物在“${st.sensitivity}”相关话题上反应更敏感，沟通宜先给明确结论并说明责任。`; renderPersonDetail(); });
+      $('personDetail').querySelector('[data-person-sim]').addEventListener('click', async () => {
+        const aiClient = createConfiguredAiClient();
+        const fallback = `（模拟分析）基于近期沟通，建议补充事实：该人物在“${st.sensitivity}”相关话题上反应更敏感，沟通宜先给明确结论并说明责任。`;
+        if (aiClient) {
+          state._personSuggestion = 'AI 正在分析……';
+          renderPersonDetail();
+          const result = await AI_ENGINE.quickAnalysis({
+            systemPrompt: '你是关系决策牌组的人物分析助手。基于人物画像、当前状态、沟通偏好、敏感点、近期沟通记录，输出 1-2 条简短的"可补充事实"推断建议。每条不超过 30 字。',
+            userPrompt: `人物: ${p.name} (${p.role})\n状态: ${JSON.stringify(p.current_state)}\n偏好: ${(p.communication_preferences || []).join('、')}\n敏感点: ${(p.sensitive_points || []).join('、')}\n已知事实: ${(p.facts || []).slice(-3).join('；')}\n近期沟通: ${(p.communication_history || []).slice(-2).map(h => h.opponent_quote).join(' | ')}`,
+            aiClient,
+            fallback
+          });
+          state._personSuggestion = result.source === 'ai' ? result.text : `（本地兜底）${result.text}`;
+        } else {
+          state._personSuggestion = fallback;
+        }
+        renderPersonDetail();
+      });
       const cf = $('personDetail').querySelector('[data-person-confirm]'); if (cf) cf.addEventListener('click', () => { p.facts.push(state._personSuggestion); state._personSuggestion = ''; persistState(); renderPersonDetail(); });
       const ds = $('personDetail').querySelector('[data-person-discard]'); if (ds) ds.addEventListener('click', () => { state._personSuggestion = ''; renderPersonDetail(); });
     }
@@ -1010,7 +1056,24 @@
     const mi = $('matterFactInput');
     if (mi) {
       $('matterDetail').querySelector('[data-matter-add]').addEventListener('click', () => { const v = mi.value.trim(); if (v) { m.facts.push(v); state._matterSuggestion = ''; persistState(); renderMatterDetail(); } });
-      $('matterDetail').querySelector('[data-matter-sim]').addEventListener('click', () => { state._matterSuggestion = `（模拟分析）建议补充风险：该项目临近“${m.stage}”阶段，疑似存在责任边界不清的隐患，可新增一条中等级风险并更新里程碑责任人。`; renderMatterDetail(); });
+      $('matterDetail').querySelector('[data-matter-sim]').addEventListener('click', async () => {
+        const aiClient = createConfiguredAiClient();
+        const fallback = `（模拟分析）建议补充风险：该项目临近“${m.stage}”阶段，疑似存在责任边界不清的隐患，可新增一条中等级风险并更新里程碑责任人。`;
+        if (aiClient) {
+          state._matterSuggestion = 'AI 正在分析……';
+          renderMatterDetail();
+          const result = await AI_ENGINE.quickAnalysis({
+            systemPrompt: '你是关系决策牌组的事项分析助手。基于事项阶段、状态、矛盾、目标、已有事实和风险，输出 1-2 条简短的"可补充风险/事实"建议。每条不超过 30 字。',
+            userPrompt: `事项: ${m.name} (${matterKindName(m.kind)})\n阶段: ${m.stage}\n主要矛盾: ${m.main_conflict}\n目标: ${m.current_goal || ''}\n事实: ${(m.facts || []).slice(-3).join('；')}\n风险: ${(m.risks || []).slice(-3).map(r => r.name || r).join('、')}`,
+            aiClient,
+            fallback
+          });
+          state._matterSuggestion = result.source === 'ai' ? result.text : `（本地兜底）${result.text}`;
+        } else {
+          state._matterSuggestion = fallback;
+        }
+        renderMatterDetail();
+      });
       const cf = $('matterDetail').querySelector('[data-matter-confirm]'); if (cf) cf.addEventListener('click', () => { m.facts.push(state._matterSuggestion); state._matterSuggestion = ''; persistState(); renderMatterDetail(); });
       const ds = $('matterDetail').querySelector('[data-matter-discard]'); if (ds) ds.addEventListener('click', () => { state._matterSuggestion = ''; renderMatterDetail(); });
     }
