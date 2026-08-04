@@ -673,20 +673,27 @@
       aiClient,
       fallback
     };
+    const t0 = Date.now();
     try {
       const result = await AI_ENGINE.generateHandPlan(input);
+      const elapsed = Date.now() - t0;
+      console.info('[AI]', result.source, `${elapsed}ms`, 'cards:', result.plan.candidates.length);
       scene.hand_plan = result.plan;
       scene.hand_plan_source = result.source;
       scene.hand_plan_reason = result.source === 'ai' ? '' : (result.reason || 'AI 未启用或返回异常，已切换本地手牌。');
+      if (result.source === 'local') {
+        console.warn('[AI] 回退本地:', result.reason);
+      }
     } catch (error) {
+      console.error('[AI] 异常:', error);
       scene.hand_plan = fallback;
       scene.hand_plan_source = 'local';
       scene.hand_plan_reason = `AI 调用失败：${error.message}`;
     }
     delete scene._preservedHandPlan;
     if (session().current.opponent === scene) {
-      state.justDealt = false;
-      renderHand({ skipStageFx: true });
+      state.justDealt = true;
+      renderHand();
       persistState();
     }
   }
