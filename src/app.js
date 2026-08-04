@@ -408,7 +408,12 @@
       </div></article>`;
   }
   function layoutHand(focus = -1) {
-    const cards = $$('.hand-card'), n = cards.length, spacing = Math.min(138, 760 / Math.max(1, n - 1));
+    const cards = $$('.hand-card'), n = cards.length;
+    // 根据 viewport 实际宽度算 spacing, 让 4 张手牌装下不裁
+    const vw = window.innerWidth || 1200;
+    const maxSpread = vw - 360; /* 减掉左右装饰 */
+    const idealSpacing = n > 1 ? Math.min(150, maxSpread / (n - 1)) : 0;
+    const spacing = Math.max(120, idealSpacing);
     cards.forEach((el, i) => {
       const offset = i - (n - 1) / 2;
       let x = offset * spacing;
