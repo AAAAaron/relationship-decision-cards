@@ -126,22 +126,31 @@
 
 ## 6. 组件规范
 
-### 6.1 卡牌 (`.dialog-card`, `.hand-card`, `.pack-card`, `.record-card`)
+### 6.1 卡牌 (`.dialog-card`, `.hand-card`, `.pack-card`, `.record-card`, `.deck-scene-card`, `.previous-slot .dialog-card`)
 
+**比例**: 全部修长 1.7:1 (像真卡牌不像方块)
+
+| 位置 | 尺寸 | 比例 | 用途 |
+|---|---|---|---|
+| `.dialog-card` | 200×340 | 1.7:1 | 当前交锋 (对方出牌 / 我的回应) |
+| `.hand-card` | 180×280 | 1.55:1 | 手牌 4 张 |
+| `.pack-card` | 200×340 | 1.7:1 | 卡包收藏 |
+| `.record-card` | 100%×340(min) | — | 回合历史 |
+| `.deck-scene-card` | 180×300 | 1.67:1 | 对方出牌弹窗场景牌堆 |
+| `.previous-slot .dialog-card` | 150×255 | 1.7:1 | 上一轮卡(半透明缩小版) |
+
+**结构 (`.card-top` / `.card-title` / `.card-body` / `.card-foot`)**:
 ```
 ┌─────────────────────┐
-│ [rank chip]    [opponent-avatar] │  ← 头部
+│ [rank chip]    [source-chip] │  ← .card-top: 顶部 chip
 │                      │
-│ Title (h1/h2)         │  ← 标题: 18-20px / 800
+│ Title (h1/h2)         │  ← .card-title: 标题 18-20px / 800
 │                      │
-│ Body paragraph       │  ← 正文: 13px / 600
+│ Body paragraph       │  ← .card-body: 正文 13px / 600
 │ (blockquote)         │
 │                      │
-│ ─── divider ───       │  ← 章节分隔
-│                      │
-│ [tags] [tags] [tags]  │  ← 章节标签
-│                      │
-│ Note (warning/safe)  │  ← 注脚: 11.5px / 620
+│ ─ ─ ─ ─ ─ ─ ─ ─      │  ← .card-foot 顶部 dashed 分隔
+│ meta · meta · meta   │  ← .card-foot: 章节 11px / 600
 └─────────────────────┘
 ```
 
