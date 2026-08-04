@@ -420,11 +420,11 @@
     cards.forEach((el, i) => {
       const offset = i - (n - 1) / 2;
       let x = offset * spacing;
-      if (focus >= 0 && i < focus) x -= 30;
-      if (focus >= 0 && i > focus) x += 30;
-      const y = Math.abs(offset) * 5, ang = offset * 4.2, focused = i === focus;
+      if (focus >= 0 && i < focus) x -= 16;
+      if (focus >= 0 && i > focus) x += 16;
+      const y = Math.abs(offset) * 3, ang = offset * 3.4, focused = i === focus;
       const t = focused
-        ? `translateX(calc(-50% + ${x}px)) translateY(${y - 46}px) rotate(0deg) scale(1.05)`
+        ? `translateX(calc(-50% + ${x}px)) translateY(${y - 8}px) rotate(0deg) scale(1.05)`
         : `translateX(calc(-50% + ${x}px)) translateY(${y}px) rotate(${ang}deg)`;
       el.style.transform = t;
       el.style.setProperty('--z', focused ? '50' : String(i + 2));
