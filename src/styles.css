@@ -609,8 +609,8 @@ text-shadow:0 0 10px rgba(231,189,101,.25);
 }
 .dialog-card {
   position:relative;
-  width:220px;
-  height:300px;
+  width:200px;
+  height:340px; /* 1.7:1 修长比例, 文字能多放 */
   flex-shrink:0;
   display:flex;
   flex-direction:column;
@@ -1131,8 +1131,8 @@ background:#6d7888;
   position:absolute;
   left:50%;
   top:8px;
-  width:196px;
-  height:212px;
+  width:180px;
+  height:280px; /* 1.55:1 修长比例 */
   border-radius:13px;
   perspective:1000px;
   transform-origin:50% 100%;
@@ -3866,8 +3866,8 @@ body {
 }
 .pack-grid .pack-card {
   position:relative;
-  width:220px;
-  height:306px;
+  width:200px;
+  height:340px; /* 1.7:1 修长比例, 与 dialog-card 一致 */
   min-height:0;
   perspective:1000px;
 }
