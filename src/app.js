@@ -409,11 +409,14 @@
   }
   function layoutHand(focus = -1) {
     const cards = $$('.hand-card'), n = cards.length;
-    // 根据 viewport 实际宽度算 spacing, 让 4 张手牌装下不裁
+    // viewport 自适应, 4 张手牌装下不裁; 3 张/2 张更宽
     const vw = window.innerWidth || 1200;
-    const maxSpread = vw - 360; /* 减掉左右装饰 */
-    const idealSpacing = n > 1 ? Math.min(150, maxSpread / (n - 1)) : 0;
-    const spacing = Math.max(120, idealSpacing);
+    let spacing;
+    if (n === 4) spacing = Math.max(130, Math.min(150, (vw - 420) / 3));
+    else if (n === 3) spacing = Math.min(170, (vw - 380) / 2);
+    else if (n === 2) spacing = 180;
+    else if (n === 1) spacing = 0;
+    else spacing = 150;
     cards.forEach((el, i) => {
       const offset = i - (n - 1) / 2;
       let x = offset * spacing;
