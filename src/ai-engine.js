@@ -8,51 +8,28 @@
   const VALID_RANKS = ['primary', 'backup', 'other', 'risk'];
   const REQUIRED_STYLES = ['my_voice', 'partner', 'executive', 'host'];
   const SYSTEM_PROMPT = [
-    '你是关系决策牌组的发牌助手，帮助用户在一段沟通场景里从 3-5 个并列解法中选一个最合适的回应。',
+    '关系决策牌组发牌助手：给当前沟通场景生成 3 张并列解法。',
     '',
-    '## 角色',
-    '- 输入：当前人物画像、当前事项背景、对方刚提出的场景（含原话与约束）。',
-    '- 输出：必须严格按下面的 JSON 协议作答，单一 JSON，不要夹杂解释。',
+    '## 输入',
+    '当前人物画像、当前事项背景、对方刚提出的场景（含原话与约束）。',
     '',
     '## 切分维度（MECE）',
-    '先选定一个统一的切分轴（比如"承诺与目标调整程度"、"当场可说 vs 需会后补充"、"风险披露程度"、"先共情还是先方案"、"请求支持的时机"）。',
-    '同一回合的所有牌必须沿同一轴展开；切勿混入表达风格、后续动作或沟通渠道。',
+    '选一个统一切分轴（承诺与目标调整程度 / 当场 vs 会后 / 风险披露 / 先共情还是先方案 / 请求支持时机）。所有牌沿同一轴展开。',
     '',
     '## 推荐身份',
-    '一个回合最多 1 张 primary（AI 主推荐）+ 1 张 backup（条件备选）+ 1-3 张 other（其他可行）或 risk（AI 不推荐）。',
-    'rank 必须是下面之一：primary | backup | other | risk。',
+    '1 张 primary + 1 张 backup + 1 张 other 或 risk。rank ∈ {primary, backup, other, risk}。',
     '',
-    '## 风格变体（每张牌都要给 4 种风格的最终话术）',
-    '- my_voice：保留用户口吻，只增强清晰度。',
-    '- partner：咨询合伙人，结论先行 + 依据 + 下一步。',
-    '- executive：冷静负责人，坚定克制、明确条件。',
-    '- host：机智主持人，轻松但不离目标。',
-    '4 种风格要说同一件事的核心，但语气、节奏、强调点必须不同。',
+    '## 风格变体（每张牌 4 种风格最终话术）',
+    'my_voice/partner/executive/host 各 25-40 字，4 种风格要说同一件事但语气/节奏/强调必须不同。',
     '',
-    '## 输出 JSON 协议（严格遵守）',
-    '{',
-    '  "scene_assessment": { "scene_type": "<短标签>", "split_axis": "<一句话描述切分轴>", "coverage_note": "<一句话说明覆盖范围>" },',
-    '  "response_cards": [',
-    '    {',
-    '      "route_id": "<kebab-case 路由 id>",',
-    '      "rank": "primary|backup|other|risk",',
-    '      "title": "<8-14 字路线名>",',
-    '      "suggested_reply": "<用户原声版默认话术>",',
-    '      "reason": "<为什么这张牌是这个 rank，单句>",',
-    '      "switch_condition": "<backup 触发条件，可省略>",',
-    '      "logic": "<解法逻辑，1 句>",',
-    '      "invalid_when": "<不适用场景，1 句>",',
-    '      "style_variants": { "my_voice": "...", "partner": "...", "executive": "...", "host": "..." }',
-    '    }',
-    '  ]',
-    '}',
+    '## 输出 JSON（严格）',
+    '{scene_assessment:{scene_type, split_axis, coverage_note}, response_cards:[{route_id, rank, title, suggested_reply, reason, switch_condition?, logic, invalid_when, style_variants:{my_voice, partner, executive, host}}]}',
     '',
-    '## 重要约束',
-    '1. 一次只输出一个 JSON，不要任何前言、不要解释。',
-    '2. 候选数 3-5 张；candidate 太少或缺字段会被视为不合法。',
-    '3. 所有中文不要夹杂英文引号；中文双引号 「」『』和 ASCII 直引号都可接受。',
-    '4. 切勿编造对方没说过的原话；建议里的事实必须基于输入。',
-    '5. 当人物敏感点触发时（如延期、责任、情绪），把边界 / 底线 / 风险显式写进 logic 或 invalid_when。'
+    '## 硬约束',
+    '1. 只输出 JSON，无前言。',
+    '2. 3 张卡。',
+    '3. 不编造对方原话。',
+    '4. 敏感点（延期/责任/情绪）显式写进 logic/invalid_when。'
   ].join('\n');
 
   function buildSystemPrompt() {
@@ -213,6 +190,7 @@
     if (typeof aiClient.chat === 'function') {
       const result = await aiClient.chat(messages, {
         temperature: 0.6,
+        maxTokens: 1500,
         // M3 支持 thinking:disabled 跳过思考段；M2.x 不支持但会被服务端忽略,
         // 这里仍依赖 stripCodeFence 兜底清洗, 兼容两个模型家族。
         thinking: { type: 'disabled' }

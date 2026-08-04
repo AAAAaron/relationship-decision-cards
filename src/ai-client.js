@@ -50,6 +50,7 @@
         };
         if (options.responseFormat) body.response_format = options.responseFormat;
         if (options.thinking) body.thinking = options.thinking;
+        if (options.maxTokens) body.max_completion_tokens = options.maxTokens;
         const response = await fetchImpl(`${baseUrl}/chat/completions`, {
           method: 'POST',
           headers: headers(),
