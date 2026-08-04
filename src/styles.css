@@ -473,7 +473,7 @@ text-shadow:0 0 10px rgba(231,189,101,.25);
 }
 .previous-slot .dialog-card {
   width:150px;
-  height:210px;
+  height:255px; /* 1.7:1 修长, 缩小版(旧轮卡半透明) */
 }
 
 /* ===== 卡牌统一基类(所有卡牌位置继承) ===== */
@@ -1428,8 +1428,8 @@ margin-top:9px;
   background:rgba(231,189,101,.05);
 }
 .deck-scene-card {
-  width:166px;
-  height:232px;
+  width:180px;
+  height:300px; /* 1.67:1 修长比例 */
   cursor:pointer;
 }
 .deck-scene-card:hover {
@@ -1594,7 +1594,7 @@ gap:11px;
 }
 .record-card {
   position:relative;
-  min-height:336px;
+  min-height:340px; /* 与 dialog-card 一致 1.7:1 修长比例 */
 perspective:1000px;
 }
 .record-card .card-face {
