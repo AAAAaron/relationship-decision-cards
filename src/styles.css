@@ -495,6 +495,9 @@ text-shadow:0 0 10px rgba(231,189,101,.25);
   line-height:1.2;
   letter-spacing:-.015em;
   color:inherit;
+  position:relative;
+  padding-left:10px;
+  border-left:3px solid var(--accent, var(--gold));
 }
 .hand-card .card-title {
   font-size:20px;
@@ -927,27 +930,42 @@ background:rgba(255,255,255,.16);
 transform:rotate(120deg);
 }
 .back-list {
-  display:grid;
-  gap:8px;
-margin-top:12px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:10px;
 }
 .back-list div {
-  padding-bottom:7px;
-border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  padding:6px 0;
+  border-bottom:1px dashed rgba(255,255,255,.12);
+}
+.back-list div:last-child {
+  border-bottom:0;
 }
 .back-list span,.back-list strong {
-display:block;
+  display:inline-block;
 }
 .back-list span {
+  flex:0 0 60px;
   color:var(--gold2);
-font-size:9px;
+  font-size:10px;
+  font-weight:760;
+  letter-spacing:.06em;
+  text-transform:uppercase;
 }
 .back-list strong {
-  margin-top:3px;
-  color:var(--soft);
-  font-size:11px;
-line-height:1.45;
+  flex:1;
+  color:var(--text);
+  font-size:12px;
+  font-weight:600;
+  line-height:1.5;
 }
+.reply-front .back-list span { color:rgba(60,40,15,.7); }
+.reply-front .back-list strong { color:#172137; }
+.reply-front .back-list div { border-bottom-color:rgba(119,91,42,.18); }
 .empty-slot {
   display:grid;
   place-items:center;
@@ -2372,20 +2390,24 @@ line-height:1.6;
     gap:6px;
   }
   .dialog-card {
-    width:155px;
-    height:220px;
+    width:140px;
+    height:240px; /* 1.7:1 修长保持 */
   }
   .dialog-card.current {
-    width:165px;
-    height:234px;
+    width:150px;
+    height:255px;
   }
   .previous-slot .dialog-card {
-    width:130px;
-    height:182px;
+    width:120px;
+    height:204px;
+  }
+  .hand-card {
+    width:140px;
+    height:218px; /* 1.55:1 */
   }
   .empty-slot {
-    width:145px;
-    height:206px;
+    width:130px;
+    height:182px;
   }
   .record-grid,.pack-grid {
     grid-template-columns:repeat(2,minmax(0,1fr));

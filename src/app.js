@@ -161,6 +161,8 @@
             <span class="card-foot-meta">${esc(sceneTypeName(scene.scene_type))}</span>
             <span class="card-foot-divider">·</span>
             <span class="card-foot-meta">置信度 ${esc(scene.confidence || '中')}</span>
+            <span class="card-foot-divider">·</span>
+            <time class="card-foot-meta">${esc((scene.created_at || '').slice(0, 10) || '今日')}</time>
           </div>
         </section>
         <section class="card-face card-back card-back-scene">

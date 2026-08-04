@@ -10,7 +10,7 @@
 
   const PI = Math.PI;
 
-  // 固定牌桌垫: 中央凸起牌桌垫(顶面+侧面) + 边缘暖橙光环
+  // 固定牌桌垫: 中央凸起牌桌垫(顶面+侧面) + 边缘暖橙光环 + 装饰刻线
   // 不再画外圈深色底盘, 让圆盘自然淡出到背景纹理
   function createTabletop(THREE, texture) {
     const group = new THREE.Group();
@@ -49,6 +49,21 @@
     ring.rotation.x = -PI / 2;
     ring.position.y = 0.02;
     group.add(ring);
+    // 4. 装饰刻线(8 条短细线在边缘外圈, 让桌垫更像牌桌)
+    const notchGroup = new THREE.Group();
+    const NOTCH_COUNT = 8;
+    const NOTCH_R = 2.72;
+    for (let i = 0; i < NOTCH_COUNT; i++) {
+      const angle = (i / NOTCH_COUNT) * PI * 2;
+      const notch = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 0.01, 0.16),
+        new THREE.MeshBasicMaterial({ color: 0xf6dda0, transparent: true, opacity: 0.5 })
+      );
+      notch.position.set(Math.cos(angle) * NOTCH_R, 0.03, Math.sin(angle) * NOTCH_R);
+      notch.rotation.y = -angle;
+      notchGroup.add(notch);
+    }
+    group.add(notchGroup);
     return group;
   }
 

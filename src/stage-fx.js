@@ -73,7 +73,8 @@
     let currentSceneGroup = null;
     let currentAccentColor = null;
     // 淡入淡出动画状态
-    const FADE_DURATION = 0.32; // 320ms
+    const FADE_DURATION = 0.42; // 420ms
+    const FADE_STAGGER = 0.06;  // 60ms 间隔, 周边物件各自淡入
     let fadeStart = 0;
     let fadeFromGroup = null;
     let fadeToGroup = null;
@@ -81,18 +82,31 @@
       if (!g || !g.traverse) return;
       g.traverse(obj => {
         if (obj.material) {
-          // 保留原 transparent 值, 仅覆盖 opacity
           obj.material.transparent = true;
           obj.material.opacity = opacity;
         }
       });
     }
+    // 给 Group 的子节点标记 stagger 索引(按深度遍历, 同级共享一个 index)
+    function annotateFadeIndex(group) {
+      if (!group) return;
+      let idx = 0;
+      group.children.forEach(child => {
+        if (child.traverse) {
+          // 子 Group (props) 整体共享一个 stagger (场景根 + 桌垫 + props)
+          child.userData.fadeIndex = idx;
+          // 子 Group 内部 mesh 不再单独 stagger (随 Group 一起淡入)
+          idx += 1;
+        }
+      });
+    }
     function startFadeIn(newGroup) {
       if (!newGroup) return;
+      annotateFadeIndex(newGroup);
       makeGroupTransparent(newGroup, 0);
       scene.add(newGroup);
       fadeStart = performance.now() / 1000;
-      fadeFromGroup = null; // 同步替换, 不做交叉淡出(避免两套主题颜色叠加)
+      fadeFromGroup = null;
       fadeToGroup = newGroup;
       currentSceneGroup = newGroup;
     }
@@ -207,21 +221,38 @@
       }
       const dt = lastFrame ? (time - lastFrame) / 1000 : 0.016;
       lastFrame = time;
-      // 推进淡入动画
+      // 推进淡入动画(周边物件 stagger 各自淡入)
       if (fadeToGroup) {
         const elapsed = time / 1000 - fadeStart;
-        const t = Math.min(1, elapsed / FADE_DURATION);
-        // ease-out: t*(2-t)
-        const ease = t * (2 - t);
-        makeGroupTransparent(fadeToGroup, ease);
-        if (t >= 1) {
-          // 动画结束, 恢复 opacity=1, 但保留 transparent=true 以维持渲染管线状态
-          // (材质若有 map 走正常贴图, 没有就回退纯色)
+        // 周边物件(从 index=1 开始) 各自延迟 stagger
+        if (fadeToGroup.traverse) {
+          fadeToGroup.traverse(obj => {
+            if (obj.material) {
+              const idx = (obj.userData && obj.userData.fadeIndex != null) ? obj.userData.fadeIndex : 0;
+              const start = idx * FADE_STAGGER;
+              const localT = Math.max(0, Math.min(1, (elapsed - start) / FADE_DURATION));
+              const ease = localT * (2 - localT); // ease-out
+              obj.material.opacity = ease;
+            }
+          });
+        }
+        // 检查是否所有 mesh 全部完成
+        let allDone = true;
+        if (fadeToGroup.traverse) {
+          fadeToGroup.traverse(obj => {
+            if (obj.material) {
+              const idx = (obj.userData && obj.userData.fadeIndex != null) ? obj.userData.fadeIndex : 0;
+              const localT = (elapsed - idx * FADE_STAGGER) / FADE_DURATION;
+              if (localT < 1) allDone = false;
+            }
+          });
+        }
+        if (allDone) {
+          // 动画结束, 恢复 opacity=1
           if (fadeToGroup.traverse) {
             fadeToGroup.traverse(obj => {
               if (obj.material) {
                 obj.material.opacity = 1;
-                // 不强制 transparent = false, 因为某些材质(map)需要它
                 obj.material.needsUpdate = true;
               }
             });
