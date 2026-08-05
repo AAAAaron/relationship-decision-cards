@@ -516,7 +516,7 @@
         <p class="play-reply-preview">"${esc(previewReply)}"</p>
         ${warning}
       </header>
-      ${c.type === 'choice' ? `<section class="play-section"><h3>选具体路线 (点击卡牌切换)</h3>${choiceGrid}</section>` : ''}
+      ${c.type === 'choice' ? `<section class="play-section"><h3>选具体路线</h3>${choiceGrid}</section>` : ''}
       <section class="play-section"><h3>换风格</h3>${styleList}</section>
       <div class="play-actions"><button class="secondary-button" data-close="playModal" type="button">返回手牌</button><button id="confirmPlay" class="primary-button" type="button">确认出牌</button></div>
     </div>`;
