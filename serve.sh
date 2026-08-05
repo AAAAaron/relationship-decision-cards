@@ -16,6 +16,15 @@ command -v "$PY_BIN" >/dev/null 2>&1 || PY_BIN="python3"
 
 cd "$(dirname "$0")" || exit 1
 
+# --- 注入构建版本号 (git commit short hash) ---
+if command -v git >/dev/null 2>&1 && git rev-parse --git-dir >/dev/null 2>&1; then
+  HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "dev")
+  if command -v sed >/dev/null 2>&1; then
+    sed -i '' "s|window\.__APP_BUILD__ = '[^']*'|window.__APP_BUILD__ = '$HASH'|" index.html 2>/dev/null || true
+    echo "📦 构建版本: $HASH"
+  fi
+fi
+
 # --- 端口占用自检 ---
 if command -v lsof >/dev/null 2>&1; then
   OCC=$(lsof -iTCP:"$PORT" -sTCP:LISTEN -P -n 2>/dev/null | tail -n +2)

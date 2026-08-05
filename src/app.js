@@ -7,6 +7,16 @@
   const DATA = MODEL ? MODEL.normalizeData(window.DEMO_DATA) : window.DEMO_DATA;
   const STORAGE = window.RelationshipStorage;
   if (!DATA) { document.body.innerHTML = '<p style="padding:24px;color:white">数据加载失败。</p>'; return; }
+  // 注入构建版本号: 从 demo-data.app.version + git commit short hash
+  try {
+    const verEl = document.getElementById('appVersion');
+    if (verEl) {
+      const base = (DATA.app && DATA.app.version) ? DATA.app.version : '0.9.0';
+      const build = (typeof __APP_BUILD__ !== 'undefined') ? __APP_BUILD__ : 'dev';
+      verEl.textContent = `V${base} · ${build}`;
+      verEl.title = `构建版本 ${build}`;
+    }
+  } catch (e) { /* swallow */ }
   const $ = id => document.getElementById(id);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const clone = v => JSON.parse(JSON.stringify(v));
