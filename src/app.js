@@ -478,10 +478,25 @@
     const c = cand ? candidateCard(cand) : card(state.selectedCardId);
     const warning = (cand.rank === 'risk' || cand.rank === 'other') ? `<div class="warning-box"><strong>${rankName(cand.rank)}：</strong>${esc(cand.reason)}<br/>仍可出牌；你可能掌握系统尚未记录的信息。</div>` : '';
 
-    // 抉择（炉石风格）：2 张并列大卡，仅 candidate.type === 'choice' 时显示
-    const choiceGrid = c.type === 'choice' ? `<div class="play-choice-grid">${c.choices.map((x, i) => `<button class="play-choice-card ${i === state.selectedChoiceIndex ? 'active' : ''}" data-choice-index="${i}" type="button"><strong>${esc(x.title)}</strong><p>${esc(x.summary)}</p></button>`).join('')}</div>` : '';
+    // 抉择: 2 张完整卡牌（跟手牌一样的视觉），仅 type === 'choice' 时显示
+    const choiceLetters = ['A', 'B', 'C', 'D'];
+    const choiceGrid = c.type === 'choice' ? `<div class="play-choice-grid">${c.choices.map((x, i) => {
+      const letter = choiceLetters[i] || String(i + 1);
+      const whyUse = i === 0 ? '首选路线' : '备选路线';
+      const tag = i === 0 ? '更稳妥' : '平衡另一面';
+      return `<button class="play-choice-card rank-${cand.rank} ${i === state.selectedChoiceIndex ? 'active' : ''}" data-choice-index="${i}" type="button">
+        <div class="choice-card-rank">${rankName(cand.rank)}</div>
+        <div class="choice-card-letter">${letter}</div>
+        <h3 class="choice-card-title">${esc(x.title)}</h3>
+        <p class="choice-card-summary">${esc(x.summary)}</p>
+        <div class="choice-card-foot">
+          <span class="choice-tag">${esc(tag)}</span>
+          <span class="choice-why">${esc(whyUse)}</span>
+        </div>
+      </button>`;
+    }).join('')}</div>` : '';
 
-    // 风格头像：4 个圆头像（可自定义 state.styleAvatars）
+    // 风格头像：4 个圆头像
     const styleAvatars = state.styleAvatars || {};
     const styleList = `<div class="play-style-row">${DATA.styles.map(s => {
       const avatar = styleAvatars[s.id] || s.id.charAt(0).toUpperCase();
@@ -492,17 +507,16 @@
       return `<button class="play-style-avatar ${s.id === state.selectedStyleId ? 'active' : ''}" data-style-id="${s.id}" type="button" title="${esc(s.name)} · ${esc(s.note)}">${avatarHtml}<small>${esc(s.name)}</small></button>`;
     }).join('')}</div>`;
 
-    // 当前风格 reply 摘要（紧凑一行，hover 展开）
     const previewReply = selectedReply();
 
     $('playModalContent').innerHTML = `<div class="play-compact">
       <header class="play-header">
         <span class="rank-badge ${rankClass(cand.rank)}">${rankName(cand.rank)}</span>
         <h2>${esc(c.title)}</h2>
-        <p class="play-reply-preview">“${esc(previewReply)}”</p>
+        <p class="play-reply-preview">"${esc(previewReply)}"</p>
         ${warning}
       </header>
-      ${c.type === 'choice' ? `<section class="play-section"><h3>选具体路线</h3>${choiceGrid}</section>` : ''}
+      ${c.type === 'choice' ? `<section class="play-section"><h3>选具体路线 (点击卡牌切换)</h3>${choiceGrid}</section>` : ''}
       <section class="play-section"><h3>换风格</h3>${styleList}</section>
       <div class="play-actions"><button class="secondary-button" data-close="playModal" type="button">返回手牌</button><button id="confirmPlay" class="primary-button" type="button">确认出牌</button></div>
     </div>`;
