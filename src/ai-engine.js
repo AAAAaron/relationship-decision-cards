@@ -171,8 +171,11 @@
     const fallback = input?.fallback || { axis: '本地规则兜底', coverage: '', candidates: [] };
     const aiClient = input?.aiClient;
     if (!aiClient) {
+      logCall({ source: 'local', reason: 'AI 客户端未启用', kind: 'hand-plan' });
       return { source: 'local', plan: fallback, reason: 'AI 客户端未启用，已使用本地规则。' };
     }
+    const model = aiClient.__model || (input?.aiConfig?.model) || '';
+    const t0 = Date.now();
     try {
       const messages = [
         { role: 'system', content: buildSystemPrompt() },
@@ -180,9 +183,34 @@
       ];
       const text = await callAiChat(aiClient, messages);
       const plan = parseAiHandPlan(text);
+      logCall({
+        source: 'ai',
+        kind: 'hand-plan',
+        model,
+        duration: Date.now() - t0,
+        promptSummary: buildUserPrompt(input).slice(0, 160),
+        responseSummary: `axis=${plan.axis} | cards=${plan.candidates.length}`,
+        meta: input?.scene?.title || ''
+      });
       return { source: 'ai', plan, reason: '' };
     } catch (error) {
+      logCall({
+        source: 'local',
+        kind: 'hand-plan',
+        model,
+        duration: Date.now() - t0,
+        error: error.message,
+        promptSummary: buildUserPrompt(input).slice(0, 160),
+        responseSummary: '解析失败'
+      });
       return { source: 'local', plan: fallback, reason: `AI 调用失败：${error.message}` };
+    }
+  }
+
+  function logCall(entry) {
+    const LOG = (typeof window !== 'undefined' && window.RelationshipAILog) || null;
+    if (LOG) {
+      try { LOG.record(entry); } catch (e) { /* swallow */ }
     }
   }
 
@@ -205,7 +233,11 @@
   async function quickAnalysis(input) {
     const fallback = input?.fallback || '';
     const aiClient = input?.aiClient;
-    if (!aiClient) return { source: 'local', text: fallback, reason: 'AI 客户端未启用。' };
+    if (!aiClient) {
+      logCall({ source: 'local', kind: 'quick-analysis', reason: 'AI 客户端未启用' });
+      return { source: 'local', text: fallback, reason: 'AI 客户端未启用。' };
+    }
+    const t0 = Date.now();
     try {
       const messages = [
         { role: 'system', content: input.systemPrompt || '你是关系决策牌组的人物/事项分析助手。' },
@@ -218,8 +250,22 @@
       const text = typeof result === 'string' ? result : (result?.text || '');
       const cleaned = String(text).trim();
       if (!cleaned) throw new Error('AI 返回空内容。');
+      logCall({
+        source: 'ai',
+        kind: 'quick-analysis',
+        duration: Date.now() - t0,
+        promptSummary: (input.userPrompt || '').slice(0, 160),
+        responseSummary: cleaned.slice(0, 80)
+      });
       return { source: 'ai', text: cleaned, reason: '' };
     } catch (error) {
+      logCall({
+        source: 'local',
+        kind: 'quick-analysis',
+        duration: Date.now() - t0,
+        error: error.message,
+        promptSummary: (input.userPrompt || '').slice(0, 160)
+      });
       return { source: 'local', text: fallback, reason: `AI 调用失败：${error.message}` };
     }
   }

@@ -1146,6 +1146,60 @@
     openModal('aiModal');
   }
 
+  function openAiLog() {
+    renderAiLog();
+    openModal('aiLogModal');
+  }
+
+  function renderAiLog() {
+    const LOG = window.RelationshipAILog;
+    const list = LOG ? LOG.getAll() : [];
+    const countEl = $('aiLogCount');
+    const listEl = $('aiLogList');
+    if (countEl) countEl.textContent = `${list.length} 条`;
+    if (!listEl) return;
+    if (!list.length) {
+      listEl.innerHTML = '<p class="helper-text">暂无 AI 调用记录。配置好 AI 后任意切换场景即可在这里看到。</p>';
+      return;
+    }
+    listEl.innerHTML = list.map(e => {
+      const status = e.source === 'ai' ? 'ai' : 'local';
+      const kindPill = e.kind ? `<span class="ai-log-pill kind">${esc(e.kind)}</span>` : '';
+      const meta = [e.ts, e.model, e.duration ? `${e.duration}ms` : ''].filter(Boolean).join(' · ');
+      const summary = e.responseSummary || e.error || '—';
+      const promptShort = e.promptSummary || '(无 prompt)';
+      const errorBlock = e.error ? `<div class="ai-log-error">⚠ ${esc(e.error)}</div>` : '';
+      const metaBlock = e.meta ? `<span class="ai-log-summary">▸ ${esc(e.meta)}</span>` : '';
+      return `<div class="ai-log-item ai-log-${status}">
+        <div class="ai-log-head">
+          <span class="ai-log-pill ${status}">${status === 'ai' ? 'AI 成功' : '本地兜底'}</span>
+          ${kindPill}
+          <span>${esc(meta)}</span>
+        </div>
+        <div class="ai-log-summary">${esc(summary)}</div>
+        ${metaBlock}
+        ${errorBlock}
+        <button class="ai-log-toggle" data-log-expand="${esc(e.id)}">展开 prompt 摘要 ▾</button>
+        <div class="ai-log-detail" data-log-detail="${esc(e.id)}" hidden>${esc(promptShort)}${e.responseSummary ? '\n\n[response] ' + esc(e.responseSummary) : ''}</div>
+      </div>`;
+    }).join('');
+    $$('[data-log-expand]', listEl).forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.logExpand;
+        const detail = listEl.querySelector(`[data-log-detail="${id}"]`);
+        if (!detail) return;
+        const hidden = detail.hasAttribute('hidden');
+        if (hidden) {
+          detail.removeAttribute('hidden');
+          btn.textContent = '收起 ▴';
+        } else {
+          detail.setAttribute('hidden', '');
+          btn.textContent = '展开 prompt 摘要 ▾';
+        }
+      });
+    });
+  }
+
   async function testAiConnection() {
     if (!AI) return showAiStatus('AI 客户端未加载。', true);
     const button = $('testAiButton');
@@ -1242,6 +1296,12 @@
     });
     $('historyButton').addEventListener('click', () => { renderHistory(); openModal('historyModal'); });
     $('aiButton').addEventListener('click', openAiSettings);
+    $('aiLogButton').addEventListener('click', openAiLog);
+    $('aiLogClear').addEventListener('click', () => {
+      if (window.RelationshipAILog) window.RelationshipAILog.clear();
+      renderAiLog();
+    });
+    if (window.RelationshipAILog) window.RelationshipAILog.subscribe(renderAiLog);
     $('aiConfigForm').addEventListener('submit', event => {
       event.preventDefault();
       state.aiConfig = readAiConfigForm();
@@ -1400,6 +1460,8 @@
       syncThemeModalOnSwitch();
     });
     setBackgroundLayer({ animate: false });
+    // 激活 3 个区域背景(对方 / 战场 / 手牌)
+    document.body.classList.add('bg-battlefield', 'bg-opponent', 'bg-hand');
     if ($('themeButton')) $('themeButton').addEventListener('click', openThemeSettings);
     if ($('themePrevButton')) $('themePrevButton').addEventListener('click', () => BG.cyclePrevId());
     if ($('themeNextButton')) $('themeNextButton').addEventListener('click', () => BG.cycleNextId());

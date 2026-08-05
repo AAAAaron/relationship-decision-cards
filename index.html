@@ -10,6 +10,9 @@
 </head>
 <body>
   <div class="bg-layer" id="bgLayer" aria-hidden="true"></div>
+  <div class="bg-region bg-region--opponent" id="bgRegionOpponent" aria-hidden="true"></div>
+  <div class="bg-region bg-region--battlefield" id="bgRegionBattlefield" aria-hidden="true"></div>
+  <div class="bg-region bg-region--hand" id="bgRegionHand" aria-hidden="true"></div>
   <div class="bg-overlay" aria-hidden="true"></div>
   <canvas id="stageFxCanvas" aria-hidden="true"></canvas>
   <div class="stage-fx-fallback" aria-hidden="true"></div>
@@ -36,6 +39,7 @@
         <button id="historyButton" class="ghost-button" type="button">回合 <span id="historyCount">1</span></button>
         <button id="themeButton" class="round-icon theme-button" type="button" aria-label="切换背景主题" title="切换背景主题">🎨</button>
         <button id="aiButton" class="round-icon" type="button" aria-label="AI 接入设置" title="AI 接入设置">AI</button>
+        <button id="aiLogButton" class="round-icon" type="button" aria-label="AI 调用日志" title="AI 调用日志">🐞</button>
         <button id="dataButton" class="round-icon data-button" type="button" aria-label="导入或导出数据" title="导入或导出数据">⇅</button>
       </div>
     </header>
@@ -159,6 +163,14 @@
     </section>
   </div>
 
+  <div id="aiLogModal" class="modal-backdrop" hidden>
+    <section class="modal-panel wide-panel" role="dialog" aria-modal="true">
+      <header class="modal-header"><div><span>AI 调试</span><h2>AI 通信原始记录</h2><p>最近 20 条调用：时间/模型/耗时/Prompt 摘要/响应摘要/失败原因。便于排查"AI 没接进来"等问题。</p></div><button class="modal-close" data-close="aiLogModal" type="button">×</button></header>
+      <div class="ai-log-toolbar"><button id="aiLogClear" class="secondary-button" type="button">清空记录</button><span id="aiLogCount" class="data-status">0 条</span></div>
+      <div id="aiLogList" class="ai-log-list"></div>
+    </section>
+  </div>
+
   <div id="themeModal" class="modal-backdrop" hidden>
     <section class="modal-panel compact-panel" role="dialog" aria-modal="true">
       <header class="modal-header"><div><span>背景主题</span><h2>切换桌面氛围</h2><p>桌面背景会随选择实时更换；偏好会保存在当前浏览器。</p></div><button class="modal-close" data-close="themeModal" type="button">×</button></header>
@@ -186,6 +198,6 @@
     }
   }
   </script>
-  <script src="data/demo-data.js"></script><script src="src/data-model.js"></script><script src="src/ai-client.js"></script><script src="src/ai-engine.js"></script><script src="src/storage.js"></script><script src="src/backgrounds.js"></script><script src="src/motion-preferences.js"></script><script src="src/stage-fx-scenes.js"></script><script src="src/stage-fx-scene-factory.js"></script><script src="src/stage-fx-effects.js"></script><script src="src/stage-fx.js"></script><script src="src/stage-fx-controller.js"></script><script type="module" src="src/stage-fx-bootstrap.js"></script><script src="src/app.js"></script>
+  <script src="data/demo-data.js"></script><script src="src/data-model.js"></script><script src="src/ai-client.js"></script><script src="src/ai-engine.js"></script><script src="src/ai-log.js"></script><script src="src/storage.js"></script><script src="src/backgrounds.js"></script><script src="src/motion-preferences.js"></script><script src="src/stage-fx-scenes.js"></script><script src="src/stage-fx-scene-factory.js"></script><script src="src/stage-fx-effects.js"></script><script src="src/stage-fx.js"></script><script src="src/stage-fx-controller.js"></script><script type="module" src="src/stage-fx-bootstrap.js"></script><script src="src/app.js"></script>
 </body>
 </html>

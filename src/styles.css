@@ -61,6 +61,38 @@ body {
   transition:opacity .55s ease;
   pointer-events:none;
 }
+/* 4 个区域背景层(炉石式分区), 默认隐藏, 显式激活时显示 */
+.bg-region {
+  position:fixed;
+  z-index:-1;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  opacity:0;
+  transition:opacity .55s ease;
+  pointer-events:none;
+}
+.bg-region--battlefield { /* 中央战场(对方出牌 + 我的回应) */
+  inset:30% 8% 36% 8%;
+  background-image:url("../assets/textures/region-battlefield.png");
+  border-radius:18px;
+  box-shadow:inset 0 0 60px rgba(0,0,0,.6);
+}
+.bg-region--opponent { /* 对方头像 / 场景区(顶部) */
+  top:0; left:0; right:0; height:30%;
+  background-image:url("../assets/textures/region-opponent.png");
+  mask-image:linear-gradient(to bottom, #000 60%, transparent 100%);
+  -webkit-mask-image:linear-gradient(to bottom, #000 60%, transparent 100%);
+}
+.bg-region--hand { /* 手牌区(底部) */
+  bottom:0; left:0; right:0; height:36%;
+  background-image:url("../assets/textures/region-hand.png");
+  mask-image:linear-gradient(to top, #000 50%, transparent 100%);
+  -webkit-mask-image:linear-gradient(to top, #000 50%, transparent 100%);
+}
+body.bg-battlefield .bg-region--battlefield,
+body.bg-opponent .bg-region--opponent,
+body.bg-hand .bg-region--hand { opacity: 0.5; mix-blend-mode: overlay; }
 .bg-overlay {
   position:fixed;
   inset:0;
@@ -210,7 +242,7 @@ display:none!important;
   margin:8px auto 8px;
   border:1px solid var(--line);
   border-radius:22px;
-  background:rgba(5,13,25,.8);
+  background:rgba(5,13,25,.55); /* 0.8→0.55 让 3 区域背景透出 */
   box-shadow:var(--shadow);
   overflow:hidden;
   height:calc(100vh - 16px);
@@ -1151,6 +1183,90 @@ line-height:1.5;
 @keyframes hand-source-pulse {
   0%, 100% { opacity:.55; }
   50% { opacity:1; }
+}
+.ai-log-toolbar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.ai-log-list {
+  max-height:60vh;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding-right:4px;
+}
+.ai-log-item {
+  position:relative;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:rgba(7,16,29,.6);
+  font-size:12px;
+  line-height:1.5;
+}
+.ai-log-item.ai-log-ai {
+  border-color:rgba(231,189,101,.4);
+  background:rgba(231,189,101,.06);
+}
+.ai-log-item.ai-log-local {
+  border-color:rgba(215,134,141,.45);
+  background:rgba(215,134,141,.06);
+}
+.ai-log-head {
+  display:flex;
+  gap:8px;
+  align-items:center;
+  font-weight:700;
+  font-size:11px;
+  margin-bottom:4px;
+}
+.ai-log-pill {
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:760;
+  letter-spacing:.02em;
+}
+.ai-log-pill.ai { background:rgba(231,189,101,.18); color:var(--gold2); }
+.ai-log-pill.local { background:rgba(215,134,141,.18); color:#f0d4d6; }
+.ai-log-pill.kind { background:rgba(125,163,255,.18); color:var(--blue); }
+.ai-log-summary {
+  color:var(--soft);
+  font-size:11.5px;
+  word-break:break-word;
+  margin-top:2px;
+}
+.ai-log-detail {
+  margin-top:6px;
+  padding:6px 8px;
+  background:rgba(0,0,0,.32);
+  border-radius:7px;
+  font-family:ui-monospace,SF Mono,monospace;
+  font-size:10.5px;
+  color:var(--muted);
+  max-height:120px;
+  overflow-auto;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.ai-log-toggle {
+  margin-top:6px;
+  font-size:10px;
+  color:var(--blue);
+  cursor:pointer;
+  background:none;
+  border:0;
+  padding:0;
+}
+.ai-log-error {
+  color:#f0d4d6;
+  font-weight:600;
+  margin-top:4px;
+  word-break:break-word;
 }
 .hand-loading {
   display:flex;
