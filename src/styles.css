@@ -1849,6 +1849,62 @@ font-weight:700;
 font-size:10px;
 }
 
+/* ===== 紧凑一列布局 (新炉石风格) ===== */
+.play-compact {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:0 4px;
+}
+.play-header {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  padding-bottom:4px;
+  border-bottom:1px solid var(--line);
+}
+.play-header h2 {
+  margin:0;
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:-.015em;
+  line-height:1.25;
+  color:var(--text);
+}
+.play-header .rank-badge {
+  align-self:flex-start;
+}
+.play-reply-preview {
+  margin:0;
+  font-size:13px;
+  font-weight:600;
+  line-height:1.55;
+  color:var(--soft);
+  letter-spacing:.005em;
+  font-style:italic;
+  padding:6px 8px;
+  background:rgba(255,255,255,.03);
+  border-left:2px solid var(--gold);
+  border-radius:0 8px 8px 0;
+}
+.play-compact .play-section {
+  margin-top:0;
+}
+.play-compact .play-section h3 {
+  margin:0 0 6px;
+  font-size:11px;
+  font-weight:760;
+  color:var(--muted);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.play-compact .play-actions {
+  margin-top:6px;
+  padding-top:8px;
+  border-top:1px solid var(--line);
+  justify-content:flex-end;
+}
+
 /* ===== 炉石风格抉择：2 张并列大卡 ===== */
 .play-choice-grid {
   display:grid;

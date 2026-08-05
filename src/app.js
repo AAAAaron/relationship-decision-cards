@@ -471,7 +471,7 @@
     // 抉择（炉石风格）：2 张并列大卡，仅 candidate.type === 'choice' 时显示
     const choiceGrid = c.type === 'choice' ? `<div class="play-choice-grid">${c.choices.map((x, i) => `<button class="play-choice-card ${i === state.selectedChoiceIndex ? 'active' : ''}" data-choice-index="${i}" type="button"><strong>${esc(x.title)}</strong><p>${esc(x.summary)}</p></button>`).join('')}</div>` : '';
 
-    // 风格头像（4 个圆头像），可配置 state.styleAvatars
+    // 风格头像：4 个圆头像（可自定义 state.styleAvatars）
     const styleAvatars = state.styleAvatars || {};
     const styleList = `<div class="play-style-row">${DATA.styles.map(s => {
       const avatar = styleAvatars[s.id] || s.id.charAt(0).toUpperCase();
@@ -479,20 +479,23 @@
       const avatarHtml = isUrl
         ? `<img src="${esc(avatar)}" alt="${esc(s.name)}" />`
         : `<span class="play-avatar-emoji">${esc(avatar)}</span>`;
-      return `<button class="play-style-avatar ${s.id === state.selectedStyleId ? 'active' : ''}" data-style-id="${s.id}" type="button" title="${esc(s.name)}">${avatarHtml}<small>${esc(s.name)}</small></button>`;
+      return `<button class="play-style-avatar ${s.id === state.selectedStyleId ? 'active' : ''}" data-style-id="${s.id}" type="button" title="${esc(s.name)} · ${esc(s.note)}">${avatarHtml}<small>${esc(s.name)}</small></button>`;
     }).join('')}</div>`;
-    const styleNote = `<p class="helper-text">${esc(style(state.selectedStyleId).note)}</p>`;
 
-    $('playModalContent').innerHTML = `<div class="play-layout">
-      <div class="play-preview">${replyCardHtml({ title: c.title, reply: selectedReply(), style_name: style(state.selectedStyleId).name, choice_title: c.type === 'choice' ? c.choices[state.selectedChoiceIndex].title : '', ai_rank: cand.rank }, true, false)}</div>
-      <div class="play-options">
+    // 当前风格 reply 摘要（紧凑一行，hover 展开）
+    const previewReply = selectedReply();
+
+    $('playModalContent').innerHTML = `<div class="play-compact">
+      <header class="play-header">
         <span class="rank-badge ${rankClass(cand.rank)}">${rankName(cand.rank)}</span>
         <h2>${esc(c.title)}</h2>
+        <p class="play-reply-preview">“${esc(previewReply)}”</p>
         ${warning}
-        ${c.type === 'choice' ? `<section class="play-section"><h3>先选择具体路线</h3>${choiceGrid}</section>` : ''}
-        <section class="play-section"><h3>换一种表达风格</h3>${styleList}${styleNote}</section>
-        <div class="play-actions"><button class="secondary-button" data-close="playModal" type="button">返回手牌</button><button id="confirmPlay" class="primary-button" type="button">确认出牌</button></div>
-      </div></div>`;
+      </header>
+      ${c.type === 'choice' ? `<section class="play-section"><h3>选具体路线</h3>${choiceGrid}</section>` : ''}
+      <section class="play-section"><h3>换风格</h3>${styleList}</section>
+      <div class="play-actions"><button class="secondary-button" data-close="playModal" type="button">返回手牌</button><button id="confirmPlay" class="primary-button" type="button">确认出牌</button></div>
+    </div>`;
     bindFlips($('playModalContent'));
     $$('[data-choice-index]', $('playModalContent')).forEach(b => b.addEventListener('click', () => { state.selectedChoiceIndex = Number(b.dataset.choiceIndex); renderPlayModal(); }));
     $$('[data-style-id]', $('playModalContent')).forEach(b => b.addEventListener('click', () => { state.selectedStyleId = b.dataset.styleId; renderPlayModal(); }));
