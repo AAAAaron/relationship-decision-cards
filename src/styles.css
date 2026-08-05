@@ -20,12 +20,22 @@
   /* 主题色：默认金(stage-fx 启动时按 preset 覆盖): meeting=#f6dda0 / elevator=#c8d2e0 / dinner=#ffb366 / default=#7da3ff */
   --accent:#f6dda0;
   --accent-soft:rgba(246,221,160,.2);
-  /* 卡牌基类变量: 14px 圆角 + 液体玻璃阴影 + 边框 */
+  /* ===== 统一卡牌 token (Hearthstone 风格) ===== */
   --card-radius:14px;
   --card-shadow:0 16px 38px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.06);
   --card-border:1px solid var(--line);
   --card-tint:rgba(255,255,255,.04);
   --card-text:var(--text);
+  --card-w:200px;          /* 主卡宽度 */
+  --card-h:320px;          /* 主卡高度 1.6:1 */
+  --card-h3-size:18px;     /* 标题字号 */
+  --card-text-size:12.5px; /* 正文字号 */
+  --card-rank-border-w:2px; /* rank 边框 */
+  --card-top-bar-h:3px;    /* 顶部高亮条 */
+  /* 卡牌背景: 暖色 (主角互动) / 冷色 (场景/记录) */
+  --card-bg-light:radial-gradient(circle at 100% 0,rgba(246,221,160,.55),transparent 43%),repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(119,91,42,.015) 3px,rgba(119,91,42,.015) 4px),linear-gradient(160deg,var(--paper2),var(--paper));
+  --card-bg-dark:linear-gradient(180deg,rgba(13,27,47,.97),rgba(7,16,29,.98));
+  --card-bg-record:radial-gradient(circle at 100% 0,rgba(117,148,255,.14),transparent 38%),repeating-linear-gradient(0deg,transparent,transparent 4px,rgba(117,148,255,.018) 4px,rgba(117,148,255,.018) 5px),linear-gradient(160deg,#1b3154,#101d34);
 --shadow:0 24px 70px rgba(0,0,0,.34);
 }
 
@@ -544,9 +554,14 @@ text-shadow:0 0 10px rgba(231,189,101,.25);
 }
 
 /* ===== 卡牌统一基类(所有卡牌位置继承) ===== */
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card, .card-face) {
+  position:relative;
+}
+/* 全部卡牌共享: 圆角 + 阴影 + 边框 */
 :where(.card-face, .hand-card, .pack-card, .deck-card-option, .record-card, .dialog-card, .deck-scene-card) {
-  border-radius:var(--card-radius,14px);
+  border-radius:var(--card-radius);
   box-shadow:var(--card-shadow);
+  border:var(--card-border);
 }
 /* 卡牌内部结构: top 头部 / title 标题 / body 正文 / foot 底部 */
 .card-top {
@@ -724,10 +739,10 @@ text-shadow:0 0 10px rgba(231,189,101,.25);
   flex-wrap:wrap;
 }
 /* rank 调色(集中): 顶部 3px 高亮条 + 边框 tint */
-:where(.hand-card, .dialog-card, .pack-card, .record-card) {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card) {
   position:relative;
 }
-:where(.hand-card, .dialog-card, .pack-card, .record-card)::before {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card)::before {
   content:"";
   position:absolute;
   inset:0;
@@ -737,26 +752,26 @@ text-shadow:0 0 10px rgba(231,189,101,.25);
   border:2px solid transparent;
   transition:border-color .25s ease, box-shadow .25s ease;
 }
-:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-primary::before {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card).rank-primary::before {
   border-color:rgba(231,189,101,.75);
   box-shadow:0 0 18px rgba(231,189,101,.32), inset 0 0 0 1px rgba(231,189,101,.22);
   animation:rankPulseGold 2.4s ease-in-out infinite;
 }
-:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-backup::before {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card).rank-backup::before {
   border-color:rgba(117,148,255,.7);
   box-shadow:0 0 14px rgba(117,148,255,.26), inset 0 0 0 1px rgba(117,148,255,.18);
   animation:rankBreathBlue 2.8s ease-in-out infinite;
 }
-:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-risk::before {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card).rank-risk::before {
   border-color:rgba(215,134,141,.78);
   box-shadow:0 0 14px rgba(215,134,141,.28), inset 0 0 0 1px rgba(215,134,141,.2);
   animation:rankWarnRed 1.9s ease-in-out infinite;
 }
-:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-other::before {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card).rank-other::before {
   border-color:rgba(150,165,185,.45);
 }
 /* rank 顶部 4px 高亮条(顶部 accent) */
-:where(.hand-card, .dialog-card, .pack-card, .record-card)::after {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card)::after {
   content:"";
   position:absolute;
   top:0;
@@ -768,16 +783,16 @@ text-shadow:0 0 10px rgba(231,189,101,.25);
   z-index:5;
   opacity:.85;
 }
-:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-primary::after {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card).rank-primary::after {
   background:linear-gradient(90deg,transparent,var(--gold),transparent);
 }
-:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-backup::after {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card).rank-backup::after {
   background:linear-gradient(90deg,transparent,var(--blue),transparent);
 }
-:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-risk::after {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card).rank-risk::after {
   background:linear-gradient(90deg,transparent,var(--red),transparent);
 }
-:where(.hand-card, .dialog-card, .pack-card, .record-card).rank-other::after {
+:where(.hand-card, .dialog-card, .pack-card, .record-card, .deck-scene-card).rank-other::after {
   background:linear-gradient(90deg,transparent,rgba(150,165,185,.5),transparent);
 }
 .dialog-card {
@@ -911,10 +926,7 @@ overflow:hidden;
   gap:6px;
   border:1px solid rgba(119,91,42,.32);
   color:var(--ink);
-  background:
-    radial-gradient(circle at 100% 0,rgba(246,221,160,.55),transparent 42%),
-    repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(119,91,42,.015) 3px,rgba(119,91,42,.015) 4px),
-    linear-gradient(160deg,var(--paper2),var(--paper));
+  background:var(--card-bg-light);
   box-shadow:0 12px 36px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(119,91,42,.08);
 }
 .card-back {
@@ -1452,11 +1464,8 @@ background:#6d7888;
   gap:6px;
   border:1px solid rgba(119,91,42,.32);
   color:var(--ink);
-  background:
-    radial-gradient(circle at 100% 0,rgba(246,221,160,.55),transparent 43%),
-    repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(119,91,42,.015) 3px,rgba(119,91,42,.015) 4px),
-    linear-gradient(160deg,var(--paper2),var(--paper));
-box-shadow:0 16px 40px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(119,91,42,.08);
+  background:var(--card-bg-light);
+  box-shadow:0 16px 40px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(119,91,42,.08);
 }
 .hand-card.focused {
   z-index:50;
