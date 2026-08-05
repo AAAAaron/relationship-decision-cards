@@ -56,6 +56,18 @@
   const sourceClass = s => ({ real: 'source-real', hypothesis: 'source-hypothesis', simulation: 'source-simulation', template: 'source-template' }[s] || 'source-hypothesis');
   const rankName = r => ({ primary: 'AI主推荐', backup: '条件备选', other: '其他可行', risk: 'AI不推荐' }[r] || '其他可行');
   const rankClass = r => ({ primary: 'rank-primary', backup: 'rank-backup', other: 'rank-other', risk: 'rank-risk' }[r] || 'rank-other');
+  // 稀有度宝石: 1-5 颗菱形 (高/中/低/极低/未知)
+  function renderRarity(confidence) {
+    const map = { '高': 5, '中高': 4, '中': 3, '中低': 2, '低': 1, '极低': 1 };
+    const n = map[confidence] || 3;
+    let html = '';
+    for (let i = 0; i < 5; i++) {
+      html += `<span class="gem ${i < n ? 'on' : ''}"></span>`;
+    }
+    return html;
+  }
+  // 翻面按钮在 card 顶部, 不被角标遮挡
+  function flipButton() { return `<button class="flip-button" data-flip type="button" aria-label="翻面">↻</button>`; }
   const relationshipTypeName = id => ({ leader: '决策型领导', client: '审慎型客户', partner: '协商型伴侣', colleague: '协作型同事' }[id] || '重要关系');
   const icon = name => {
     const paths = {
@@ -151,12 +163,16 @@
       <div class="card-inner">
         <section class="card-face scene-front">
           <button class="flip-button" data-flip type="button">↻</button>
+          <div class="card-corner-rank" aria-hidden="true">${esc(sceneTypeName(scene.scene_type).slice(0,2))}</div>
+          <div class="card-flair" aria-hidden="true">${esc(sourceName(scene.source))}</div>
           <div class="card-top">
             <div class="opponent-avatar"><span>${esc(p.initial)}</span><small>${esc(p.name)} · 对方出牌</small></div>
             <span class="source-badge ${sourceClass(scene.source)}">${sourceName(scene.source)}</span>
           </div>
           <h3 class="card-title">${esc(scene.title)}</h3>
+          <div class="card-art">${esc(sceneTypeName(scene.scene_type))} · 场景</div>
           <div class="card-body">${lead}</div>
+          <div class="card-rarity" aria-hidden="true">${renderRarity(scene.confidence || '中')}</div>
           <div class="card-foot">
             <span class="card-foot-meta">${esc(sceneTypeName(scene.scene_type))}</span>
             <span class="card-foot-divider">·</span>
@@ -188,9 +204,13 @@
       <div class="card-inner">
         <section class="card-face reply-front">
           <button class="flip-button" data-flip type="button">↻</button>
+          <div class="card-corner-rank" aria-hidden="true">${esc(rankName(player.ai_rank || 'primary').slice(0,2))}</div>
+          <div class="card-flair" aria-hidden="true">${saved ? '已收藏' : '采用中'}</div>
           <div class="card-top"><div class="rank-row">${rank}${saved ? '<span class="rank-badge rank-primary">已收藏</span>' : ''}</div></div>
           <h3 class="card-title">${esc(player.title)}</h3>
+          <div class="card-art">${esc(player.style_name || '我的原声')}</div>
           <div class="card-body"><blockquote>“${esc(player.reply)}”</blockquote></div>
+          <div class="card-rarity" aria-hidden="true">${renderRarity(player.confidence || '中')}</div>
           <div class="card-foot"><span class="card-foot-meta">${esc(player.style_name || '我的原声')}</span><span class="card-foot-divider">·</span><span class="card-foot-meta">${saved ? '已收藏，可复用' : '当前回合采用'}</span></div>
         </section>
         <section class="card-face card-back card-back-player">

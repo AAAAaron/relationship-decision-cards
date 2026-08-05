@@ -542,21 +542,114 @@ text-shadow:0 0 10px rgba(231,189,101,.25);
   justify-content:space-between;
   gap:8px;
 }
+/* 卡牌中央插画占位 (Hearthstone 风格) */
+.card-art {
+  position:relative;
+  height:48px;
+  margin:4px -2px 6px;
+  border-radius:6px;
+  background:linear-gradient(135deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.01) 100%);
+  border:1px dashed rgba(255,255,255,.18);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  color:rgba(255,255,255,.4);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  font-weight:760;
+}
+.reply-front .card-art {
+  background:linear-gradient(135deg, rgba(119,91,42,.06) 0%, rgba(119,91,42,.02) 100%);
+  border-color:rgba(119,91,42,.22);
+  color:rgba(60,40,15,.5);
+}
+/* 卡牌底部稀有度宝石 (Hearthstone 风格, 1-5 颗菱形) */
+.card-rarity {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:3px;
+  margin-top:-4px;
+  margin-bottom:4px;
+  height:8px;
+}
+
+/* 卡牌左上角标 (rank 颜色方块, 像 Hearthstone 费用格) */
+.card-corner-rank {
+  position:absolute;
+  top:-2px;
+  left:-2px;
+  width:24px;
+  height:24px;
+  background:var(--accent, var(--gold));
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:800;
+  color:#182039;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4), 0 1px 4px rgba(0,0,0,.3);
+  z-index:2;
+}
+.reply-front .card-corner-rank {
+  background:linear-gradient(180deg, var(--gold2), var(--gold));
+  color:#182039;
+}
+/* 卡牌右上角标 (场景类型) */
+.card-flair {
+  position:absolute;
+  top:6px;
+  right:6px;
+  padding:2px 7px;
+  border-radius:999px;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  color:rgba(255,255,255,.85);
+  font-size:9.5px;
+  font-weight:760;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  z-index:2;
+}
+.card-rarity .gem {
+  width:5px;
+  height:5px;
+  transform:rotate(45deg);
+  border-radius:1px;
+  background:rgba(255,255,255,.3);
+}
+.card-rarity .gem.on { background:var(--gold, #e7bd65); box-shadow:0 0 4px var(--gold, #e7bd65); }
+.reply-front .card-rarity .gem.on { background:rgba(231,189,101,.85); }
 .card-title {
   margin:0;
   font-size:17px;
   font-weight:800;
   line-height:1.25;
-  letter-spacing:-.015em;
+  letter-spacing:-.02em;
   color:inherit;
   position:relative;
-  padding-left:10px;
+  padding:0 0 0 12px;
   border-left:3px solid var(--accent, var(--gold));
   display:-webkit-box;
   -webkit-line-clamp:2;
   -webkit-box-orient:vertical;
   overflow:hidden;
   text-overflow:ellipsis;
+  /* 标题顶部装饰线: 顶部小标 */
+  &::before {
+    content:"";
+    position:absolute;
+    top:-6px;
+    left:12px;
+    right:0;
+    height:2px;
+    background:linear-gradient(90deg, var(--accent, var(--gold)), transparent);
+    border-radius:1px;
+    opacity:.65;
+  }
 }
 .hand-card .card-title {
   font-size:19px;
