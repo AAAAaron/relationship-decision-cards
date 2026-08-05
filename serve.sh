@@ -42,14 +42,39 @@ echo "   停止方式: 前台运行按 Ctrl+C；后台运行执行 pkill -f 'htt
 echo ""
 
 if [ "${1:-}" = "--bg" ]; then
-  nohup "$PY_BIN" -m http.server "$PORT" --bind "$BIND" >serve.log 2>&1 &
+  cat > /tmp/no-cache-server.py <<'EOF'
+import sys, http.server, socketserver
+class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+        super().end_headers()
+PORT = int(sys.argv[1])
+BIND = sys.argv[2]
+with socketserver.TCPServer((BIND, PORT), NoCacheHandler) as httpd:
+    httpd.serve_forever()
+EOF
+  nohup "$PY_BIN" /tmp/no-cache-server.py "$PORT" "$BIND" >serve.log 2>&1 &
   sleep 1
   if curl -s -o /dev/null -w "%{http_code}" "http://$BIND:$PORT/index.html" | grep -q 200; then
-    echo "✅ 已在后台启动，访问: http://localhost:$PORT  (日志: serve.log)"
+    echo "✅ 已在后台启动 (no-cache 模式), 访问: http://localhost:$PORT  (日志: serve.log)"
   else
     echo "❌ 启动失败，请查看 serve.log"
     exit 1
   fi
 else
-  exec "$PY_BIN" -m http.server "$PORT" --bind "$BIND"
+  cat > /tmp/no-cache-server.py <<'EOF'
+import sys, http.server, socketserver
+class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        super().end_headers()
+PORT = int(sys.argv[1])
+BIND = sys.argv[2]
+with socketserver.TCPServer((BIND, PORT), NoCacheHandler) as httpd:
+    httpd.serve_forever()
+EOF
+  exec "$PY_BIN" /tmp/no-cache-server.py "$PORT" "$BIND"
 fi

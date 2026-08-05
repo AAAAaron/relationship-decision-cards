@@ -1871,263 +1871,6 @@ font-weight:700;
 font-size:10px;
 }
 
-/* ===== 紧凑一列布局 (新炉石风格) ===== */
-.play-compact {
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  padding:0 4px;
-}
-.play-header {
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  padding-bottom:4px;
-  border-bottom:1px solid var(--line);
-}
-.play-header h2 {
-  margin:0;
-  font-size:18px;
-  font-weight:800;
-  letter-spacing:-.015em;
-  line-height:1.25;
-  color:var(--text);
-}
-.play-header .rank-badge {
-  align-self:flex-start;
-}
-.play-reply-preview {
-  margin:0;
-  font-size:13px;
-  font-weight:600;
-  line-height:1.55;
-  color:var(--soft);
-  letter-spacing:.005em;
-  font-style:italic;
-  padding:6px 8px;
-  background:rgba(255,255,255,.03);
-  border-left:2px solid var(--gold);
-  border-radius:0 8px 8px 0;
-}
-.play-compact .play-section {
-  margin-top:0;
-}
-.play-compact .play-section h3 {
-  margin:0 0 6px;
-  font-size:11px;
-  font-weight:760;
-  color:var(--muted);
-  letter-spacing:.06em;
-  text-transform:uppercase;
-}
-.play-compact .play-actions {
-  margin-top:6px;
-  padding-top:8px;
-  border-top:1px solid var(--line);
-  justify-content:flex-end;
-}
-
-/* ===== 炉石风格抉择：2 张完整卡牌 (跟手牌一样的视觉) ===== */
-.play-choice-grid {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-  margin-top:10px;
-}
-.play-choice-card {
-  position:relative;
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:42px 14px 8px;
-  background:linear-gradient(160deg,rgba(246,221,160,.55),transparent 43%),repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(119,91,42,.015) 3px,rgba(119,91,42,.015) 4px),linear-gradient(180deg,var(--paper2),var(--paper));
-  color:var(--ink);
-  font-size:13px;
-  font-weight:600;
-  text-align:left;
-  cursor:pointer;
-  height:280px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
-  box-shadow:0 16px 40px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.16);
-}
-.play-choice-card::before {
-  content:"";
-  position:absolute;
-  inset:0;
-  border:3px solid transparent;
-  border-radius:14px;
-  pointer-events:none;
-  z-index:6;
-}
-.play-choice-card::after {
-  content:"";
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  height:3px;
-  background:linear-gradient(90deg,transparent,var(--accent),transparent);
-  border-radius:14px 14px 0 0;
-  pointer-events:none;
-  z-index:5;
-}
-.play-choice-card.rank-primary::before { border-color:var(--gold); }
-.play-choice-card.rank-backup::before { border-color:var(--blue); }
-.play-choice-card.rank-other::before { border-color:#6f7a8e; }
-.play-choice-card.rank-risk::before { border-color:var(--red); }
-.play-choice-card.rank-primary::after { background:linear-gradient(90deg,transparent,var(--gold),transparent); }
-.play-choice-card.rank-backup::after { background:linear-gradient(90deg,transparent,var(--blue),transparent); }
-.play-choice-card.rank-other::after { background:linear-gradient(90deg,transparent,#8491a7,transparent); }
-.play-choice-card.rank-risk::after { background:linear-gradient(90deg,transparent,var(--red),transparent); }
-.play-choice-card:hover {
-  transform:translateY(-4px) scale(1.02);
-  box-shadow:0 22px 50px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.16);
-}
-.play-choice-card.active {
-  transform:translateY(-6px) scale(1.04);
-  border-color:var(--gold);
-  box-shadow:0 0 0 2px var(--gold),0 24px 60px rgba(231,189,101,.5),inset 0 1px 0 rgba(255,255,255,.2);
-}
-.play-choice-card.active::before { border-color:var(--gold); }
-.play-choice-card .choice-card-rank {
-  position:absolute;
-  top:8px;
-  left:8px;
-  padding:3px 9px 3px 7px;
-  border-radius:999px;
-  background:rgba(255,255,255,.6);
-  color:var(--ink);
-  font-size:9.5px;
-  font-weight:760;
-  letter-spacing:.02em;
-  border:1px solid rgba(119,91,42,.32);
-  z-index:7;
-}
-.play-choice-card.rank-primary .choice-card-rank {
-  background:linear-gradient(145deg,var(--gold2),var(--gold));
-  color:#19223a;
-  border-color:rgba(231,189,101,.6);
-}
-.play-choice-card .choice-card-letter {
-  position:absolute;
-  top:8px;
-  right:12px;
-  font-size:32px;
-  font-weight:800;
-  font-family:Georgia,serif;
-  color:rgba(119,91,42,.32);
-  letter-spacing:.02em;
-  line-height:1;
-  z-index:7;
-}
-.play-choice-card.active .choice-card-letter { color:rgba(231,189,101,.85); }
-.play-choice-card .choice-card-title {
-  margin:0 0 8px;
-  font-size:18px;
-  font-weight:800;
-  line-height:1.2;
-  letter-spacing:-.015em;
-  color:var(--ink);
-  word-break:break-word;
-  flex-shrink:0;
-}
-.play-choice-card .choice-card-summary {
-  margin:0 14px;
-  font-size:12.5px;
-  font-weight:600;
-  line-height:1.55;
-  color:#5b5246;
-  letter-spacing:.005em;
-  flex:1 1 auto;
-}
-.play-choice-card .choice-card-foot {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin-top:auto;
-  padding:8px 12px;
-  border-top:1px solid rgba(75,61,34,.22);
-  background:rgba(255,255,255,.32);
-  font-size:10.5px;
-  font-weight:760;
-  color:var(--ink2);
-  letter-spacing:.02em;
-}
-.play-choice-card .choice-tag {
-  padding:2px 8px;
-  border-radius:999px;
-  background:rgba(119,91,42,.18);
-  color:var(--ink);
-  border:1px solid rgba(119,91,42,.32);
-}
-.play-choice-card.active .choice-tag {
-  background:rgba(231,189,101,.4);
-  border-color:rgba(231,189,101,.6);
-  color:#19223a;
-}
-
-/* ===== 风格头像：4 个圆头像横向排列，可自定义 ===== */
-.play-style-row {
-  display:flex;
-  gap:14px;
-  margin-top:10px;
-  flex-wrap:wrap;
-}
-.play-style-avatar {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:4px;
-  padding:6px 6px 4px;
-  border:1px solid transparent;
-  border-radius:14px;
-  background:transparent;
-  cursor:pointer;
-  transition:transform .16s ease,border-color .16s ease,background .16s ease;
-  min-width:68px;
-}
-.play-style-avatar > :first-child {
-  width:44px;
-  height:44px;
-  border-radius:50%;
-  display:grid;
-  place-items:center;
-  background:linear-gradient(145deg,var(--gold2),var(--gold));
-  color:#19223a;
-  font-weight:800;
-  font-size:18px;
-  overflow:hidden;
-  border:2px solid rgba(255,255,255,.18);
-  box-shadow:0 6px 14px rgba(0,0,0,.36);
-}
-.play-style-avatar img {
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
-.play-avatar-emoji {
-  font-size:22px;
-  line-height:1;
-}
-.play-style-avatar small {
-  font-size:10.5px;
-  font-weight:760;
-  color:var(--soft);
-  letter-spacing:.02em;
-}
-.play-style-avatar:hover {
-  transform:translateY(-2px);
-  background:rgba(255,255,255,.04);
-}
-.play-style-avatar.active {
-  border-color:var(--gold);
-  background:rgba(231,189,101,.12);
-}
-.play-style-avatar.active small { color:var(--gold2); }
 .warning-box {
   margin-top:14px;
   padding:12px 14px;
@@ -5066,4 +4809,197 @@ body {
   .hero-tagline { padding:4px 16px 0; }
   .hero-tagline__lead { font-size:14px; }
   .hero-tagline__sub { font-size:11px; }
+}
+
+/* ===== 现代极简 playModal ===== */
+.play-modern {
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  padding:0 4px;
+}
+.play-header {
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.play-header-row {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.play-header h2 {
+  margin:0;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:-.01em;
+  line-height:1.3;
+  color:var(--text);
+}
+.play-header .rank-badge {
+  font-size:10px;
+  padding:3px 10px;
+  letter-spacing:.04em;
+}
+.play-reply-preview {
+  margin:0;
+  font-size:13px;
+  font-weight:500;
+  line-height:1.55;
+  color:var(--muted);
+  font-style:italic;
+  padding-left:12px;
+  border-left:2px solid var(--gold);
+}
+.play-warning {
+  font-size:12px;
+  color:#f0d4d6;
+  background:rgba(215,134,141,.1);
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid rgba(215,134,141,.3);
+}
+
+/* ===== 抉择: 2 张现代极简卡 (多色渐变 + 圆角 + 留白) ===== */
+.play-choice-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.play-choice-card {
+  position:relative;
+  border:1px solid transparent;
+  border-radius:18px;
+  padding:22px 16px 16px;
+  background:var(--card-gradient,linear-gradient(135deg,#5b8cc7,#345f8a));
+  color:#fff;
+  text-align:left;
+  cursor:pointer;
+  min-height:160px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  overflow:hidden;
+  transition:transform .18s ease,box-shadow .18s ease;
+  box-shadow:0 8px 24px rgba(0,0,0,.32);
+}
+.play-choice-card::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.08),transparent 60%);
+  pointer-events:none;
+}
+.play-choice-card:hover {
+  transform:translateY(-2px);
+  box-shadow:0 14px 36px rgba(0,0,0,.42);
+}
+.play-choice-card.active {
+  transform:translateY(-4px);
+  box-shadow:0 0 0 2px rgba(255,255,255,.85),0 18px 48px rgba(0,0,0,.48);
+}
+.play-choice-card .play-choice-letter {
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.06em;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:rgba(255,255,255,.22);
+  color:#fff;
+  display:grid;
+  place-items:center;
+  backdrop-filter:blur(4px);
+  position:absolute;
+  top:12px;
+  left:12px;
+}
+.play-choice-card .play-choice-title {
+  margin:18px 0 0;
+  font-size:15px;
+  font-weight:700;
+  line-height:1.3;
+  letter-spacing:-.005em;
+  color:#fff;
+  word-break:break-word;
+}
+.play-choice-card .play-choice-summary {
+  margin:0;
+  font-size:12px;
+  font-weight:500;
+  line-height:1.5;
+  color:rgba(255,255,255,.82);
+}
+
+/* ===== 风格头像: 4 个小圆头像 (现代紧凑) ===== */
+.play-style-section {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.play-section-label {
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  flex-shrink:0;
+}
+.play-style-row {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.play-style-avatar {
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  cursor:pointer;
+  transition:transform .14s ease,border-color .14s ease,background .14s ease;
+  overflow:hidden;
+  padding:0;
+}
+.play-style-avatar > :first-child {
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(145deg,var(--gold2),var(--gold));
+  color:#19223a;
+  font-weight:800;
+  font-size:14px;
+  overflow:hidden;
+}
+.play-style-avatar img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.play-avatar-emoji {
+  font-size:16px;
+  line-height:1;
+}
+.play-style-avatar:hover {
+  transform:translateY(-2px);
+  border-color:rgba(255,255,255,.32);
+}
+.play-style-avatar.active {
+  border-color:var(--gold);
+  box-shadow:0 0 0 2px var(--gold);
+  background:rgba(231,189,101,.16);
+}
+
+.play-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  padding-top:6px;
+  border-top:1px solid var(--line);
 }

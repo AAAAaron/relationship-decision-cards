@@ -476,27 +476,25 @@
   function renderPlayModal() {
     const cand = state.selectedCandidate;
     const c = cand ? candidateCard(cand) : card(state.selectedCardId);
-    const warning = (cand.rank === 'risk' || cand.rank === 'other') ? `<div class="warning-box"><strong>${rankName(cand.rank)}：</strong>${esc(cand.reason)}<br/>仍可出牌；你可能掌握系统尚未记录的信息。</div>` : '';
+    const warning = (cand.rank === 'risk' || cand.rank === 'other') ? `<div class="play-warning">${rankName(cand.rank)} · ${esc(cand.reason)}</div>` : '';
 
-    // 抉择: 2 张完整卡牌（跟手牌一样的视觉），仅 type === 'choice' 时显示
+    // 抉择: 2 张完整卡牌（现代极简风，多色渐变 + 圆角 + 留白）
     const choiceLetters = ['A', 'B', 'C', 'D'];
+    const choiceGradients = [
+      'linear-gradient(135deg,#5b8cc7 0%,#345f8a 100%)',
+      'linear-gradient(135deg,#c75b84 0%,#8a3456 100%)'
+    ];
     const choiceGrid = c.type === 'choice' ? `<div class="play-choice-grid">${c.choices.map((x, i) => {
       const letter = choiceLetters[i] || String(i + 1);
-      const whyUse = i === 0 ? '首选路线' : '备选路线';
-      const tag = i === 0 ? '更稳妥' : '平衡另一面';
-      return `<button class="play-choice-card rank-${cand.rank} ${i === state.selectedChoiceIndex ? 'active' : ''}" data-choice-index="${i}" type="button">
-        <div class="choice-card-rank">${rankName(cand.rank)}</div>
-        <div class="choice-card-letter">${letter}</div>
-        <h3 class="choice-card-title">${esc(x.title)}</h3>
-        <p class="choice-card-summary">${esc(x.summary)}</p>
-        <div class="choice-card-foot">
-          <span class="choice-tag">${esc(tag)}</span>
-          <span class="choice-why">${esc(whyUse)}</span>
-        </div>
+      const gradient = choiceGradients[i % choiceGradients.length];
+      return `<button class="play-choice-card ${i === state.selectedChoiceIndex ? 'active' : ''}" data-choice-index="${i}" type="button" style="--card-gradient:${gradient}">
+        <div class="play-choice-letter">${letter}</div>
+        <h3 class="play-choice-title">${esc(x.title)}</h3>
+        <p class="play-choice-summary">${esc(x.summary)}</p>
       </button>`;
     }).join('')}</div>` : '';
 
-    // 风格头像：4 个圆头像
+    // 风格头像：4 个小圆头像 (现代极简)
     const styleAvatars = state.styleAvatars || {};
     const styleList = `<div class="play-style-row">${DATA.styles.map(s => {
       const avatar = styleAvatars[s.id] || s.id.charAt(0).toUpperCase();
@@ -504,20 +502,25 @@
       const avatarHtml = isUrl
         ? `<img src="${esc(avatar)}" alt="${esc(s.name)}" />`
         : `<span class="play-avatar-emoji">${esc(avatar)}</span>`;
-      return `<button class="play-style-avatar ${s.id === state.selectedStyleId ? 'active' : ''}" data-style-id="${s.id}" type="button" title="${esc(s.name)} · ${esc(s.note)}">${avatarHtml}<small>${esc(s.name)}</small></button>`;
+      return `<button class="play-style-avatar ${s.id === state.selectedStyleId ? 'active' : ''}" data-style-id="${s.id}" type="button" title="${esc(s.name)}">${avatarHtml}</button>`;
     }).join('')}</div>`;
 
     const previewReply = selectedReply();
 
-    $('playModalContent').innerHTML = `<div class="play-compact">
+    $('playModalContent').innerHTML = `<div class="play-modern">
       <header class="play-header">
-        <span class="rank-badge ${rankClass(cand.rank)}">${rankName(cand.rank)}</span>
-        <h2>${esc(c.title)}</h2>
+        <div class="play-header-row">
+          <span class="rank-badge ${rankClass(cand.rank)}">${rankName(cand.rank)}</span>
+          <h2>${esc(c.title)}</h2>
+        </div>
         <p class="play-reply-preview">"${esc(previewReply)}"</p>
         ${warning}
       </header>
-      ${c.type === 'choice' ? `<section class="play-section"><h3>选具体路线</h3>${choiceGrid}</section>` : ''}
-      <section class="play-section"><h3>换风格</h3>${styleList}</section>
+      ${c.type === 'choice' ? `<div class="play-choice-section">${choiceGrid}</div>` : ''}
+      <div class="play-style-section">
+        <span class="play-section-label">风格</span>
+        ${styleList}
+      </div>
       <div class="play-actions"><button class="secondary-button" data-close="playModal" type="button">返回手牌</button><button id="confirmPlay" class="primary-button" type="button">确认出牌</button></div>
     </div>`;
     bindFlips($('playModalContent'));
