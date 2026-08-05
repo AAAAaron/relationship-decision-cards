@@ -22,6 +22,7 @@
     handFocus: -1, justDealt: true,
     packFilter: { person: 'all', matter: 'all', sceneType: 'all' }, packSearch: '',
     aiConfig: { baseUrl: 'https://api.openai.com/v1', model: '', apiKey: '', rememberKey: false, enabled: false },
+    styleAvatars: { my_voice: '🗣️', partner: '👔', executive: '🧊', host: '🎙️' },
     _personSuggestion: '', _matterSuggestion: ''
   };
   const matterIdsForPerson = personId => MODEL
@@ -124,6 +125,7 @@
     _personSuggestion: '', _matterSuggestion: ''
   };
   state.aiConfig = { ...defaultState.aiConfig, ...(state.aiConfig || {}) };
+  state.styleAvatars = { ...defaultState.styleAvatars, ...(state.styleAvatars || {}) };
 
   function persistState() {
     if (!STORAGE) return;
@@ -464,15 +466,31 @@
   function renderPlayModal() {
     const cand = state.selectedCandidate;
     const c = cand ? candidateCard(cand) : card(state.selectedCardId);
-    const choice = c.type === 'choice' ? `<section class="play-section"><h3>先选择具体路线</h3><div class="choice-list">${c.choices.map((x, i) => `<button class="choice-option ${i === state.selectedChoiceIndex ? 'active' : ''}" data-choice-index="${i}" type="button"><strong>${esc(x.title)}</strong><small>${esc(x.summary)}</small></button>`).join('')}</div></section>` : '';
     const warning = (cand.rank === 'risk' || cand.rank === 'other') ? `<div class="warning-box"><strong>${rankName(cand.rank)}：</strong>${esc(cand.reason)}<br/>仍可出牌；你可能掌握系统尚未记录的信息。</div>` : '';
+
+    // 抉择（炉石风格）：2 张并列大卡，仅 candidate.type === 'choice' 时显示
+    const choiceGrid = c.type === 'choice' ? `<div class="play-choice-grid">${c.choices.map((x, i) => `<button class="play-choice-card ${i === state.selectedChoiceIndex ? 'active' : ''}" data-choice-index="${i}" type="button"><strong>${esc(x.title)}</strong><p>${esc(x.summary)}</p></button>`).join('')}</div>` : '';
+
+    // 风格头像（4 个圆头像），可配置 state.styleAvatars
+    const styleAvatars = state.styleAvatars || {};
+    const styleList = `<div class="play-style-row">${DATA.styles.map(s => {
+      const avatar = styleAvatars[s.id] || s.id.charAt(0).toUpperCase();
+      const isUrl = /^https?:\/\//i.test(avatar) || /^data:/.test(avatar);
+      const avatarHtml = isUrl
+        ? `<img src="${esc(avatar)}" alt="${esc(s.name)}" />`
+        : `<span class="play-avatar-emoji">${esc(avatar)}</span>`;
+      return `<button class="play-style-avatar ${s.id === state.selectedStyleId ? 'active' : ''}" data-style-id="${s.id}" type="button" title="${esc(s.name)}">${avatarHtml}<small>${esc(s.name)}</small></button>`;
+    }).join('')}</div>`;
+    const styleNote = `<p class="helper-text">${esc(style(state.selectedStyleId).note)}</p>`;
+
     $('playModalContent').innerHTML = `<div class="play-layout">
       <div class="play-preview">${replyCardHtml({ title: c.title, reply: selectedReply(), style_name: style(state.selectedStyleId).name, choice_title: c.type === 'choice' ? c.choices[state.selectedChoiceIndex].title : '', ai_rank: cand.rank }, true, false)}</div>
       <div class="play-options">
         <span class="rank-badge ${rankClass(cand.rank)}">${rankName(cand.rank)}</span>
         <h2>${esc(c.title)}</h2>
-        ${warning}${choice}
-        <section class="play-section"><h3>换一种表达风格</h3><div class="style-tabs">${DATA.styles.map(s => `<button class="style-tab ${s.id === state.selectedStyleId ? 'active' : ''}" data-style-id="${s.id}" type="button">${esc(s.name)}</button>`).join('')}</div><p class="helper-text">${esc(style(state.selectedStyleId).note)}</p></section>
+        ${warning}
+        ${c.type === 'choice' ? `<section class="play-section"><h3>先选择具体路线</h3>${choiceGrid}</section>` : ''}
+        <section class="play-section"><h3>换一种表达风格</h3>${styleList}${styleNote}</section>
         <div class="play-actions"><button class="secondary-button" data-close="playModal" type="button">返回手牌</button><button id="confirmPlay" class="primary-button" type="button">确认出牌</button></div>
       </div></div>`;
     bindFlips($('playModalContent'));
@@ -586,17 +604,72 @@
   }
   function buildSimulationScene() {
     const sc = session().current.opponent, base = scenariosFor()[0] || DATA.scenarios[Object.keys(DATA.scenarios)[0]][0];
+    const fallbackText = { title: '继续追问', quote: '我理解你的意思，但你能不能把条件和责任再说具体一点？' };
     const text = sc ? (sc.simulation || {}) : {};
-    const fallback = { title: '继续追问', quote: '我理解你的意思，但你能不能把条件和责任再说具体一点？' };
-    const src = text.title ? text : fallback;
-    return {
+    const src = text.title ? text : fallbackText;
+    const enableAi = aiEngaged();
+    const scene = {
       id: `sim-${Date.now()}`, source: 'simulation', scene_type: sc ? sc.scene_type : 'meeting',
-      channel: 'AI模拟', title: src.title, quote: src.quote, tags: ['AI仿真', '非现实记录', '可继续推演'],
+      channel: 'AI模拟', title: src.title, quote: src.quote,
+      tags: ['AI仿真', '非现实记录', '可继续推演'],
       constraints: sc ? sc.constraints : [], round_goal: '检验当前路线是否经得起下一轮沟通',
       focus: '根据上一轮回应继续追问', confidence: '中',
-      hand_plan: clone(base.hand_plan), simulation: fallback,
-      hand_plan_source: 'local', hand_plan_reason: 'AI 未启用时使用本地模拟场景。'
+      hand_plan: enableAi ? null : clone(base.hand_plan),
+      simulation: fallbackText,
+      hand_plan_source: enableAi ? 'loading' : 'local',
+      hand_plan_reason: ''
     };
+    if (enableAi) {
+      scene._preservedHandPlan = clone(base.hand_plan);
+      scene._preservedSimulation = src;
+      aiRefillSimulationScene(scene);
+    }
+    return scene;
+  }
+
+  async function aiRefillSimulationScene(scene) {
+    if (!scene) return;
+    const aiClient = createConfiguredAiClient();
+    if (!aiClient) {
+      if (session().current.opponent === scene) renderHandPlanSource();
+      return;
+    }
+    const previousPlayer = session().current.player || {};
+    const previousScene = session().current.opponent || {};
+    const fallbackPlan = scene._preservedHandPlan || genericPlan() || { axis: '本地兜底', coverage: '', candidates: [] };
+    const fallbackScene = scene._preservedSimulation || { title: '继续追问', quote: '我理解你的意思，但你能不能把条件和责任再说具体一点？' };
+    try {
+      const result = await AI_ENGINE.generateNextScene({
+        person: person(),
+        matter: matter(),
+        currentScene: previousScene,
+        previousPlayer,
+        aiClient,
+        fallbackScene,
+        fallbackPlan
+      });
+      scene.title = result.scene.title;
+      scene.quote = result.scene.quote;
+      scene.simulation = result.scene;
+      scene.hand_plan = result.plan;
+      scene.hand_plan_source = result.source;
+      scene.hand_plan_reason = result.source === 'ai' ? '' : (result.reason || 'AI 模拟失败，使用本地兜底');
+    } catch (error) {
+      scene.title = fallbackScene.title;
+      scene.quote = fallbackScene.quote;
+      scene.simulation = fallbackScene;
+      scene.hand_plan = fallbackPlan;
+      scene.hand_plan_source = 'local';
+      scene.hand_plan_reason = `AI 模拟失败：${error.message}`;
+    }
+    delete scene._preservedHandPlan;
+    delete scene._preservedSimulation;
+    if (session().current.opponent === scene) {
+      state.justDealt = true;
+      renderHand();
+      renderBoard();
+      persistState();
+    }
   }
   function openOpponentDeck() { renderOpponentDeck(); openModal('opponentDeckModal'); }
   function renderOpponentDeck() {

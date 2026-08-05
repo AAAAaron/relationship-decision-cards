@@ -270,12 +270,94 @@
     }
   }
 
+  async function generateNextScene(input) {
+    const fallbackScene = input?.fallbackScene || { title: '继续追问', quote: '我理解你的意思，但你能不能把条件和责任再说具体一点？' };
+    const fallbackPlan = input?.fallbackPlan || { axis: '本地兜底', coverage: '', candidates: [] };
+    const aiClient = input?.aiClient;
+    if (!aiClient) {
+      logCall({ source: 'local', kind: 'next-scene', reason: 'AI 客户端未启用' });
+      return { source: 'local', scene: fallbackScene, plan: fallbackPlan, reason: 'AI 客户端未启用。' };
+    }
+    const previousPlayer = input?.previousPlayer || {};
+    const currentScene = input?.currentScene || {};
+    const userPrompt = [
+      '# 模拟对方下一句 + 重新发牌',
+      '',
+      '基于当前人物、事项、刚打出场景和上一轮我方回应，模拟对方下一句最可能说的话，并给当前局势 3 张主要解法。',
+      '',
+      '## 人物',
+      `姓名: ${input?.person?.name || '未知'}`,
+      `角色: ${input?.person?.role || ''}`,
+      `情绪: ${input?.person?.current_state?.mood || ''}`,
+      `敏感点: ${input?.person?.current_state?.sensitivity || ''}`,
+      '',
+      '## 事项',
+      `名称: ${input?.matter?.name || ''}`,
+      `矛盾: ${input?.matter?.main_conflict || ''}`,
+      '',
+      '## 上一轮场景',
+      `标题: ${currentScene.title || ''}`,
+      `原话: ${currentScene.quote || ''}`,
+      '',
+      '## 我方上一轮回应',
+      `reply: ${previousPlayer.reply || ''}`,
+      `style: ${previousPlayer.style_name || ''}`,
+      '',
+      '## 输出 JSON（严格遵守）',
+      '{',
+      '  "next_scene": { "title": "<对方下一句话的关键词 8-14 字>", "quote": "<对方原话 30-60 字>" },',
+      '  "axis": "<切分轴一句话>", "candidates": [',
+      '    { "rank": "primary", "title": "<路线>", "suggested_reply": "<回>", "reason": "<为什么>", "style_variants": { "my_voice": "...", "partner": "...", "executive": "...", "host": "..." } }',
+      '  ]',
+      '}',
+      '',
+      '只输出 JSON, 不要前言'
+    ].join('\n');
+    const t0 = Date.now();
+    try {
+      const result = await aiClient.chat([
+        { role: 'system', content: '你是关系决策牌组的"模拟对手 + 发牌助手"。基于当前人物、事项、上一轮场景、我方回应，模拟对方下一句最可能说的话，并给当前局势 3 张主要解法。' },
+        { role: 'user', content: userPrompt }
+      ], {
+        temperature: 0.6,
+        maxTokens: 1200,
+        thinking: { type: 'disabled' }
+      });
+      const text = typeof result === 'string' ? result : (result?.text || '');
+      const payload = safeParse(text);
+      const scene = {
+        title: safeText(payload.next_scene?.title, fallbackScene.title),
+        quote: safeText(payload.next_scene?.quote, fallbackScene.quote)
+      };
+      const planPayload = {
+        scene_assessment: { split_axis: safeText(payload.axis, '按一个统一维度展开'), coverage_note: '' },
+        response_cards: Array.isArray(payload.candidates) ? payload.candidates : []
+      };
+      const plan = toHandPlan(planPayload);
+      logCall({
+        source: 'ai', kind: 'next-scene', duration: Date.now() - t0,
+        promptSummary: userPrompt.slice(0, 160),
+        responseSummary: `next="${scene.title}" | cards=${plan.candidates.length}`,
+        meta: currentScene.title || ''
+      });
+      return { source: 'ai', scene, plan, reason: '' };
+    } catch (error) {
+      logCall({
+        source: 'local', kind: 'next-scene', duration: Date.now() - t0,
+        error: error.message,
+        promptSummary: userPrompt.slice(0, 160)
+      });
+      return { source: 'local', scene: fallbackScene, plan: fallbackPlan, reason: `AI 调用失败：${error.message}` };
+    }
+  }
+
   return {
     buildSystemPrompt,
     buildUserPrompt,
     parseAiHandPlan,
     generateHandPlan,
     quickAnalysis,
+    generateNextScene,
     VALID_RANKS,
     REQUIRED_STYLES
   };
