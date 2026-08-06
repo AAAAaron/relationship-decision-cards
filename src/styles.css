@@ -4861,7 +4861,7 @@ body {
   border:1px solid rgba(215,134,141,.3);
 }
 
-/* ===== 抉择: 2 张现代极简卡 (多色渐变 + 圆角 + 留白) ===== */
+/* ===== 抉择: 2 张米黄卡牌 (与手牌风格一致) ===== */
 .play-choice-grid {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -4869,67 +4869,97 @@ body {
 }
 .play-choice-card {
   position:relative;
-  border:1px solid transparent;
-  border-radius:18px;
-  padding:22px 16px 16px;
-  background:var(--card-gradient,linear-gradient(135deg,#5b8cc7,#345f8a));
-  color:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:34px 14px 14px;
+  background:var(--card-bg-light);
+  color:var(--ink);
   text-align:left;
   cursor:pointer;
-  min-height:160px;
+  min-height:200px;
   display:flex;
   flex-direction:column;
   gap:8px;
   overflow:hidden;
-  transition:transform .18s ease,box-shadow .18s ease;
-  box-shadow:0 8px 24px rgba(0,0,0,.32);
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+  box-shadow:0 12px 30px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.18);
 }
+/* 顶部 3px rank 高亮条 (与手牌一致) */
+.play-choice-card::after {
+  content:"";
+  position:absolute;
+  top:0;
+  left:14px;
+  right:14px;
+  height:3px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  border-radius:0 0 4px 4px;
+  pointer-events:none;
+  z-index:1;
+  opacity:.85;
+}
+/* 4px rank 边框 (与手牌一致) */
 .play-choice-card::before {
   content:"";
   position:absolute;
   inset:0;
-  background:linear-gradient(180deg,rgba(255,255,255,.08),transparent 60%);
+  border:2px solid transparent;
+  border-radius:inherit;
   pointer-events:none;
+  z-index:4;
+  transition:border-color .2s ease,box-shadow .2s ease;
 }
 .play-choice-card:hover {
   transform:translateY(-2px);
-  box-shadow:0 14px 36px rgba(0,0,0,.42);
+  box-shadow:0 16px 40px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.18);
 }
 .play-choice-card.active {
-  transform:translateY(-4px);
-  box-shadow:0 0 0 2px rgba(255,255,255,.85),0 18px 48px rgba(0,0,0,.48);
+  transform:translateY(-3px);
+  border-color:rgba(231,189,101,.55);
+  box-shadow:0 0 0 2px rgba(231,189,101,.6),0 18px 44px rgba(231,189,101,.32),inset 0 1px 0 rgba(255,255,255,.2);
+}
+.play-choice-card.active::before {
+  border-color:rgba(231,189,101,.7);
+  box-shadow:0 0 16px rgba(231,189,101,.32);
 }
 .play-choice-card .play-choice-letter {
-  font-size:13px;
-  font-weight:700;
-  letter-spacing:.06em;
+  position:absolute;
+  top:8px;
+  left:10px;
   width:24px;
   height:24px;
   border-radius:50%;
-  background:rgba(255,255,255,.22);
-  color:#fff;
+  background:rgba(119,91,42,.18);
+  border:1px solid rgba(119,91,42,.4);
+  color:rgba(60,40,15,.85);
+  font-size:13px;
+  font-weight:800;
+  font-family:Georgia,serif;
   display:grid;
   place-items:center;
-  backdrop-filter:blur(4px);
-  position:absolute;
-  top:12px;
-  left:12px;
+  z-index:3;
+}
+.play-choice-card.active .play-choice-letter {
+  background:rgba(231,189,101,.9);
+  border-color:rgba(231,189,101,.7);
+  color:#19223a;
 }
 .play-choice-card .play-choice-title {
   margin:18px 0 0;
   font-size:15px;
-  font-weight:700;
+  font-weight:800;
   line-height:1.3;
-  letter-spacing:-.005em;
-  color:#fff;
+  letter-spacing:-.01em;
+  color:var(--ink);
   word-break:break-word;
 }
 .play-choice-card .play-choice-summary {
   margin:0;
   font-size:12px;
   font-weight:500;
-  line-height:1.5;
-  color:rgba(255,255,255,.82);
+  line-height:1.55;
+  color:#5b5246;
+  letter-spacing:.005em;
 }
 
 /* ===== 风格头像: 4 个小圆头像 (现代紧凑) ===== */

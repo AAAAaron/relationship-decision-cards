@@ -478,16 +478,11 @@
     const c = cand ? candidateCard(cand) : card(state.selectedCardId);
     const warning = (cand.rank === 'risk' || cand.rank === 'other') ? `<div class="play-warning">${rankName(cand.rank)} · ${esc(cand.reason)}</div>` : '';
 
-    // 抉择: 2 张完整卡牌（现代极简风，多色渐变 + 圆角 + 留白）
+    // 抉择: 2 张米黄卡牌（与手牌风格一致，rank 边框 + 顶部高亮条 + 大字 A/B）
     const choiceLetters = ['A', 'B', 'C', 'D'];
-    const choiceGradients = [
-      'linear-gradient(135deg,#5b8cc7 0%,#345f8a 100%)',
-      'linear-gradient(135deg,#c75b84 0%,#8a3456 100%)'
-    ];
     const choiceGrid = c.type === 'choice' ? `<div class="play-choice-grid">${c.choices.map((x, i) => {
       const letter = choiceLetters[i] || String(i + 1);
-      const gradient = choiceGradients[i % choiceGradients.length];
-      return `<button class="play-choice-card ${i === state.selectedChoiceIndex ? 'active' : ''}" data-choice-index="${i}" type="button" style="--card-gradient:${gradient}">
+      return `<button class="play-choice-card ${i === state.selectedChoiceIndex ? 'active' : ''}" data-choice-index="${i}" type="button">
         <div class="play-choice-letter">${letter}</div>
         <h3 class="play-choice-title">${esc(x.title)}</h3>
         <p class="play-choice-summary">${esc(x.summary)}</p>
