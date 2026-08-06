@@ -502,21 +502,16 @@
 
     const previewReply = selectedReply();
 
+    // 极简化: 1 张大卡牌预览 (非 choice) / 2 张并列大卡 (choice) + 下方 4 个小头像 + 单按钮
+    const cardPreview = (c.type === 'choice') ? choiceGrid : `<div class="play-single-card">${replyCardHtml({ title: c.title, reply: previewReply, style_name: style(state.selectedStyleId).name, choice_title: c.type === 'choice' ? c.choices[state.selectedChoiceIndex].title : '', ai_rank: cand.rank }, true, false)}</div>`;
+
     $('playModalContent').innerHTML = `<div class="play-modern">
-      <header class="play-header">
-        <div class="play-header-row">
-          <span class="rank-badge ${rankClass(cand.rank)}">${rankName(cand.rank)}</span>
-          <h2>${esc(c.title)}</h2>
-        </div>
-        <p class="play-reply-preview">"${esc(previewReply)}"</p>
-        ${warning}
-      </header>
-      ${c.type === 'choice' ? `<div class="play-choice-section">${choiceGrid}</div>` : ''}
+      <div class="play-cards-row">${cardPreview}</div>
       <div class="play-style-section">
-        <span class="play-section-label">风格</span>
         ${styleList}
       </div>
-      <div class="play-actions"><button class="secondary-button" data-close="playModal" type="button">返回手牌</button><button id="confirmPlay" class="primary-button" type="button">确认出牌</button></div>
+      ${warning ? `<div class="play-warning">${warning}</div>` : ''}
+      <div class="play-actions"><button class="secondary-button" data-close="playModal" type="button">返回</button><button id="confirmPlay" class="primary-button" type="button">出牌</button></div>
     </div>`;
     bindFlips($('playModalContent'));
     $$('[data-choice-index]', $('playModalContent')).forEach(b => b.addEventListener('click', () => { state.selectedChoiceIndex = Number(b.dataset.choiceIndex); renderPlayModal(); }));
