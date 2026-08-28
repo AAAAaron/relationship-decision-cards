@@ -41,9 +41,9 @@
       return group;
     }
 
-    // 上轮深度堆叠: 更小/躺平/偏后
+    // 上轮深度堆叠: 更小/躺平/向外后方错开, 与当前牌形成清晰层次
     function previousPose(pos) {
-      return { x: pos.x * 1.55, y: LYING.lift, z: pos.z - 0.55, rx: LYING.rx, ry: 0, rz: 0 };
+      return { x: pos.x + Math.sign(pos.x || 1) * 0.7, y: LYING.lift, z: pos.z - 0.9, rx: LYING.rx, ry: 0, rz: 0 };
     }
     function setPreviousCard(holder, spec, pos) {
       if (holder.group) {
@@ -55,7 +55,7 @@
       const group = card3d.createCard3D({ THREE, painter, spec });
       const pose = previousPose(pos);
       placeAt(group, pose);
-      group.scale.setScalar(0.72);
+      group.scale.setScalar(0.66);
       root.add(group);
       holder.group = group;
     }
