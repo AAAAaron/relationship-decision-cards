@@ -192,7 +192,7 @@
 
   function paintBadge(ctx, rank, x, y, dark) {
     const s = RANK_STYLE[rank] || RANK_STYLE.other;
-    ctx.font = `700 ${12.5 * SCALE}px ${FONT_STACK}`;
+    ctx.font = `700 ${14 * SCALE}px ${FONT_STACK}`;
     const text = s.label;
     const tw = ctx.measureText(text).width;
     const padX = 12 * SCALE, h = 26 * SCALE;
@@ -227,68 +227,137 @@
     ctx.fill();
   }
 
+  // 画面区: 大幅装饰徽记填充牌面中部(炉石的 art box)
+  function paintArt(ctx, x, y, w, h, dark, spec) {
+    const fc = frameColors(dark);
+    const rank = RANK_STYLE[spec.rank] || RANK_STYLE.other;
+    ctx.save();
+    roundRect(ctx, x, y, w, h, 16 * SCALE);
+    ctx.clip();
+    // 底色: 深一档的渐变 + 斜纹
+    const g = ctx.createLinearGradient(x, y, x + w, y + h);
+    if (dark) {
+      g.addColorStop(0, '#16233d');
+      g.addColorStop(1, '#0d1829');
+    } else {
+      g.addColorStop(0, '#f3e6c8');
+      g.addColorStop(1, '#e3cd9d');
+    }
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = dark ? 'rgba(159,180,232,0.14)' : 'rgba(119,91,42,0.1)';
+    ctx.lineWidth = 1.2 * SCALE;
+    for (let i = -h; i < w; i += 22 * SCALE) {
+      ctx.beginPath();
+      ctx.moveTo(x + i, y + h);
+      ctx.lineTo(x + i + h, y);
+      ctx.stroke();
+    }
+    // 中央光晕
+    const glow = ctx.createRadialGradient(x + w / 2, y + h / 2, 0, x + w / 2, y + h / 2, w * 0.55);
+    glow.addColorStop(0, dark ? 'rgba(126,151,214,0.4)' : 'rgba(246,221,160,0.65)');
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x, y, w, h);
+    // 大徽记: 双层菱形 + 大字符
+    const cx = x + w / 2, cy = y + h / 2;
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = dark ? 'rgba(10,18,32,0.55)' : 'rgba(60,42,16,0.18)';
+    diamond(ctx, cx, cy, w * 0.34);
+    ctx.fill();
+    const gem = ctx.createLinearGradient(cx, cy - w * 0.3, cx, cy + w * 0.3);
+    gem.addColorStop(0, rank.gem);
+    gem.addColorStop(1, rank.gemDark);
+    ctx.fillStyle = gem;
+    diamond(ctx, cx, cy, w * 0.26);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,244,214,0.9)';
+    ctx.lineWidth = 3 * SCALE;
+    ctx.stroke();
+    // 徽记内大字: 场景用类型首字, 应对用 ✦
+    const artChar = (spec.meta && spec.meta[0] && spec.meta[0].value && spec.meta[0].value[0]) || '✦';
+    ctx.fillStyle = '#fff8e8';
+    ctx.font = `800 ${58 * SCALE}px ${FONT_STACK}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(artChar, cx, cy + 3 * SCALE);
+    ctx.globalAlpha = 1;
+    // 四角小菱形
+    ctx.fillStyle = fc.pin;
+    [[x + 18 * SCALE, y + 18 * SCALE], [x + w - 18 * SCALE, y + 18 * SCALE], [x + 18 * SCALE, y + h - 18 * SCALE], [x + w - 18 * SCALE, y + h - 18 * SCALE]]
+      .forEach(([px, py]) => { diamond(ctx, px, py, 5 * SCALE); ctx.fill(); });
+    ctx.restore();
+    // 边框
+    ctx.strokeStyle = fc.pin;
+    ctx.lineWidth = 2.4 * SCALE;
+    roundRect(ctx, x, y, w, h, 16 * SCALE);
+    ctx.stroke();
+  }
+
   // 正面
   // spec: { kind:'scene'|'reply'|'hand', rank, title, quote, meta:[{label,value}], back:{logic,invalid,source} }
   function drawCardFace(ctx, spec) {
     paintCardChrome(ctx, spec, ({ w, h, pad, dark, innerW }) => {
-      const ink = dark ? '#e8eefc' : '#172137';
-      const soft = dark ? 'rgba(200,214,240,0.85)' : '#6f6a60';
+      const ink = dark ? '#f0f4ff' : '#141d2e';
+      const soft = dark ? 'rgba(206,218,242,0.9)' : '#5f584c';
       const fc = frameColors(dark);
-      let y = pad + 26 * SCALE;
+      const ix = pad + 14 * SCALE;
+      let y = pad + 18 * SCALE;
 
       // rank 徽记(左上)
       const rank = spec.rank || (dark ? 'backup' : 'other');
-      y += paintBadge(ctx, rank, pad + 16 * SCALE, y, dark) + 22 * SCALE;
+      y += paintBadge(ctx, rank, ix, y, dark) + 14 * SCALE;
 
-      // 标题(自动缩字号到两行内)
-      let titleSize = 26;
+      // 标题(自动缩字号到两行内) — 大字主导
+      let titleSize = 34;
       let titleLines;
       for (;;) {
         ctx.font = `800 ${titleSize * SCALE}px ${FONT_STACK}`;
-        titleLines = wrapText(ctx, spec.title, innerW - 32 * SCALE, 3);
-        if (titleLines.length <= 2 || titleSize <= 16) break;
+        titleLines = wrapText(ctx, spec.title, innerW - 28 * SCALE, 2);
+        if (titleLines.length <= 2 || titleSize <= 22) break;
         titleSize -= 2;
       }
       ctx.fillStyle = ink;
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'left';
       titleLines.forEach(line => {
-        ctx.fillText(line, pad + 16 * SCALE, y + titleSize * SCALE);
-        y += titleSize * SCALE * 1.3;
+        ctx.fillText(line, ix, y + titleSize * SCALE);
+        y += titleSize * SCALE * 1.28;
       });
-      y += 10 * SCALE;
-      // 标题饰线
-      paintFlourish(ctx, w / 2, y + 6 * SCALE, innerW / 2 - 30 * SCALE, fc);
-      y += 26 * SCALE;
+      y += 12 * SCALE;
+      paintFlourish(ctx, w / 2, y + 4 * SCALE, innerW / 2 - 24 * SCALE, fc);
+      y += 22 * SCALE;
 
-      // 引语(带大引号装饰)
+      // 画面区: 大幅装饰徽记, 填满牌面中部
+      const metaH = (Array.isArray(spec.meta) && spec.meta.length) ? 46 * SCALE : 0;
+      const quoteReserve = spec.quote ? 170 * SCALE : 0;
+      const artH = Math.max(150 * SCALE, h - pad * 2 - (y - pad) - quoteReserve - metaH - 24 * SCALE);
+      paintArt(ctx, ix, y, innerW, artH, dark, spec);
+      y += artH + 20 * SCALE;
+
+      // 引语: 大号字, 实际要说的话是主角
       if (spec.quote) {
-        const quoteSize = 14.5;
+        const quoteSize = 19;
         ctx.font = `600 ${quoteSize * SCALE}px ${FONT_STACK}`;
-        const quoteLines = wrapText(ctx, spec.quote, innerW - 30 * SCALE, 15);
-        // 装饰引号
-        ctx.font = `800 ${52 * SCALE}px ${FONT_STACK}`;
-        ctx.fillStyle = dark ? 'rgba(126,151,214,0.5)' : 'rgba(201,164,76,0.55)';
-        ctx.fillText('“', pad + 8 * SCALE, y + 34 * SCALE);
-        ctx.font = `600 ${quoteSize * SCALE}px ${FONT_STACK}`;
-        ctx.fillStyle = dark ? 'rgba(232,238,252,0.94)' : '#3f382c';
+        const quoteLines = wrapText(ctx, `“${spec.quote}”`, innerW - 16 * SCALE, 5);
+        ctx.fillStyle = dark ? 'rgba(235,241,252,0.96)' : '#33291a';
         quoteLines.forEach(line => {
-          ctx.fillText(line, pad + 30 * SCALE, y + quoteSize * SCALE);
-          y += quoteSize * SCALE * 1.58;
+          ctx.fillText(line, ix, y + quoteSize * SCALE);
+          y += quoteSize * SCALE * 1.5;
         });
       }
 
       // 底部信息条(窗口内底部)
       if (Array.isArray(spec.meta) && spec.meta.length) {
-        const barY = h - pad - 40 * SCALE;
-        ctx.strokeStyle = dark ? 'rgba(126,151,214,0.35)' : 'rgba(119,91,42,0.3)';
-        ctx.lineWidth = 1 * SCALE;
+        const barY = h - pad - 26 * SCALE;
+        ctx.strokeStyle = dark ? 'rgba(126,151,214,0.4)' : 'rgba(119,91,42,0.35)';
+        ctx.lineWidth = 1.2 * SCALE;
         ctx.beginPath();
-        ctx.moveTo(pad + 16 * SCALE, barY - 14 * SCALE);
-        ctx.lineTo(w - pad - 16 * SCALE, barY - 14 * SCALE);
+        ctx.moveTo(ix, barY - 14 * SCALE);
+        ctx.lineTo(w - ix, barY - 14 * SCALE);
         ctx.stroke();
-        ctx.font = `600 ${11.5 * SCALE}px ${FONT_STACK}`;
-        let x = pad + 16 * SCALE;
+        ctx.font = `600 ${13 * SCALE}px ${FONT_STACK}`;
+        let x = ix;
         spec.meta.forEach(m => {
           ctx.textAlign = 'left';
           ctx.fillStyle = soft;
@@ -325,16 +394,16 @@
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'left';
 
-      ctx.font = `800 ${20 * SCALE}px ${FONT_STACK}`;
-      const titleLines = wrapText(ctx, spec.title, innerW - 32 * SCALE, 2);
+      ctx.font = `800 ${24 * SCALE}px ${FONT_STACK}`;
+      const titleLines = wrapText(ctx, spec.title, innerW - 28 * SCALE, 2);
       ctx.fillStyle = ink;
       titleLines.forEach(line => {
-        ctx.fillText(line, pad + 16 * SCALE, y + 20 * SCALE);
-        y += 20 * SCALE * 1.32;
+        ctx.fillText(line, pad + 14 * SCALE, y + 24 * SCALE);
+        y += 24 * SCALE * 1.3;
       });
       y += 12 * SCALE;
-      paintFlourish(ctx, w / 2, y + 4 * SCALE, innerW / 2 - 30 * SCALE, fc);
-      y += 28 * SCALE;
+      paintFlourish(ctx, w / 2, y + 4 * SCALE, innerW / 2 - 24 * SCALE, fc);
+      y += 26 * SCALE;
 
       const sections = [
         ['行动逻辑', spec.back && spec.back.logic],
@@ -343,16 +412,16 @@
       ].filter(([, text]) => text);
 
       sections.forEach(([label, text]) => {
-        ctx.font = `700 ${12.5 * SCALE}px ${FONT_STACK}`;
+        ctx.font = `700 ${14.5 * SCALE}px ${FONT_STACK}`;
         ctx.fillStyle = dark ? '#a9bdf0' : '#8a6a1f';
-        ctx.fillText(label, pad + 16 * SCALE, y + 12 * SCALE);
-        y += 24 * SCALE;
-        ctx.font = `500 ${12.5 * SCALE}px ${FONT_STACK}`;
-        const lines = wrapText(ctx, text, innerW - 32 * SCALE, 8);
-        ctx.fillStyle = dark ? 'rgba(232,238,252,0.9)' : '#4a4438';
+        ctx.fillText(label, pad + 14 * SCALE, y + 14 * SCALE);
+        y += 28 * SCALE;
+        ctx.font = `500 ${14.5 * SCALE}px ${FONT_STACK}`;
+        const lines = wrapText(ctx, text, innerW - 28 * SCALE, 8);
+        ctx.fillStyle = dark ? 'rgba(235,241,252,0.92)' : '#40392c';
         lines.forEach(line => {
-          ctx.fillText(line, pad + 16 * SCALE, y + 12 * SCALE);
-          y += 12.5 * SCALE * 1.6;
+          ctx.fillText(line, pad + 14 * SCALE, y + 14 * SCALE);
+          y += 14.5 * SCALE * 1.55;
         });
         y += 14 * SCALE;
       });
@@ -376,7 +445,7 @@
     function makeTexture(canvas) {
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace || 'srgb';
-      tex.anisotropy = 4;
+      tex.anisotropy = 8;
       return tex;
     }
     return {
