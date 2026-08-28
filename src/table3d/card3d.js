@@ -31,16 +31,16 @@
   function createCard3D({ THREE, painter, spec, options = {} }) {
     const width = options.width || 1;
     const height = options.height || width * 1.6;
-    const depth = options.depth || 0.02;
+    const depth = options.depth || 0.055;
     const radius = Math.min(width, height) * 0.055;
 
     const geometry = new THREE.ExtrudeGeometry(roundedCardShape(THREE, width, height, radius), {
-      depth: depth - 0.004,
+      depth: depth - 0.008,
       bevelEnabled: true,
-      bevelThickness: 0.002,
-      bevelSize: 0.002,
-      bevelSegments: 1,
-      curveSegments: 6
+      bevelThickness: 0.004,
+      bevelSize: 0.004,
+      bevelSegments: 2,
+      curveSegments: 8
     });
     geometry.center();
 
@@ -48,9 +48,9 @@
     // 简化方案: 用两个贴面 PlaneGeometry 贴正反面, 挤出体只做侧面/厚度
     const group = new THREE.Group();
     const sideMaterial = new THREE.MeshStandardMaterial({
-      color: options.sideColor || 0x8a6a1f,
-      roughness: 0.55,
-      metalness: 0.25
+      color: options.sideColor || 0xb08a3e,
+      roughness: 0.35,
+      metalness: 0.45
     });
     const body = new THREE.Mesh(geometry, sideMaterial);
     body.name = 'card-body';
@@ -59,8 +59,10 @@
     const faceGeometry = new THREE.PlaneGeometry(width, height);
     const frontMaterial = new THREE.MeshStandardMaterial({
       map: painter.frontTexture(spec),
-      roughness: 0.62,
-      metalness: 0.05
+      roughness: 0.5,
+      metalness: 0.08,
+      emissive: 0x2a2115,
+      emissiveIntensity: 0.55
     });
     const front = new THREE.Mesh(faceGeometry, frontMaterial);
     front.position.z = depth / 2 + 0.001;
@@ -69,8 +71,10 @@
 
     const backMaterial = new THREE.MeshStandardMaterial({
       map: painter.backTexture(spec),
-      roughness: 0.62,
-      metalness: 0.05
+      roughness: 0.5,
+      metalness: 0.08,
+      emissive: 0x2a2115,
+      emissiveIntensity: 0.55
     });
     const back = new THREE.Mesh(faceGeometry, backMaterial);
     back.position.z = -(depth / 2 + 0.001);

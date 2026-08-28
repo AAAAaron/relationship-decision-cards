@@ -19,7 +19,7 @@
     rune: { x: 0, z: -2.1, radius: 1.7 },
     deckPos: { x: -3.4, z: -2.1 },
     packPos: { x: 3.6, z: 2.2 },
-    camera: { fov: 40, pos: [0, 5.4, 8.6], lookAt: [0, 0.7, 0.3] }
+    camera: { fov: 44, pos: [0, 3.6, 9.6], lookAt: [0, 0.9, -1.1] }
   };
 
   // 程序桌面纹理: 深色木纹 + 中央渐亮
@@ -105,7 +105,7 @@
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const mat = new THREE.PointsMaterial({
-      color: 0xf6dda0, size: 0.022, transparent: true, opacity: 0.4, depthWrite: false
+      color: 0xf6dda0, size: 0.026, transparent: true, opacity: 0.55, depthWrite: false
     });
     const points = new THREE.Points(geom, mat);
     return { points, seeds, base: positions.slice() };
@@ -129,18 +129,33 @@
     }
     renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, quality === 'low' ? 1 : 2));
     renderer.setClearColor(0x0a0805, 1);
+    // 电影级色调映射 + sRGB 输出: 高光不过曝、暗部有层次, 质感关键
+    if (THREE.ACESFilmicToneMapping !== undefined) {
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.25;
+    }
+    if (THREE.SRGBColorSpace !== undefined) renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-    // 灯光: 环境底光 + 战场主聚光 + 双侧卡位聚光 + 金色补光
-    scene.add(new THREE.AmbientLight(0x8a7a5c, 0.55));
-    const mainSpot = new THREE.SpotLight(0xffd9a0, 90, 18, 0.62, 0.55, 1.6);
+    // 灯光: 暖环境底光 + 半球天光 + 战场主聚光 + 双侧卡位聚光
+    scene.add(new THREE.AmbientLight(0xc9a875, 0.85));
+    if (THREE.HemisphereLight) {
+      const hemi = new THREE.HemisphereLight(0xffe2b0, 0x2a180c, 0.75);
+      scene.add(hemi);
+    }
+    const mainSpot = new THREE.SpotLight(0xffd9a0, 160, 20, 0.66, 0.5, 1.5);
     mainSpot.position.set(0, 7.5, -1.4);
     mainSpot.target.position.set(LAYOUT.rune.x, 0, LAYOUT.rune.z);
     scene.add(mainSpot, mainSpot.target);
-    const playerSpot = new THREE.SpotLight(0xffe6bb, 46, 14, 0.5, 0.6, 1.7);
+    // 手牌主光: 正上方偏后, 保证手牌卡面被照亮
+    const handKey = new THREE.SpotLight(0xffe8c4, 140, 16, 0.72, 0.45, 1.4);
+    handKey.position.set(0, 6.2, 6.4);
+    handKey.target.position.set(0, 0.6, LAYOUT.hand.z);
+    scene.add(handKey, handKey.target);
+    const playerSpot = new THREE.SpotLight(0xffe6bb, 70, 14, 0.5, 0.6, 1.7);
     playerSpot.position.set(0.4, 6.5, 4.4);
     playerSpot.target.position.set(0, 0, LAYOUT.hand.z - 0.6);
     scene.add(playerSpot, playerSpot.target);
-    const opponentSpot = new THREE.SpotLight(0xaebbe8, 30, 14, 0.5, 0.65, 1.7);
+    const opponentSpot = new THREE.SpotLight(0xaebbe8, 55, 14, 0.5, 0.65, 1.7);
     opponentSpot.position.set(-0.6, 6.5, -4.2);
     opponentSpot.target.position.set(LAYOUT.opponent.x, 0, LAYOUT.opponent.z);
     scene.add(opponentSpot, opponentSpot.target);
