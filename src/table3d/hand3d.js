@@ -27,9 +27,9 @@
     return slots;
   }
 
-  const IDLE = { lift: 0.02, scale: 0.86, rx: -0.98 };
-  const HOVER = { lift: 0.85, scale: 1.0, rx: -0.55 };
-  const SELECT = { lift: 1.5, scale: 1.06, rx: -0.32 };
+  const IDLE = { lift: 0.03, scale: 0.9, rx: -0.42 };
+  const HOVER = { lift: 0.85, scale: 1.02, rx: -0.14 };
+  const SELECT = { lift: 1.5, scale: 1.08, rx: -0.04 };
 
   function createHand3D({ THREE, painter, card3d, tweenEngine, parentGroup, hand }) {
     const root = new THREE.Group();

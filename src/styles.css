@@ -5258,3 +5258,7 @@ body.table3d-live .round-controls {
   font-size:13px;
   line-height:1.6;
 }
+body.table3d-live .app-shell {
+  position:relative;
+  z-index:2;
+}

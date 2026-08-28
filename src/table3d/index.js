@@ -2,10 +2,10 @@
 // 组合 scene3d/hand3d/board3d/interact3d, 对 app.js 暴露一个状态同步桥
 // bridge.sync(snapshot) 把 session 状态映射到 3D 场景; 交互通过 callbacks 回到业务层
 (function initTable3dIndex(globalScope, factory) {
-  const api = factory();
+  const api = factory(globalScope);
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (globalScope) globalScope.Table3dIndex = api;
-})(typeof window !== 'undefined' ? window : globalThis, function createTable3dIndexApi() {
+})(typeof window !== 'undefined' ? window : globalThis, function createTable3dIndexApi(globalScope) {
   'use strict';
 
   function createTable3dBridge({ THREE, canvas, tweenFactory, sceneFactory, handFactory, boardFactory, interactFactory, callbacks = {} }) {

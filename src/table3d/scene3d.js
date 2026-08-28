@@ -19,7 +19,7 @@
     rune: { x: 0, z: -2.1, radius: 1.7 },
     deckPos: { x: -3.4, z: -2.1 },
     packPos: { x: 3.6, z: 2.2 },
-    camera: { fov: 42, pos: [0, 6.6, 6.9], lookAt: [0, 0, 0.35] }
+    camera: { fov: 40, pos: [0, 5.4, 8.6], lookAt: [0, 0.7, 0.3] }
   };
 
   // 程序桌面纹理: 深色木纹 + 中央渐亮
