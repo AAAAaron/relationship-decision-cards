@@ -247,8 +247,8 @@
         if (r.width === 0 || r.height === 0) return;
         nx = ((e.clientX - r.left) / r.width) * 100;
         ny = ((e.clientY - r.top) / r.height) * 100;
-        tx = ((e.clientY - r.top) / r.height - 0.5) * -2.5;
-        ty = ((e.clientX - r.left) / r.width - 0.5) * 2.5;
+        tx = ((e.clientY - r.top) / r.height - 0.5) * -3.5;
+        ty = ((e.clientX - r.left) / r.width - 0.5) * 3.5;
         if (raf) return;
         raf = requestAnimationFrame(() => {
           const back = card.querySelector('.card-back');
@@ -391,8 +391,8 @@
         const r = el.getBoundingClientRect();
         const x = (e.clientX - r.left) / r.width - 0.5;
         const y = (e.clientY - r.top) / r.height - 0.5;
-        el.style.setProperty('--tilt-rx', `${(-y * 5).toFixed(1)}deg`);
-        el.style.setProperty('--tilt-ry', `${(x * 5).toFixed(1)}deg`);
+        el.style.setProperty('--tilt-rx', `${(-y * 8).toFixed(1)}deg`);
+        el.style.setProperty('--tilt-ry', `${(x * 8).toFixed(1)}deg`);
       });
       el.addEventListener('click', e => { if (e.target.closest('[data-flip]')) return; openPlay(el.dataset.cardId); });
     });
@@ -452,11 +452,11 @@
     cards.forEach((el, i) => {
       const offset = i - (n - 1) / 2;
       let x = offset * spacing;
-      if (focus >= 0 && i < focus) x -= 16;
-      if (focus >= 0 && i > focus) x += 16;
+      if (focus >= 0 && i < focus) x -= 22;
+      if (focus >= 0 && i > focus) x += 22;
       const y = Math.abs(offset) * 3, ang = offset * 3.4, focused = i === focus;
       const t = focused
-        ? `translateX(calc(-50% + ${x}px)) translateY(${y - 8}px) rotate(0deg) scale(1.05)`
+        ? `translateX(calc(-50% + ${x}px)) translateY(${y - 22}px) rotate(0deg) scale(1.12)`
         : `translateX(calc(-50% + ${x}px)) translateY(${y}px) rotate(${ang}deg)`;
       el.style.transform = t;
       el.style.setProperty('--z', focused ? '50' : String(i + 2));

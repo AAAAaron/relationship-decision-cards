@@ -879,6 +879,15 @@ transform-style:preserve-3d;
 .dialog-card.is-flipped .card-inner,.hand-card.is-flipped .card-inner,.record-card.is-flipped .card-inner {
 transform:rotateY(180deg);
 }
+/* 翻面瞬间轻微弹跳: 用独立 scale 属性, 与 rotateY transform 叠加不冲突 */
+@keyframes flipPop {
+  0% { scale:1; }
+  40% { scale:1.05; }
+  100% { scale:1; }
+}
+.dialog-card.is-flipped .card-inner,.hand-card.is-flipped .card-inner,.record-card.is-flipped .card-inner {
+  animation:flipPop .45s cubic-bezier(.34,1.3,.5,1);
+}
 .card-face {
   position:absolute;
   inset:0;
@@ -1471,8 +1480,8 @@ background:#6d7888;
 }
 .hand-card.focused {
   z-index:50;
-  transform:translateX(calc(-50%)) translateY(-4px) scale(1.06);
-  filter:drop-shadow(0 20px 40px rgba(0,0,0,.42));
+  transform:translateX(calc(-50%)) translateY(-22px) scale(1.12);
+  filter:drop-shadow(0 26px 46px rgba(0,0,0,.5)) drop-shadow(0 0 22px rgba(231,189,101,.14));
 }
 .hand-card:not(.focused):hover {
   transform:translateX(calc(-50%)) translateY(-2px) scale(1.03);
@@ -3805,6 +3814,9 @@ body {
 
 @media(prefers-reduced-motion:reduce) {
   .hand-card.rank-primary::before,.hand-card.rank-primary .primary-ornament em {
+    animation:none;
+  }
+  .dialog-card.is-flipped .card-inner,.hand-card.is-flipped .card-inner,.record-card.is-flipped .card-inner {
     animation:none;
   }
 }
