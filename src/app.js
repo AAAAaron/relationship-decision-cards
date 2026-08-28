@@ -1674,7 +1674,11 @@
         const { id } = e.detail || {};
         if (id) openPlayHud(id); else closePlayHud();
       });
-      window.addEventListener('table3d:board-click', e => showCardDetail((e.detail || {}).kind));
+      window.addEventListener('table3d:board-click', e => {
+        const kind = (e.detail || {}).kind;
+        if (kind) showCardDetail(kind);
+        else closeCardDetail(); // 点空白: 相机复位同时收起详情
+      });
       // 悬停浮卡: DOM 高清文字跟随鼠标, 解决 3D 远处小字可读性
       window.addEventListener('table3d:hover', e => showTableTooltip(e.detail));
       // Esc: 退出"拿起牌看"并关闭详情
