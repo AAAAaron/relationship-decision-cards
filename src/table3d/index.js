@@ -59,15 +59,29 @@
       if (group) {
         const entry = hand3d.entryForGroup(group);
         if (entry) {
+          if (scene3d.isReviewing && scene3d.isReviewing()) {
+            scene3d.resetView();
+            if (callbacks.onBoardClick) callbacks.onBoardClick(null);
+          }
           selectedId = selectedId === entry.id ? null : entry.id;
           hand3d.select(entry.id);
           if (callbacks.onHandSelect) callbacks.onHandSelect(selectedId, entry.data, entry.id);
           return;
         }
-        if (group === board3d.playerGroup && callbacks.onBoardClick) { callbacks.onBoardClick('player'); return; }
-        if (group === board3d.opponentGroup && callbacks.onBoardClick) { callbacks.onBoardClick('opponent'); return; }
+        if (group === board3d.playerGroup || group === board3d.opponentGroup) {
+          // 拿起牌看: 相机滑翔到牌前
+          const center = group.position.clone();
+          center.y += 0.35;
+          scene3d.focusOn(center);
+          if (callbacks.onBoardClick) callbacks.onBoardClick(group === board3d.playerGroup ? 'player' : 'opponent');
+          return;
+        }
       }
-      // 点空白: 取消选中
+      // 点空白: 相机复位 + 取消选中
+      if (scene3d.isReviewing && scene3d.isReviewing()) {
+        scene3d.resetView();
+        if (callbacks.onBoardClick) callbacks.onBoardClick(null);
+      }
       if (selectedId) {
         selectedId = null;
         hand3d.clearSelect();
@@ -172,6 +186,8 @@
 
     return {
       sync, playSelectedHand, saveFlight, start, dispose,
+      resetView: () => scene3d.resetView(),
+      isReviewing: () => Boolean(scene3d.isReviewing && scene3d.isReviewing()),
       selectHand(id) {
         selectedId = id;
         hand3d.select(id);

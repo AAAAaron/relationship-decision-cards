@@ -121,6 +121,39 @@
     camera.position.set(...LAYOUT.camera.pos);
     camera.lookAt(...LAYOUT.camera.lookAt);
 
+    // 相机运镜: 点击桌上牌 → 滑翔到牌跟前"拿起牌看"; resetView 滑回
+    const CAM_HOME = { pos: [...LAYOUT.camera.pos], look: [...LAYOUT.camera.lookAt] };
+    const curLook = new THREE.Vector3(...LAYOUT.camera.lookAt);
+    let camAnim = null;
+    let reviewing = false;
+    function flyCam(toPos, toLook, duration = 0.5) {
+      camAnim = {
+        t: 0, duration,
+        fromPos: camera.position.clone(),
+        toPos: new THREE.Vector3(toPos[0], toPos[1], toPos[2]),
+        fromLook: curLook.clone(),
+        toLook: new THREE.Vector3(toLook[0], toLook[1], toLook[2])
+      };
+    }
+    function focusOn(center) {
+      reviewing = true;
+      flyCam([center.x, center.y + 0.95, center.z + 2.45], [center.x, center.y, center.z]);
+    }
+    function resetView() {
+      reviewing = false;
+      flyCam(CAM_HOME.pos, CAM_HOME.look);
+    }
+    function stepCamera(dt) {
+      if (!camAnim) return;
+      camAnim.t += dt;
+      const k = Math.min(1, camAnim.t / camAnim.duration);
+      const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      camera.position.lerpVectors(camAnim.fromPos, camAnim.toPos, e);
+      curLook.lerpVectors(camAnim.fromLook, camAnim.toLook, e);
+      camera.lookAt(curLook);
+      if (k >= 1) camAnim = null;
+    }
+
     let renderer;
     try {
       renderer = new THREE.WebGLRenderer({ canvas, antialias: quality !== 'low' });
@@ -182,6 +215,7 @@
     let elapsed = 0;
     function update(dt) {
       elapsed += dt;
+      stepCamera(dt);
       // 符文圈呼吸 + 缓转
       const breath = 0.42 + Math.sin(elapsed * 1.2) * 0.12;
       rune.main.material.opacity = breath;
@@ -226,7 +260,12 @@
 
     handleResize();
 
-    return { scene, camera, renderer, LAYOUT, update, runePulse, handleResize, dispose };
+    return {
+      scene, camera, renderer, LAYOUT, update, runePulse, handleResize, dispose,
+      focusOn, resetView,
+      isReviewing: () => reviewing,
+      getCamHome: () => CAM_HOME
+    };
   }
 
   return { createScene3D, LAYOUT, paintTableCanvas, buildRuneCircle, buildDust };

@@ -1676,6 +1676,12 @@
       window.addEventListener('table3d:board-click', e => showCardDetail((e.detail || {}).kind));
       // 悬停浮卡: DOM 高清文字跟随鼠标, 解决 3D 远处小字可读性
       window.addEventListener('table3d:hover', e => showTableTooltip(e.detail));
+      // Esc: 退出"拿起牌看"并关闭详情
+      document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        closeCardDetail();
+        if (window.Table3dBridge) window.Table3dBridge.resetView();
+      });
       // 3D 桥就绪后(晚于 app.js 初始化)重新同步一次状态
       window.addEventListener('table3d:ready', () => renderAll());
       // 初始化失败 → 平面降级视图
@@ -1716,7 +1722,12 @@
         ${rows.map(([label, value]) => `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join('')}
       </dl>`;
     panel.hidden = false;
-    $('cardDetailClose').addEventListener('click', () => { panel.hidden = true; });
+    $('cardDetailClose').addEventListener('click', closeCardDetail);
+  }
+  function closeCardDetail() {
+    const panel = $('cardDetail');
+    if (panel) panel.hidden = true;
+    if (window.Table3dBridge && window.Table3dBridge.isReviewing()) window.Table3dBridge.resetView();
   }
 
   // ---------- 悬停浮卡: 跟随鼠标的 DOM 高清小卡 ----------
