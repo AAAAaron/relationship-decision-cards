@@ -560,11 +560,17 @@
       document.body.appendChild(clone);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          clone.style.transform = `translate(${clone._dx}px,${clone._dy}px) scale(${clone._sx})`;
-          clone.style.opacity = '0';
+          // 飞行途中带透视翻转, 落点前回正, 模拟炉石式"甩牌上手"弧线
+          clone.style.transform = `translate(${clone._dx * 0.5}px,${clone._dy * 0.5 - 40}px) scale(${(clone._sx + 1) / 2}) rotate(6deg) perspective(900px) rotateY(28deg)`;
+          clone.style.opacity = '1';
         });
       });
-      setTimeout(() => { clone.remove(); renderAll(); }, 580);
+      setTimeout(() => {
+        clone.style.transform = `translate(${clone._dx}px,${clone._dy}px) scale(${clone._sx}) rotate(0deg) perspective(900px) rotateY(0deg)`;
+        spawnImpactRing(targetSlot);
+      }, 300);
+      setTimeout(() => { clone.style.opacity = '0'; }, 440);
+      setTimeout(() => { clone.remove(); renderAll(); }, 620);
     } else {
       renderAll();
     }
@@ -578,6 +584,14 @@
         targetRect: playerSlot.getBoundingClientRect()
       });
     }
+  }
+  // 落点冲击圈: 出牌落定时在目标槽位中心迸发一圈金光
+  function spawnImpactRing(slot) {
+    if (!slot) return;
+    const ring = document.createElement('span');
+    ring.className = 'card-impact-ring';
+    slot.appendChild(ring);
+    ring.addEventListener('animationend', () => ring.remove(), { once: true });
   }
   function recordFromCurrent() {
     const s = session(), p = person(), m = matter(), opp = s.current.opponent || {};
