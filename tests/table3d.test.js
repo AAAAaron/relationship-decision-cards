@@ -12,9 +12,9 @@ function mockCtx() {
     textAlign: 'left', textBaseline: 'alphabetic',
     measureText: (text) => ({ width: String(text).length * 10 }),
     fillRect() {}, strokeRect() {}, clearRect() {},
-    beginPath() {}, moveTo() {}, lineTo() {}, arcTo() {},
+    beginPath() {}, moveTo() {}, lineTo() {}, arcTo() {}, arc() {},
     quadraticCurveTo() {}, closePath() {}, fill() {}, stroke() {},
-    save() {}, restore() {}, translate() {}, rotate() {},
+    save() {}, restore() {}, translate() {}, rotate() {}, clip() {},
     createLinearGradient: () => gradient,
     createRadialGradient: () => gradient,
     fillText() {}

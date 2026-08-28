@@ -8,17 +8,20 @@
 })(typeof window !== 'undefined' ? window : globalThis, function createTable3dHandApi() {
   'use strict';
 
-  // 扇形槽位计算: n 张牌的 offset/x/z/rotationY/rotationZ
-  // 手牌中心在 z=hand.z, 越靠边越靠后(z 略减)并有轻微外旋, 形成扇形
-  function computeFanSlots(count, hand = { z: 2.6, spacing: 0.92, curve: 0.14, ry: 0.1, rz: 0.07 }) {
+  // 扇形槽位计算: n 张牌的 offset/x/y/z/rotationY/rotationZ
+  // 炉石式: 大幅重叠(固定间距), 边牌沿弧线沉降外旋, 底边沉出屏幕下缘
+  function computeFanSlots(count, hand = { z: 3.0, spacing: 0.58, curve: 0.17, ry: 0.17, rz: 0.085, yDrop: 0.09 }) {
     const slots = [];
-    const spacing = count > 5 ? hand.spacing * (5 / count) : hand.spacing;
+    // 重叠度固定, 张数多时轻微收紧并限宽
+    let spacing = hand.spacing;
+    const maxSpan = 3.9;
+    if (count > 1) spacing = Math.min(spacing, (maxSpan - 1.1) / (count - 1));
     for (let i = 0; i < count; i += 1) {
       const offset = i - (count - 1) / 2;
       slots.push({
         offset,
         x: offset * spacing,
-        y: 0,
+        y: -Math.abs(offset) * hand.yDrop,
         z: hand.z - Math.abs(offset) * hand.curve,
         ry: offset * hand.ry,
         rz: offset * hand.rz
@@ -27,9 +30,9 @@
     return slots;
   }
 
-  const IDLE = { lift: 0.05, scale: 1.02, rx: -0.16 };
-  const HOVER = { lift: 0.95, scale: 1.18, rx: -0.02 };
-  const SELECT = { lift: 1.6, scale: 1.24, rx: 0.08 };
+  const IDLE = { lift: -0.28, scale: 1.22, rx: -0.1 };
+  const HOVER = { lift: 0.95, scale: 1.36, rx: 0.0 };
+  const SELECT = { lift: 1.62, scale: 1.42, rx: 0.06 };
 
   function createHand3D({ THREE, painter, card3d, tweenEngine, parentGroup, hand }) {
     const root = new THREE.Group();

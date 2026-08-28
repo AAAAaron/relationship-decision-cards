@@ -14,10 +14,13 @@ test('computeFanSlots: 扇形左右对称且边牌后收', () => {
   assert.ok(slots[0].ry < 0 && slots[4].ry > 0, '边牌外旋');
 });
 
-test('computeFanSlots: 张数多时自动收紧间距', () => {
+test('computeFanSlots: 张数多时自动收紧间距, 总宽不超上限', () => {
   const few = handApi.computeFanSlots(3);
   const many = handApi.computeFanSlots(8);
-  assert.ok(Math.abs(many[7].x - many[0].x) < Math.abs(few[2].x - few[0].x) * 2.4, '8 张总宽不应线性爆炸');
+  const manySpan = many[7].x - many[0].x;
+  assert.ok(manySpan <= 3.9, `8 张总宽应 ≤ 3.9, 实际 ${manySpan}`);
+  assert.ok(manySpan > 2.0, '仍应保持扇形展开');
+  assert.ok(Math.abs(few[2].x - few[0].x) > 1.0, '3 张有正常间距');
 });
 
 test('ndcFromEvent: 事件坐标归一化到 -1..1', () => {

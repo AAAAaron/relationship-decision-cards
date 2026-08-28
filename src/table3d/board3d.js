@@ -23,7 +23,7 @@
     function standPose(pos, mode = STAND) {
       return { x: pos.x, y: mode.lift, z: pos.z, rx: mode.rx, ry: 0, rz: 0 };
     }
-    const BOARD_SCALE = 1.15;
+    const BOARD_SCALE = 1.32;
 
     function placeAt(group, pose) {
       group.position.set(pose.x, pose.y, pose.z);

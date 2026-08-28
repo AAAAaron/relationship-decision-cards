@@ -15,7 +15,7 @@
     opponent: { x: -0.78, z: -1.75 },
     player: { x: 0.78, z: -1.75 },
     previousLift: 0.06,
-    hand: { z: 2.6, radius: 4.6, spread: 1.05 },
+    hand: { z: 3.0, radius: 4.6, spread: 1.05 },
     rune: { x: 0, z: -1.75, radius: 1.55 },
     deckPos: { x: -3.2, z: -1.9 },
     packPos: { x: 3.6, z: 2.2 },
