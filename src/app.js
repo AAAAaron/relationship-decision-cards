@@ -267,6 +267,7 @@
       player: replySpec(session().current.player),
       previous: previousSpecs(),
       deal,
+      sceneType: session().current.opponent ? session().current.opponent.scene_type : null,
       selectedId: state.selectedCardId
     });
     renderRoundControls();

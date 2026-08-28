@@ -27,9 +27,9 @@
     const ctx = canvas.getContext('2d');
     const w = canvas.width, h = canvas.height;
     const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, '#241610');
-    g.addColorStop(0.5, '#2e1c12');
-    g.addColorStop(1, '#1b0f0a');
+    g.addColorStop(0, '#1c1109');
+    g.addColorStop(0.5, '#251710');
+    g.addColorStop(1, '#130b06');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
     // 木纹条
@@ -44,8 +44,8 @@
     }
     // 中央暖光池(战场被照亮, 边缘暗)
     const pool = ctx.createRadialGradient(w / 2, h * 0.45, w * 0.05, w / 2, h * 0.45, w * 0.55);
-    pool.addColorStop(0, 'rgba(255,196,110,0.16)');
-    pool.addColorStop(0.6, 'rgba(255,180,100,0.05)');
+    pool.addColorStop(0, 'rgba(255,196,120,0.13)');
+    pool.addColorStop(0.6, 'rgba(255,184,104,0.04)');
     pool.addColorStop(1, 'rgba(0,0,0,0.32)');
     ctx.fillStyle = pool;
     ctx.fillRect(0, 0, w, h);
@@ -113,8 +113,8 @@
 
   function createScene3D({ THREE, canvas, quality = 'high' }) {
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x0a0805, 10, 22);
-    scene.background = new THREE.Color(0x0a0805);
+    scene.fog = new THREE.Fog(0x130d08, 11, 24);
+    scene.background = new THREE.Color(0x130d08);
 
     const aspect = (canvas.clientWidth || 16) / (canvas.clientHeight || 9);
     const camera = new THREE.PerspectiveCamera(LAYOUT.camera.fov, aspect, 0.1, 60);
@@ -175,7 +175,7 @@
       const hemi = new THREE.HemisphereLight(0xffe2b0, 0x2a180c, 0.5);
       scene.add(hemi);
     }
-    const mainSpot = new THREE.SpotLight(0xffd9a0, 55, 20, 0.66, 0.5, 1.5);
+    const mainSpot = new THREE.SpotLight(0xffcf96, 55, 20, 0.66, 0.5, 1.5);
     mainSpot.position.set(0, 7.5, -1.4);
     mainSpot.target.position.set(LAYOUT.rune.x, 0, LAYOUT.rune.z);
     scene.add(mainSpot, mainSpot.target);

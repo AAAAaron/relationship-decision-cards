@@ -103,6 +103,56 @@
     buildSlotMarker(LAYOUT.opponent);
     buildSlotMarker(LAYOUT.player);
 
+    // 场景小立牌: 按场景类型在桌边立一个元素图案(饭局🍜/私聊🐱/会议💼...)
+    const SCENE_EMOJI = {
+      meeting: '💼', encounter: '🚪', private: '🐱', meal: '🍜',
+      phone: '📞', async_message: '💬', event: '⚡'
+    };
+    let scenePropMesh = null;
+    let scenePropType = null;
+    function paintPropCanvas(emoji) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256; canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 256, 256);
+      const glow = ctx.createRadialGradient(128, 116, 10, 128, 116, 118);
+      glow.addColorStop(0, 'rgba(255,214,140,0.4)');
+      glow.addColorStop(0.65, 'rgba(255,190,105,0.12)');
+      glow.addColorStop(1, 'rgba(255,190,105,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, 256, 256);
+      ctx.font = '130px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emoji, 128, 122);
+      return canvas;
+    }
+    function setSceneProp(sceneType) {
+      const type = sceneType || 'fallback';
+      if (type === scenePropType) return;
+      scenePropType = type;
+      const emoji = SCENE_EMOJI[type] || '🎭';
+      const canvas = paintPropCanvas(emoji);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace || 'srgb';
+      if (scenePropMesh) {
+        scenePropMesh.material.map.dispose();
+        scenePropMesh.material.map = texture;
+        scenePropMesh.material.needsUpdate = true;
+      } else {
+        scenePropMesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.05, 1.05),
+          new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false })
+        );
+        scenePropMesh.position.set(-2.45, 0.62, -0.75);
+        scenePropMesh.rotation.y = 0.35;
+        root.add(scenePropMesh);
+      }
+      // 换场景时轻弹一下
+      scenePropMesh.scale.setScalar(0.7);
+      tweenEngine.to(scenePropMesh.scale, { x: 1, y: 1, z: 1 }, { duration: 0.4, ease: 'easeOutBack' });
+    }
+
     // 牌堆: 一叠卡背(细盒体堆叠)
     function buildDeckPile() {
       const pile = new THREE.Group();
