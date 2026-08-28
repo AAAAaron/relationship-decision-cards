@@ -308,6 +308,31 @@
       const rank = spec.rank || (dark ? 'backup' : 'other');
       y += paintBadge(ctx, rank, ix, y, dark) + 14 * SCALE;
 
+      // 摘要模式(桌上牌): 大标题 + 画面区占满, 详情看悬停浮卡/详情面板
+      if (spec.summary) {
+        let sumSize = 46;
+        let sumLines;
+        for (;;) {
+          ctx.font = `800 ${sumSize * SCALE}px ${FONT_STACK}`;
+          sumLines = wrapText(ctx, spec.title, innerW - 24 * SCALE, 2);
+          if (sumLines.length <= 2 || sumSize <= 30) break;
+          sumSize -= 2;
+        }
+        ctx.fillStyle = ink;
+        ctx.textBaseline = 'alphabetic';
+        ctx.textAlign = 'left';
+        sumLines.forEach(line => {
+          ctx.fillText(line, ix, y + sumSize * SCALE);
+          y += sumSize * SCALE * 1.26;
+        });
+        y += 10 * SCALE;
+        paintFlourish(ctx, w / 2, y + 4 * SCALE, innerW / 2 - 24 * SCALE, fc);
+        y += 20 * SCALE;
+        const sumArtH = h - pad * 2 - (y - pad) - 22 * SCALE;
+        paintArt(ctx, ix, y, innerW, sumArtH, dark, spec);
+        return;
+      }
+
       // 标题(自动缩字号到两行内) — 大字主导
       let titleSize = 34;
       let titleLines;

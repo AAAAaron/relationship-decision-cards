@@ -5313,3 +5313,52 @@ body.table3d-live .fallback-view { display:none; }
 .fallback-hand-card.active { border-color:var(--gold); box-shadow:0 0 16px rgba(231,189,101,.25); }
 .fallback-hand-card strong { display:block; margin:6px 0 4px; font-size:15px; }
 .fallback-hand-card p { margin:0; color:var(--soft); font-size:12px; line-height:1.5; }
+/* ===== 悬停浮卡: DOM 高清文字 ===== */
+.table-tooltip {
+  position:fixed;
+  z-index:26;
+  width:320px;
+  padding:14px 16px;
+  border:1px solid rgba(246,221,160,.4);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(22,36,60,.97),rgba(11,21,40,.98));
+  box-shadow:0 22px 54px rgba(0,0,0,.6), 0 0 24px rgba(231,189,101,.15);
+  pointer-events:none;
+  animation:tipIn .16s ease-out both;
+}
+@keyframes tipIn {
+  from { opacity:0; transform:translateY(6px); }
+  to { opacity:1; transform:none; }
+}
+.table-tooltip header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:7px;
+}
+.tt-rank {
+  font-size:11px;
+  font-weight:700;
+  padding:3px 10px;
+  border-radius:999px;
+  background:rgba(204,214,228,.2);
+  color:var(--text);
+}
+.tt-rank.tt-primary { background:rgba(231,189,101,.28); color:var(--gold2); }
+.tt-rank.tt-backup { background:rgba(117,148,255,.25); color:#b9c9f2; }
+.tt-rank.tt-risk { background:rgba(215,134,141,.25); color:#f0c3c8; }
+.table-tooltip em { font-style:normal; color:var(--muted); font-size:11px; }
+.table-tooltip strong {
+  display:block;
+  font-size:19px;
+  font-weight:800;
+  line-height:1.3;
+  margin-bottom:6px;
+}
+.table-tooltip p {
+  margin:0;
+  color:#e3e9f4;
+  font-size:14px;
+  font-weight:600;
+  line-height:1.6;
+}

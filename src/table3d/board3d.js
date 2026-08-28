@@ -229,6 +229,24 @@
       }
     }
 
+    // 战场牌 hover: 抬起并转向相机, 文字可读; 移开回落
+    let hoveredBoard = null;
+    function hover(group) {
+      if (hoveredBoard === group) return;
+      const restore = (card) => {
+        if (!card) return;
+        const pose = standPose(card === playerCard ? LAYOUT.player : LAYOUT.opponent);
+        tweenEngine.to(card.position, { y: pose.y }, { duration: 0.25 });
+        tweenEngine.to(card.rotation, { x: pose.rx }, { duration: 0.25 });
+      };
+      restore(hoveredBoard);
+      hoveredBoard = group;
+      if (group) {
+        tweenEngine.to(group.position, { y: standPose(LAYOUT.player).y + 0.55 }, { duration: 0.25 });
+        tweenEngine.to(group.rotation, { x: -0.18 }, { duration: 0.25 });
+      }
+    }
+
     function getBoardMeshes() {
       const meshes = [];
       if (playerCard) meshes.push(playerCard);

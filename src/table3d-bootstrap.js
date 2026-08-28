@@ -12,7 +12,7 @@
       THREE,
       canvas,
       callbacks: {
-        onHandHover: (id) => window.dispatchEvent(new CustomEvent('table3d:hand-hover', { detail: { id } })),
+        onHandHover: (payload) => window.dispatchEvent(new CustomEvent('table3d:hover', { detail: payload })),
         onHandSelect: (id, data) => window.dispatchEvent(new CustomEvent('table3d:hand-select', { detail: { id, data } })),
         onBoardClick: (kind) => window.dispatchEvent(new CustomEvent('table3d:board-click', { detail: { kind } }))
       }

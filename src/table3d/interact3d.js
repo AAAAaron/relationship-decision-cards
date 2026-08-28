@@ -57,7 +57,7 @@
         if (cardGroup !== currentHit) {
           currentHit = cardGroup;
           if (domElement) domElement.style.cursor = cardGroup ? 'pointer' : '';
-          if (typeof onHover === 'function') onHover(cardGroup);
+          if (typeof onHover === 'function') onHover(cardGroup, lastEvent);
         }
       });
     }

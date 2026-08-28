@@ -227,7 +227,7 @@
   function sceneSpec(scene) {
     if (!scene) return null;
     return {
-      kind: 'scene', rank: 'backup', title: scene.title,
+      kind: 'scene', rank: 'backup', title: scene.title, summary: true,
       artChar: (sceneTypeName(scene.scene_type) || '场')[0],
       quote: scene.quote || scene.opponent_action || scene.trigger || '',
       meta: [{ label: '场景', value: sceneTypeName(scene.scene_type) }, { label: '来源', value: sourceName(scene.source) }],
@@ -241,7 +241,7 @@
   function replySpec(player) {
     if (!player) return null;
     return {
-      kind: 'reply', rank: player.ai_rank || 'primary', title: player.title, artChar: '✦',
+      kind: 'reply', rank: player.ai_rank || 'primary', title: player.title, artChar: '✦', summary: true,
       quote: player.reply || '',
       meta: [{ label: '语气', value: player.style_name || '我的原声' }],
       back: {
@@ -1674,6 +1674,8 @@
         if (id) openPlayHud(id); else closePlayHud();
       });
       window.addEventListener('table3d:board-click', e => showCardDetail((e.detail || {}).kind));
+      // 悬停浮卡: DOM 高清文字跟随鼠标, 解决 3D 远处小字可读性
+      window.addEventListener('table3d:hover', e => showTableTooltip(e.detail));
       // 3D 桥就绪后(晚于 app.js 初始化)重新同步一次状态
       window.addEventListener('table3d:ready', () => renderAll());
       // 初始化失败 → 平面降级视图
@@ -1715,6 +1717,26 @@
       </dl>`;
     panel.hidden = false;
     $('cardDetailClose').addEventListener('click', () => { panel.hidden = true; });
+  }
+
+  // ---------- 悬停浮卡: 跟随鼠标的 DOM 高清小卡 ----------
+  function showTableTooltip(payload) {
+    const tip = $('tableTooltip');
+    if (!tip) return;
+    if (!payload || !payload.data) { tip.hidden = true; return; }
+    const d = payload.data;
+    $('ttRank').textContent = rankName(d.rank);
+    $('ttRank').className = `tt-rank tt-${d.rank || 'other'}`;
+    $('ttKind').textContent = payload.kind === 'board' ? (payload.side === 'opponent' ? '对方场景牌' : '我方回应牌') : '手牌';
+    $('ttTitle').textContent = d.title || '';
+    $('ttQuote').textContent = d.quote ? `“${d.quote}”` : '';
+    tip.hidden = false;
+    const vw = window.innerWidth || 1440;
+    const vh = window.innerHeight || 900;
+    const tw = 320;
+    const left = (payload.x || vw / 2) > vw / 2 ? (payload.x || 0) - tw - 28 : (payload.x || 0) + 28;
+    tip.style.left = Math.max(12, Math.min(vw - tw - 12, left)) + 'px';
+    tip.style.top = Math.max(70, Math.min(vh - 240, (payload.y || vh / 2) - 70)) + 'px';
   }
 
   // ---------- 桌面风格（PNG 已废弃，stage-fx 主导） ----------

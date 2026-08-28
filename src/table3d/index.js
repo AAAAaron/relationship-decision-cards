@@ -27,18 +27,31 @@
     let selectedId = null;
     let flying = false;
     const seen = { opponent: '', player: '', previous: '' };
+    const lastSpec = { opponent: null, player: null };
 
-    // hover: 手牌抬起
-    function handleHover(group) {
-      if (!group) { hand3d.hover(null); if (callbacks.onHandHover) callbacks.onHandHover(null); return; }
-      const entry = hand3d.entryForGroup(group);
-      if (entry) {
-        hand3d.hover(entry.id);
-        if (callbacks.onHandHover) callbacks.onHandHover(entry.id);
-        return;
+    // hover: 手牌抬起 / 战场牌抬向相机, 并回调浮卡数据(带鼠标坐标)
+    function handleHover(group, event) {
+      let payload = null;
+      if (group) {
+        const entry = hand3d.entryForGroup(group);
+        if (entry) {
+          hand3d.hover(entry.id);
+          payload = { kind: 'hand', id: entry.id, data: entry.data };
+        } else {
+          hand3d.hover(null);
+          board3d.hover(group);
+          if (group === board3d.playerGroup && lastSpec.player) payload = { kind: 'board', side: 'player', data: lastSpec.player };
+          else if (group === board3d.opponentGroup && lastSpec.opponent) payload = { kind: 'board', side: 'opponent', data: lastSpec.opponent };
+        }
+      } else {
+        hand3d.hover(null);
+        board3d.hover(null);
       }
-      hand3d.hover(null);
-      if (callbacks.onHandHover) callbacks.onHandHover(null);
+      if (payload && event && typeof event.clientX === 'number') {
+        payload.x = event.clientX;
+        payload.y = event.clientY;
+      }
+      if (callbacks.onHandHover) callbacks.onHandHover(payload);
     }
 
     function handleClick(group) {
@@ -83,13 +96,18 @@
       const oppKey = snap.opponent ? JSON.stringify(snap.opponent) : '';
       if (oppKey !== seen.opponent) {
         seen.opponent = oppKey;
+        lastSpec.opponent = snap.opponent || null;
         if (snap.opponent) board3d.opponentPlay(snap.opponent);
       }
       const playerKey = snap.player ? JSON.stringify(snap.player) : '';
       if (playerKey !== seen.player) {
         seen.player = playerKey;
+        lastSpec.player = snap.player || null;
         if (snap.player) board3d.setPlayer(snap.player);
         else board3d.clearPlayer();
+      }
+      if (typeof board3d.setSceneProp === 'function' && snap.sceneType !== undefined) {
+        board3d.setSceneProp(snap.sceneType);
       }
       const prevKey = JSON.stringify(snap.previous || null);
       if (prevKey !== seen.previous) {
