@@ -57,12 +57,14 @@
     group.add(body);
 
     const faceGeometry = new THREE.PlaneGeometry(width, height);
+    const darkCard = spec.kind === 'scene';
     const frontMaterial = new THREE.MeshStandardMaterial({
       map: painter.frontTexture(spec),
       roughness: 0.5,
       metalness: 0.08,
-      emissive: 0x2a2115,
-      emissiveIntensity: 0.55
+      // 深色场景牌: 自发光底色保住暗部, 避免被聚光洗成灰白
+      emissive: darkCard ? 0x16233f : 0x1d1710,
+      emissiveIntensity: darkCard ? 0.55 : 0.18
     });
     const front = new THREE.Mesh(faceGeometry, frontMaterial);
     front.position.z = depth / 2 + 0.001;
@@ -73,8 +75,8 @@
       map: painter.backTexture(spec),
       roughness: 0.5,
       metalness: 0.08,
-      emissive: 0x2a2115,
-      emissiveIntensity: 0.55
+      emissive: darkCard ? 0x16233f : 0x1d1710,
+      emissiveIntensity: darkCard ? 0.55 : 0.18
     });
     const back = new THREE.Mesh(faceGeometry, backMaterial);
     back.position.z = -(depth / 2 + 0.001);

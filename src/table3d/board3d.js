@@ -23,11 +23,12 @@
     function standPose(pos, mode = STAND) {
       return { x: pos.x, y: mode.lift, z: pos.z, rx: mode.rx, ry: 0, rz: 0 };
     }
+    const BOARD_SCALE = 1.15;
 
     function placeAt(group, pose) {
       group.position.set(pose.x, pose.y, pose.z);
       group.rotation.set(pose.rx, pose.ry, pose.rz);
-      group.scale.setScalar(1);
+      group.scale.setScalar(BOARD_SCALE);
     }
 
     function ensureCard(current, spec, pos, mode) {
@@ -91,11 +92,12 @@
     // 出牌飞行: 手牌组 → 我方牌位弧线, 完成后回调
     function playFromHand(group, onComplete) {
       const dst = standPose(LAYOUT.player);
+      dst.scale = BOARD_SCALE;
       const mid = { x: (group.position.x + dst.x) / 2, y: 1.7, z: (group.position.z + dst.z) / 2 - 0.4 };
       // 第一段: 升空到弧顶
       tweenEngine.to(group.position, { x: mid.x, y: mid.y, z: mid.z }, { duration: 0.3, ease: 'easeOutCubic' });
       tweenEngine.to(group.rotation, { x: -1.1, y: 0.5, z: 0 }, { duration: 0.3, ease: 'easeOutCubic' });
-      tweenEngine.to(group.scale, { x: 1, y: 1, z: 1 }, { duration: 0.3 });
+      tweenEngine.to(group.scale, { x: BOARD_SCALE, y: BOARD_SCALE, z: BOARD_SCALE }, { duration: 0.3, delay: 0.1 });
       // 第二段: 落到牌位
       tweenEngine.to(group.position, { x: dst.x, y: dst.y, z: dst.z }, { duration: 0.34, delay: 0.3, ease: 'easeOutCubic', onComplete: () => {
         tweenEngine.to(group.rotation, { x: dst.rx, y: 0, z: 0 }, { duration: 0.2 });

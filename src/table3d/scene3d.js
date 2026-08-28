@@ -12,12 +12,12 @@
   const LAYOUT = {
     cardW: 1.0,
     cardH: 1.6,
-    opponent: { x: -0.75, z: -2.1 },
-    player: { x: 0.75, z: -2.1 },
+    opponent: { x: -0.78, z: -1.75 },
+    player: { x: 0.78, z: -1.75 },
     previousLift: 0.06,
     hand: { z: 2.6, radius: 4.6, spread: 1.05 },
-    rune: { x: 0, z: -2.1, radius: 1.7 },
-    deckPos: { x: -3.4, z: -2.1 },
+    rune: { x: 0, z: -1.75, radius: 1.55 },
+    deckPos: { x: -3.2, z: -1.9 },
     packPos: { x: 3.6, z: 2.2 },
     camera: { fov: 44, pos: [0, 3.6, 9.6], lookAt: [0, 0.9, -1.1] }
   };
@@ -43,7 +43,7 @@
       ctx.stroke();
     }
     // 中央暖光池(战场被照亮, 边缘暗)
-    const pool = ctx.createRadialGradient(w / 2, h * 0.42, w * 0.05, w / 2, h * 0.42, w * 0.55);
+    const pool = ctx.createRadialGradient(w / 2, h * 0.45, w * 0.05, w / 2, h * 0.45, w * 0.55);
     pool.addColorStop(0, 'rgba(255,196,110,0.16)');
     pool.addColorStop(0.6, 'rgba(255,180,100,0.05)');
     pool.addColorStop(1, 'rgba(0,0,0,0.32)');
@@ -132,22 +132,22 @@
     // 电影级色调映射 + sRGB 输出: 高光不过曝、暗部有层次, 质感关键
     if (THREE.ACESFilmicToneMapping !== undefined) {
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.25;
+      renderer.toneMappingExposure = 1.08;
     }
     if (THREE.SRGBColorSpace !== undefined) renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     // 灯光: 暖环境底光 + 半球天光 + 战场主聚光 + 双侧卡位聚光
-    scene.add(new THREE.AmbientLight(0xc9a875, 0.85));
+    scene.add(new THREE.AmbientLight(0xc9a875, 0.6));
     if (THREE.HemisphereLight) {
-      const hemi = new THREE.HemisphereLight(0xffe2b0, 0x2a180c, 0.75);
+      const hemi = new THREE.HemisphereLight(0xffe2b0, 0x2a180c, 0.5);
       scene.add(hemi);
     }
-    const mainSpot = new THREE.SpotLight(0xffd9a0, 160, 20, 0.66, 0.5, 1.5);
+    const mainSpot = new THREE.SpotLight(0xffd9a0, 55, 20, 0.66, 0.5, 1.5);
     mainSpot.position.set(0, 7.5, -1.4);
     mainSpot.target.position.set(LAYOUT.rune.x, 0, LAYOUT.rune.z);
     scene.add(mainSpot, mainSpot.target);
     // 手牌主光: 正上方偏后, 保证手牌卡面被照亮
-    const handKey = new THREE.SpotLight(0xffe8c4, 140, 16, 0.72, 0.45, 1.4);
+    const handKey = new THREE.SpotLight(0xffe8c4, 95, 16, 0.72, 0.45, 1.4);
     handKey.position.set(0, 6.2, 6.4);
     handKey.target.position.set(0, 0.6, LAYOUT.hand.z);
     scene.add(handKey, handKey.target);
@@ -155,7 +155,7 @@
     playerSpot.position.set(0.4, 6.5, 4.4);
     playerSpot.target.position.set(0, 0, LAYOUT.hand.z - 0.6);
     scene.add(playerSpot, playerSpot.target);
-    const opponentSpot = new THREE.SpotLight(0xaebbe8, 55, 14, 0.5, 0.65, 1.7);
+    const opponentSpot = new THREE.SpotLight(0xaebbe8, 22, 14, 0.5, 0.65, 1.7);
     opponentSpot.position.set(-0.6, 6.5, -4.2);
     opponentSpot.target.position.set(LAYOUT.opponent.x, 0, LAYOUT.opponent.z);
     scene.add(opponentSpot, opponentSpot.target);
