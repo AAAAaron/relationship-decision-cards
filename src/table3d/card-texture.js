@@ -275,7 +275,7 @@
     ctx.lineWidth = 3 * SCALE;
     ctx.stroke();
     // 徽记内大字: 场景用类型首字, 应对用 ✦
-    const artChar = (spec.meta && spec.meta[0] && spec.meta[0].value && spec.meta[0].value[0]) || '✦';
+    const artChar = spec.artChar || '✦';
     ctx.fillStyle = '#fff8e8';
     ctx.font = `800 ${58 * SCALE}px ${FONT_STACK}`;
     ctx.textAlign = 'center';

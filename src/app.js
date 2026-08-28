@@ -212,7 +212,7 @@
       return {
         id: card.id,
         data: {
-          kind: 'hand', rank: c.rank, title: card.title,
+          kind: 'hand', rank: c.rank, title: card.title, artChar: '✦',
           quote: (card.front && card.front.my_voice) || '',
           meta: [{ label: 'AI', value: rankName(c.rank) }],
           back: {
@@ -228,6 +228,7 @@
     if (!scene) return null;
     return {
       kind: 'scene', rank: 'backup', title: scene.title,
+      artChar: (sceneTypeName(scene.scene_type) || '场')[0],
       quote: scene.quote || scene.opponent_action || scene.trigger || '',
       meta: [{ label: '场景', value: sceneTypeName(scene.scene_type) }, { label: '来源', value: sourceName(scene.source) }],
       back: {
@@ -240,7 +241,7 @@
   function replySpec(player) {
     if (!player) return null;
     return {
-      kind: 'reply', rank: player.ai_rank || 'primary', title: player.title,
+      kind: 'reply', rank: player.ai_rank || 'primary', title: player.title, artChar: '✦',
       quote: player.reply || '',
       meta: [{ label: '语气', value: player.style_name || '我的原声' }],
       back: {
