@@ -111,8 +111,10 @@ body.bg-hand .bg-region--hand { opacity: 0.5; mix-blend-mode: overlay; }
   position:fixed;
   inset:0;
   z-index:-1;
-  /* 中央 30% → 外围 55% 压暗, 让背景纹理仅作氛围, UI 文字保持可读 */
-  background:radial-gradient(ellipse at 50% 45%,rgba(5,11,22,.3) 0%,rgba(5,11,22,.55) 100%);
+  /* 聚光渐晕: 中央牌桌亮、四周压暗, 视线聚焦卡牌 */
+  background:
+    radial-gradient(ellipse 62% 55% at 50% 46%,transparent 0%,rgba(3,8,16,.34) 78%,rgba(2,6,13,.62) 100%),
+    radial-gradient(ellipse at 50% 45%,rgba(5,11,22,.22) 0%,rgba(5,11,22,.5) 100%);
   pointer-events:none;
   transition:opacity .55s ease;
 }
