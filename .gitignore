@@ -8,3 +8,4 @@ serve.log
 output/
 scripts/deploy-server.sh
 tests/deploy.test.js
+.zcode/
