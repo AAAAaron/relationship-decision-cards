@@ -293,6 +293,7 @@
   function createPlayerPlayEffect(ctx) {
     const THREE = ctx && ctx.THREE;
     const canvas = ctx && ctx.canvas;
+    const isLowPerfCtx = !!(ctx && ctx.lowPerf);
     let elapsed = 0;
     let alive = false;
     let rank = 'other';
@@ -374,7 +375,23 @@
           color, size: 0.055, sizeAttenuation: true, transparent: true, opacity: 0
         });
         const ring = new THREE.Points(ringGeom, ringMat);
-        objects = { lines, ring, ringMat };
+        // 落点金色粒子迸发：随机径向散布的点云, 渲染期整体放大 + 淡出, 模拟火星四溅
+        const burstCount = isLowPerfCtx ? 8 : 16;
+        const burstPos = new Float32Array(burstCount * 3);
+        for (let j = 0; j < burstCount; j += 1) {
+          const a = Math.random() * Math.PI * 2;
+          const r = 0.05 + Math.random() * 0.06;
+          burstPos[j * 3] = dst.x + Math.cos(a) * r;
+          burstPos[j * 3 + 1] = dst.y + Math.sin(a) * r;
+          burstPos[j * 3 + 2] = 0.05;
+        }
+        const burstGeom = new THREE.BufferGeometry();
+        burstGeom.setAttribute('position', new THREE.BufferAttribute(burstPos, 3));
+        const burstMat = new THREE.PointsMaterial({
+          color: 0xf6dda0, size: 0.04, sizeAttenuation: true, transparent: true, opacity: 0
+        });
+        const burst = new THREE.Points(burstGeom, burstMat);
+        objects = { lines, ring, ringMat, burst, burstMat };
       },
       update(dt) {
         if (!alive) return;
@@ -403,6 +420,14 @@
             objects.ringMat.opacity = Math.max(0, 0.9 * (1 - k));
           }
         }
+        if (objects.burst && objects.burstMat) {
+          if (!objects.burst.parent) scene.add(objects.burst);
+          if (p >= 0.55) {
+            const k = (p - 0.55) / 0.45;
+            objects.burst.scale.set(1 + k * 3.2, 1 + k * 3.2, 1);
+            objects.burstMat.opacity = Math.max(0, 0.85 * (1 - k));
+          }
+        }
       },
       dispose(scene) {
         if (!objects) return;
@@ -410,14 +435,16 @@
           objects.lines.forEach(l => {
             if (scene) scene.remove(l.points);
             if (l.points.geometry) l.points.geometry.dispose();
-            l.points.material.dispose();
+            if (l.points.material) l.points.material.dispose();
           });
         }
-        if (objects.ring) {
-          if (scene) scene.remove(objects.ring);
-          if (objects.ring.geometry) objects.ring.geometry.dispose();
-          if (objects.ring.material) objects.ring.material.dispose();
-        }
+        ['ring', 'burst'].forEach(key => {
+          const obj = objects[key];
+          if (!obj) return;
+          if (scene) scene.remove(obj);
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) obj.material.dispose();
+        });
         objects = null;
       }
     };
@@ -598,7 +625,20 @@
         const mat = new THREE.PointsMaterial({
           color, size: 0.05, sizeAttenuation: true, transparent: true, opacity: 0
         });
-        objects = { points: new THREE.Points(geom, mat), mat };
+        // 翻面光尘：卡牌上方几粒金色微尘, 渲染期随进度缓缓上飘
+        const dustCount = 6;
+        const dustPos = new Float32Array(dustCount * 3);
+        for (let j = 0; j < dustCount; j += 1) {
+          dustPos[j * 3] = pt.x + (Math.random() - 0.5) * 0.22;
+          dustPos[j * 3 + 1] = pt.y + 0.12 + Math.random() * 0.08;
+          dustPos[j * 3 + 2] = 0.05;
+        }
+        const dustGeom = new THREE.BufferGeometry();
+        dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+        const dustMat = new THREE.PointsMaterial({
+          color: 0xf6dda0, size: 0.028, sizeAttenuation: true, transparent: true, opacity: 0
+        });
+        objects = { points: new THREE.Points(geom, mat), mat, dust: new THREE.Points(dustGeom, dustMat), dustMat };
       },
       update(dt) {
         if (!alive) return;
@@ -612,6 +652,7 @@
       render(THREE, scene) {
         if (!objects) return;
         if (!objects.points.parent) scene.add(objects.points);
+        if (!objects.dust.parent) scene.add(objects.dust);
         const p = effect.getProgress();
         if (p < 0.5) {
           objects.mat.opacity = (p / 0.5) * 0.9;
@@ -620,12 +661,19 @@
           objects.mat.opacity = Math.max(0, 0.9 * (1 - (p - 0.5) / 0.5));
           objects.points.scale.set(1.6 + (p - 0.5) * 0.4, 1.6 + (p - 0.5) * 0.4, 1);
         }
+        // 光尘随进度上飘并淡出
+        objects.dust.position.y = p * 0.18;
+        objects.dustMat.opacity = Math.max(0, 0.8 * (1 - p));
       },
       dispose(scene) {
         if (!objects) return;
-        if (scene) scene.remove(objects.points);
-        if (objects.points.geometry) objects.points.geometry.dispose();
-        if (objects.points.material) objects.points.material.dispose();
+        ['points', 'dust'].forEach(key => {
+          const obj = objects[key];
+          if (!obj) return;
+          if (scene) scene.remove(obj);
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) obj.material.dispose();
+        });
         objects = null;
       }
     };

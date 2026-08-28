@@ -296,7 +296,7 @@
       let effect = null;
       if (kind === 'opponent-play') effect = fx.createOpponentPlayEffect({ THREE, canvas });
       else if (kind === 'hand-deal') effect = fx.createHandDealEffect({ THREE, canvas });
-      else if (kind === 'player-play') effect = fx.createPlayerPlayEffect({ THREE, canvas });
+      else if (kind === 'player-play') effect = fx.createPlayerPlayEffect({ THREE, canvas, lowPerf: isLowPerf });
       else if (kind === 'round-save') effect = fx.createRoundSaveEffect({ THREE, canvas });
       else if (kind === 'card-flip') effect = fx.createCardFlipEffect({ THREE, canvas });
       if (!effect) return;
