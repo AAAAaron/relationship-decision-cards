@@ -26,6 +26,7 @@
   } catch (error) {
     document.body.classList.add('table3d-unavailable');
     document.body.dataset.table3dError = String((error && (error.stack || error.message)) || error).slice(0, 400);
+    window.dispatchEvent(new CustomEvent('table3d:unavailable', { detail: { message: String((error && error.message) || error) } }));
     if (typeof console !== 'undefined') console.warn('[table3d] 降级为平面视图:', error && error.message);
   }
 })();

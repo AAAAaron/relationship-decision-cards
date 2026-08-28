@@ -145,6 +145,63 @@
   function openModal(id) { $(id).hidden = false; document.body.style.overflow = 'hidden'; }
   function closeModal(id) { $(id).hidden = true; if (!$$('.modal-backdrop').some(m => !m.hidden)) document.body.style.overflow = ''; }
   function table3dActive() { return Boolean(typeof window !== 'undefined' && window.Table3dBridge); }
+  function fallbackMode() { return !table3dActive() && typeof document !== 'undefined' && document.body.classList.contains('table3d-unavailable'); }
+
+  // ---------- 降级平面视图: 无 WebGL / 关动效时用纯文字列表完成同样的决策流 ----------
+  function renderFallbackView() {
+    const root = $('fallbackView');
+    if (!root) return;
+    root.hidden = false;
+    const s = session();
+    const plan = handPlan();
+    const opp = s.current.opponent;
+    const player = s.current.player;
+    const loading = opp && opp.hand_plan_source === 'loading';
+    root.innerHTML = `
+      <section class="fallback-scene">
+        <header><span>对方场景</span>${opp ? `<em>${esc(sourceName(opp.source))} · ${esc(sceneTypeName(opp.scene_type))}</em>` : ''}</header>
+        ${opp
+          ? `<h3>${esc(opp.title)}</h3><p>“${esc(opp.quote || opp.opponent_action || '')}”</p>`
+          : '<p class="helper-text">还没有场景牌。点左侧「对方出牌」创建一张。</p>'}
+      </section>
+      <section class="fallback-reply">
+        <header><span>我的回应</span>${player && s.current.saved ? '<em>已收藏</em>' : ''}</header>
+        ${player
+          ? `<h3>${esc(player.title)}</h3><p>“${esc(player.reply)}”</p><small>${esc(player.style_name || '')}</small>`
+          : '<p class="helper-text">从下方选择一张应对。</p>'}
+      </section>
+      <section class="fallback-hand">
+        <header><span>手牌</span>${loading ? '<em>AI 思考中…</em>' : ''}</header>
+        <div class="fallback-hand-list">
+          ${(plan && plan.candidates || []).map(c => {
+            const card = candidateCard(c);
+            const active = state.selectedCardId === card.id;
+            return `<div class="fallback-hand-card ${active ? 'active' : ''}" data-fb-card="${esc(card.id)}">
+              <span class="rank-badge ${rankClass(c.rank)}">${rankName(c.rank)}</span>
+              <strong>${esc(card.title)}</strong>
+              <p>“${esc((card.front && card.front.my_voice) || '')}”</p>
+            </div>`;
+          }).join('')}
+        </div>
+      </section>`;
+    $$('.fallback-hand-card', root).forEach(el => {
+      el.addEventListener('click', () => {
+        state.selectedCardId = el.dataset.fbCard;
+        state.selectedCandidate = candidateFor(state.selectedCardId);
+        state.selectedStyleId = 'my_voice'; state.selectedChoiceIndex = 0;
+        renderFallbackView();
+      });
+      el.addEventListener('dblclick', () => {
+        state.selectedCardId = el.dataset.fbCard;
+        state.selectedCandidate = candidateFor(state.selectedCardId);
+        state.selectedStyleId = 'my_voice'; state.selectedChoiceIndex = 0;
+        session().current.player = buildPlayerData();
+        session().current.saved = false;
+        state.selectedCardId = null; state.selectedCandidate = null;
+        renderAll();
+      });
+    });
+  }
 
   // ---------- table3d: 状态 → 3D 场景同步 ----------
   function handSpecs() {
@@ -214,7 +271,13 @@
     renderRoundControls();
   }
 
-  function renderAll() { renderTop(); if (table3dActive()) { syncTable(); } else { renderBoard(); renderHand(); } renderCounts(); persistState(); }
+  function renderAll() {
+    renderTop();
+    if (table3dActive()) syncTable();
+    else if (fallbackMode()) { renderFallbackView(); renderRoundControls(); }
+    else { renderBoard(); renderHand(); }
+    renderCounts(); persistState();
+  }
   function renderTop() {
     const p = person(), m = matter();
     $('heroAvatar').textContent = p.initial;
@@ -1612,6 +1675,8 @@
       window.addEventListener('table3d:board-click', e => showCardDetail((e.detail || {}).kind));
       // 3D 桥就绪后(晚于 app.js 初始化)重新同步一次状态
       window.addEventListener('table3d:ready', () => renderAll());
+      // 初始化失败 → 平面降级视图
+      window.addEventListener('table3d:unavailable', () => renderAll());
     }
   }
 

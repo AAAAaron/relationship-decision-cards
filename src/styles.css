@@ -5262,3 +5262,54 @@ body.table3d-live .app-shell {
   position:relative;
   z-index:2;
 }
+/* ===== 降级平面视图 (无 WebGL / 关动效) ===== */
+.fallback-view {
+  position:fixed;
+  inset:0;
+  z-index:4;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  padding:110px 28px 28px;
+  overflow:auto;
+  pointer-events:auto;
+}
+body.table3d-live .fallback-view { display:none; }
+.fallback-scene,.fallback-reply,.fallback-hand {
+  max-width:860px;
+  width:100%;
+  margin:0 auto;
+  padding:16px 20px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:linear-gradient(180deg,rgba(20,34,58,.9),rgba(10,20,38,.94));
+}
+.fallback-scene header,.fallback-reply header,.fallback-hand header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+  color:var(--gold2);
+  font-size:12px;
+  font-weight:700;
+}
+.fallback-scene h3,.fallback-reply h3 { margin:0 0 6px; font-size:19px; font-weight:800; }
+.fallback-scene p,.fallback-reply p { margin:0; color:#dfe6f2; font-size:14px; line-height:1.6; }
+.fallback-reply small { color:var(--muted); }
+.fallback-hand-list {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:10px;
+}
+.fallback-hand-card {
+  padding:12px 14px;
+  border:1px solid var(--line2);
+  border-radius:12px;
+  background:rgba(255,255,255,.04);
+  cursor:pointer;
+  transition:border-color .16s ease, transform .16s ease;
+}
+.fallback-hand-card:hover { border-color:rgba(246,221,160,.5); transform:translateY(-2px); }
+.fallback-hand-card.active { border-color:var(--gold); box-shadow:0 0 16px rgba(231,189,101,.25); }
+.fallback-hand-card strong { display:block; margin:6px 0 4px; font-size:15px; }
+.fallback-hand-card p { margin:0; color:var(--soft); font-size:12px; line-height:1.5; }
