@@ -61,6 +61,48 @@
       holder.group = group;
     }
 
+    // 牌位刻痕: 桌面上发光圆角虚线框, 空位时也提示"这里放牌"
+    function paintSlotCanvas() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256; canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 256, 400);
+      ctx.strokeStyle = 'rgba(231,189,101,0.55)';
+      ctx.lineWidth = 5;
+      ctx.setLineDash([18, 12]);
+      if (typeof ctx.roundRect === 'function') {
+        ctx.beginPath();
+        ctx.roundRect(14, 14, 228, 372, 26);
+        ctx.stroke();
+      } else {
+        ctx.strokeRect(14, 14, 228, 372);
+      }
+      ctx.setLineDash([]);
+      ctx.strokeStyle = 'rgba(231,189,101,0.16)';
+      ctx.lineWidth = 2;
+      if (typeof ctx.roundRect === 'function') {
+        ctx.beginPath();
+        ctx.roundRect(6, 6, 244, 388, 30);
+        ctx.stroke();
+      }
+      return canvas;
+    }
+    function buildSlotMarker(pos) {
+      const canvas = paintSlotCanvas();
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace || 'srgb';
+      const mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(LAYOUT.cardW * 1.18, LAYOUT.cardH * 1.18),
+        new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: 0.85, depthWrite: false })
+      );
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.position.set(pos.x, 0.012, pos.z);
+      root.add(mesh);
+      return mesh;
+    }
+    buildSlotMarker(LAYOUT.opponent);
+    buildSlotMarker(LAYOUT.player);
+
     // 牌堆: 一叠卡背(细盒体堆叠)
     function buildDeckPile() {
       const pile = new THREE.Group();

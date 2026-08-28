@@ -18,7 +18,7 @@
     const hand3d = (handFactory || globalScope.Table3dHand).createHand3D({
       THREE, painter, card3d, tweenEngine: tween,
       parentGroup: scene3d.scene,
-      hand: { z: LAYOUT.hand.z, spacing: 0.58, curve: 0.17, ry: 0.17, rz: 0.085, yDrop: 0.09 }
+      hand: { z: LAYOUT.hand.z, spacing: 0.62, curve: 0.17, ry: 0.17, rz: 0.085, yDrop: 0.09 }
     });
     const board3d = (boardFactory || globalScope.Table3dBoard).createBoard3D({
       THREE, painter, card3d, tweenEngine: tween, parentGroup: scene3d.scene, LAYOUT

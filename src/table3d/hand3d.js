@@ -30,7 +30,7 @@
     return slots;
   }
 
-  const IDLE = { lift: -0.28, scale: 1.22, rx: -0.1 };
+  const IDLE = { lift: -0.2, scale: 1.16, rx: -0.1 };
   const HOVER = { lift: 0.95, scale: 1.36, rx: 0.0 };
   const SELECT = { lift: 1.62, scale: 1.42, rx: 0.06 };
 
