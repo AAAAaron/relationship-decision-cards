@@ -144,7 +144,77 @@
 
   function openModal(id) { $(id).hidden = false; document.body.style.overflow = 'hidden'; }
   function closeModal(id) { $(id).hidden = true; if (!$$('.modal-backdrop').some(m => !m.hidden)) document.body.style.overflow = ''; }
-  function renderAll() { renderTop(); renderBoard(); renderHand(); renderCounts(); persistState(); }
+  function table3dActive() { return Boolean(typeof window !== 'undefined' && window.Table3dBridge); }
+
+  // ---------- table3d: 状态 → 3D 场景同步 ----------
+  function handSpecs() {
+    const plan = handPlan();
+    if (!plan) return [];
+    return plan.candidates.map(c => {
+      const card = candidateCard(c);
+      return {
+        id: card.id,
+        data: {
+          kind: 'hand', rank: c.rank, title: card.title,
+          quote: (card.front && card.front.my_voice) || '',
+          meta: [{ label: 'AI', value: rankName(c.rank) }],
+          back: {
+            logic: (card.back && card.back.logic) || '',
+            invalid: (card.back && card.back.invalid) || '',
+            source: (card.back && card.back.source) || ''
+          }
+        }
+      };
+    });
+  }
+  function sceneSpec(scene) {
+    if (!scene) return null;
+    return {
+      kind: 'scene', rank: 'backup', title: scene.title,
+      quote: scene.quote || scene.opponent_action || scene.trigger || '',
+      meta: [{ label: '场景', value: sceneTypeName(scene.scene_type) }, { label: '来源', value: sourceName(scene.source) }],
+      back: {
+        logic: scene.round_goal || '形成合适回应',
+        invalid: (scene.constraints || []).join('、') || '—',
+        source: `${sourceName(scene.source)} · 置信度 ${scene.confidence || '中'}`
+      }
+    };
+  }
+  function replySpec(player) {
+    if (!player) return null;
+    return {
+      kind: 'reply', rank: player.ai_rank || 'primary', title: player.title,
+      quote: player.reply || '',
+      meta: [{ label: '语气', value: player.style_name || '我的原声' }],
+      back: {
+        logic: `表达风格：${player.style_name || '我的原声'}`,
+        invalid: player.ai_reason || '',
+        source: player.saved ? '已收藏，可复用' : '本回合采用'
+      }
+    };
+  }
+  function previousSpecs() {
+    const prev = session().previous;
+    if (!prev) return {};
+    return { opponent: sceneSpec(prev.opponent), player: replySpec(prev.player) };
+  }
+  function syncTable(withDeal = false) {
+    const bridge = window.Table3dBridge;
+    if (!bridge) return;
+    const deal = withDeal || state.justDealt;
+    state.justDealt = false;
+    bridge.sync({
+      hand: handSpecs(),
+      opponent: sceneSpec(session().current.opponent),
+      player: replySpec(session().current.player),
+      previous: previousSpecs(),
+      deal,
+      selectedId: state.selectedCardId
+    });
+    renderRoundControls();
+  }
+
+  function renderAll() { renderTop(); if (table3dActive()) { syncTable(); } else { renderBoard(); renderHand(); } renderCounts(); persistState(); }
   function renderTop() {
     const p = person(), m = matter();
     $('heroAvatar').textContent = p.initial;
@@ -293,6 +363,8 @@
     }
   }
   function renderBoard() {
+    if (table3dActive()) { syncTable(); return; }
+    if (!$('currentOpponentSlot')) return; // 3D 模式 DOM 牌桌已移除
     const s = session();
     const previousRecord = s.previous ? s.history.find(record => record.id === s.previous.recordId) : null;
     $('previousOpponentSlot').innerHTML = '';
@@ -353,6 +425,8 @@
     return candidates;
   }
   function renderHand(options = {}) {
+    if (table3dActive()) { syncTable(); return; }
+    if (!$('handFan')) return; // 3D 模式 DOM 手牌已移除
     const plan = handPlan();
     if (!plan) {
       const aiLoading = session().current.opponent?.hand_plan_source === 'loading';
@@ -519,16 +593,65 @@
     $$('[data-close]', $('playModalContent')).forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
     $('confirmPlay').addEventListener('click', confirmPlay);
   }
-  function confirmPlay() {
+  function buildPlayerData() {
     const cand = state.selectedCandidate;
     const c = cand ? candidateCard(cand) : card(state.selectedCardId);
-    const playerData = {
+    return {
       card_id: c.id, title: c.title, reply: selectedReply(), style_name: style(state.selectedStyleId).name,
       style_id: state.selectedStyleId,
       choice_title: c.type === 'choice' ? c.choices[state.selectedChoiceIndex].title : '',
       ai_rank: cand.rank, ai_reason: cand.reason,
       front: c.front || undefined
     };
+  }
+
+  // ---------- 出牌 HUD(3D 模式): 卡下内联确认条, 替代全屏弹窗 ----------
+  function openPlayHud(cardId) {
+    state.selectedCardId = cardId; state.selectedCandidate = candidateFor(cardId);
+    state.selectedStyleId = 'my_voice'; state.selectedChoiceIndex = 0;
+    const cand = state.selectedCandidate;
+    const c = candidateCard(cand);
+    if (!cand || !c) return;
+    $('playHudRank').textContent = rankName(cand.rank);
+    $('playHudRank').className = `play-hud-rank rank-${cand.rank}`;
+    $('playHudTitle').textContent = c.title;
+    const stylesBox = $('playHudStyles');
+    stylesBox.innerHTML = DATA.styles.map(s => `<button class="style-chip${s.id === state.selectedStyleId ? ' active' : ''}" data-style-id="${esc(s.id)}" type="button">${esc(s.name)}</button>`).join('');
+    refreshPlayHud();
+    $('playHud').hidden = false;
+  }
+  function refreshPlayHud() {
+    if (!state.selectedCandidate) return;
+    $('playHudQuote').textContent = `“${selectedReply()}”`;
+    $$('#playHudStyles .style-chip').forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.styleId === state.selectedStyleId);
+    });
+  }
+  function closePlayHud() {
+    $('playHud').hidden = true;
+  }
+  async function confirmPlayHud() {
+    const bridge = window.Table3dBridge;
+    if (!bridge || bridge.isFlying()) return;
+    const cardId = state.selectedCardId;
+    closePlayHud();
+    const landed = await bridge.playSelectedHand();
+    if (!landed) return;
+    state.selectedCardId = cardId;
+    session().current.player = buildPlayerData();
+    session().current.saved = false;
+    state.selectedCardId = null; state.selectedCandidate = null;
+    renderAll();
+  }
+  function cancelPlayHud() {
+    closePlayHud();
+    if (window.Table3dBridge) window.Table3dBridge.selectHand(null);
+    state.selectedCardId = null; state.selectedCandidate = null;
+  }
+
+  function confirmPlay() {
+    if (table3dActive()) { confirmPlayHud(); return; }
+    const playerData = buildPlayerData();
     session().current.player = playerData;
     session().current.saved = false;
 
@@ -608,6 +731,10 @@
     const prev = session().current.saved;
     session().current.saved = !prev;
     renderBoard();
+    // 3D 模式: 收藏时光点从双方牌位飞向卡包
+    if (!prev && session().current.saved && table3dActive() && window.Table3dBridge) {
+      window.Table3dBridge.saveFlight();
+    }
     // 关键动作：从未收藏 → 收藏时派发星点飞卡包
     if (!prev && session().current.saved) {
       const opp = $('currentOpponentSlot');
@@ -1415,10 +1542,10 @@
     $('matterButton').addEventListener('click', openMatterDetail);
     $('opponentDeckButton').addEventListener('click', openOpponentDeck);
     $$('[data-previous-card]').forEach(button => button.addEventListener('click', () => openPreviousCard(button.dataset.previousCard)));
-    $('currentOpponentSlot').addEventListener('click', event => {
+    if ($('currentOpponentSlot')) $('currentOpponentSlot').addEventListener('click', event => {
       if (!event.target.closest('[data-flip]')) openCurrentCard('opponent');
     });
-    $('currentPlayerSlot').addEventListener('click', event => {
+    if ($('currentPlayerSlot')) $('currentPlayerSlot').addEventListener('click', event => {
       if (!event.target.closest('[data-flip]')) openCurrentCard('player');
     });
     $('historyButton').addEventListener('click', () => { renderHistory(); openModal('historyModal'); });
@@ -1459,7 +1586,7 @@
     $('createSimulationButton').addEventListener('click', () => playNewScene(buildSimulationScene()));
     $$('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
     $$('.modal-backdrop').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); }));
-    $('handViewport').addEventListener('wheel', e => {
+    if ($('handViewport')) $('handViewport').addEventListener('wheel', e => {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault();
         const cards = $$('.hand-card'); if (!cards.length) return;
@@ -1467,6 +1594,61 @@
         layoutHand(state.handFocus);
       }
     }, { passive: false });
+    // table3d HUD: 出牌确认条 / 语气切换 / 战场牌详情
+    if ($('playHudConfirm')) {
+      $('playHudConfirm').addEventListener('click', confirmPlayHud);
+      $('playHudCancel').addEventListener('click', cancelPlayHud);
+      $('playHudStyles').addEventListener('click', e => {
+        const chip = e.target.closest('.style-chip');
+        if (!chip) return;
+        state.selectedStyleId = chip.dataset.styleId;
+        state.selectedChoiceIndex = 0;
+        refreshPlayHud();
+      });
+      window.addEventListener('table3d:hand-select', e => {
+        const { id } = e.detail || {};
+        if (id) openPlayHud(id); else closePlayHud();
+      });
+      window.addEventListener('table3d:board-click', e => showCardDetail((e.detail || {}).kind));
+      // 3D 桥就绪后(晚于 app.js 初始化)重新同步一次状态
+      window.addEventListener('table3d:ready', () => renderAll());
+    }
+  }
+
+  // ---------- 3D 战场牌详情: 侧滑面板, 正反信息一页排干净 ----------
+  function showCardDetail(kind) {
+    const s = session();
+    const isOpponent = kind === 'opponent';
+    const scene = isOpponent ? s.current.opponent : s.current.player;
+    if (!scene) return;
+    const panel = $('cardDetail');
+    if (!panel) return;
+    const rows = isOpponent
+      ? [
+          ['对方原话', scene.quote || scene.opponent_action || '—'],
+          ['触发事件', scene.trigger || '—'],
+          ['约束', (scene.constraints || []).join('、') || '—'],
+          ['对方关注', scene.focus || '待判断'],
+          ['本回合目标', scene.round_goal || '形成合适回应'],
+          ['来源 / 置信度', `${sourceName(scene.source)} · ${scene.confidence || '中'}`]
+        ]
+      : [
+          ['我的回应', scene.reply || '—'],
+          ['表达风格', scene.style_name || '我的原声'],
+          ['具体抉择', scene.choice_title || '无'],
+          ['AI 判断', scene.ai_reason || '—']
+        ];
+    panel.innerHTML = `
+      <header class="card-detail-head">
+        <span>${isOpponent ? '对方场景牌' : '我的回应牌'}</span>
+        <button id="cardDetailClose" class="round-icon" type="button" aria-label="关闭详情">×</button>
+      </header>
+      <h3>${esc(scene.title)}</h3>
+      <dl class="card-detail-list">
+        ${rows.map(([label, value]) => `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join('')}
+      </dl>`;
+    panel.hidden = false;
+    $('cardDetailClose').addEventListener('click', () => { panel.hidden = true; });
   }
 
   // ---------- 桌面风格（PNG 已废弃，stage-fx 主导） ----------

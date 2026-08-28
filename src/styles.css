@@ -5058,3 +5058,203 @@ body {
   width:100%;
   box-sizing:border-box;
 }
+
+/* ===== table3d: 3D 牌桌 + HUD ===== */
+#table3dCanvas {
+  position:fixed;
+  inset:0;
+  z-index:0;
+  display:block;
+  touch-action:none;
+}
+body.table3d-live .app-shell {
+  pointer-events:none;
+}
+body.table3d-live .app-shell .topbar,
+body.table3d-live .table-rail,
+body.table3d-live .round-controls,
+body.table3d-live .play-hud,
+body.table3d-live .card-detail {
+  pointer-events:auto;
+}
+.table3d-stage {
+  position:fixed;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+}
+.table-rail {
+  position:fixed;
+  left:16px;
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  z-index:5;
+}
+.table-rail-button {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  min-width:96px;
+  padding:12px 12px;
+  border:1px solid rgba(246,221,160,.28);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(23,41,69,.88),rgba(13,28,50,.92));
+  color:var(--text);
+  cursor:pointer;
+  box-shadow:0 10px 26px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.table-rail-button:hover {
+  transform:translateY(-2px);
+  border-color:rgba(246,221,160,.55);
+  box-shadow:0 14px 32px rgba(0,0,0,.5), 0 0 18px rgba(231,189,101,.18);
+}
+.table-rail-button strong { font-size:13px; }
+.table-rail-button small { color:var(--muted); font-size:10.5px; }
+.table-rail-button .spine-gem { color:var(--gold); font-size:16px; }
+/* 回合操作: 手牌上方居中 */
+body.table3d-live .round-controls {
+  position:fixed;
+  left:50%;
+  bottom:calc(42vh - 8px);
+  transform:translateX(-50%);
+  display:flex;
+  gap:10px;
+  z-index:6;
+}
+/* 出牌确认条: 卡牌下方浮出, 无全屏遮罩 */
+.play-hud {
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  width:min(640px,94vw);
+  z-index:20;
+}
+.play-hud-inner {
+  padding:14px 18px 14px;
+  border:1px solid rgba(246,221,160,.35);
+  border-radius:18px;
+  background:linear-gradient(180deg,rgba(20,34,58,.96),rgba(10,20,38,.98));
+  box-shadow:0 24px 60px rgba(0,0,0,.6), 0 0 30px rgba(231,189,101,.14), inset 0 1px 0 rgba(255,255,255,.1);
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  animation:hudIn .28s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes hudIn {
+  from { opacity:0; transform:translateY(24px) scale(.96); }
+  to { opacity:1; transform:none; }
+}
+.play-hud-head {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.play-hud-head strong { font-size:18px; font-weight:800; }
+.play-hud-rank {
+  font-size:11px;
+  font-weight:700;
+  padding:3px 10px;
+  border-radius:999px;
+  background:rgba(204,214,228,.2);
+  color:var(--text);
+}
+.play-hud-rank.rank-primary { background:rgba(231,189,101,.25); color:var(--gold2); }
+.play-hud-rank.rank-backup { background:rgba(117,148,255,.22); color:#b9c9f2; }
+.play-hud-rank.rank-risk { background:rgba(215,134,141,.22); color:#f0c3c8; }
+.play-hud-quote {
+  margin:0;
+  color:#dfe6f2;
+  font-size:13.5px;
+  font-weight:600;
+  line-height:1.55;
+}
+.play-hud-styles {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.style-chip {
+  padding:6px 13px;
+  border-radius:999px;
+  border:1px solid var(--line2);
+  background:rgba(255,255,255,.05);
+  color:var(--soft);
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .16s ease;
+}
+.style-chip:hover { border-color:rgba(246,221,160,.5); color:var(--text); }
+.style-chip.active {
+  background:linear-gradient(145deg,var(--gold2),var(--gold));
+  border-color:transparent;
+  color:#182039;
+  box-shadow:0 4px 14px rgba(231,189,101,.35);
+}
+.play-hud-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+/* 战场牌详情: 右侧滑入 */
+.card-detail {
+  position:fixed;
+  right:0;
+  top:0;
+  bottom:0;
+  width:min(360px,88vw);
+  z-index:30;
+  padding:22px 22px;
+  overflow:auto;
+  border-left:1px solid rgba(246,221,160,.3);
+  background:linear-gradient(180deg,rgba(18,32,56,.97),rgba(8,17,32,.98));
+  box-shadow:-24px 0 60px rgba(0,0,0,.55);
+  animation:detailIn .3s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes detailIn {
+  from { transform:translateX(40px); opacity:0; }
+  to { transform:none; opacity:1; }
+}
+.card-detail-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+}
+.card-detail-head span {
+  color:var(--gold2);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.06em;
+}
+.card-detail h3 {
+  margin:0 0 14px;
+  font-size:22px;
+  font-weight:800;
+  line-height:1.25;
+}
+.card-detail-list { margin:0; display:flex; flex-direction:column; gap:12px; }
+.card-detail-list div {
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.03);
+}
+.card-detail-list dt {
+  color:var(--muted);
+  font-size:11px;
+  font-weight:700;
+  margin-bottom:3px;
+}
+.card-detail-list dd {
+  margin:0;
+  color:var(--text);
+  font-size:13px;
+  line-height:1.6;
+}

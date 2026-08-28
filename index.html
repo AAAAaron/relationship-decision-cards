@@ -12,13 +12,7 @@
   <link rel="stylesheet" href="src/styles.css" />
 </head>
 <body>
-  <div class="bg-layer" id="bgLayer" aria-hidden="true"></div>
-  <div class="bg-region bg-region--opponent" id="bgRegionOpponent" aria-hidden="true"></div>
-  <div class="bg-region bg-region--battlefield" id="bgRegionBattlefield" aria-hidden="true"></div>
-  <div class="bg-region bg-region--hand" id="bgRegionHand" aria-hidden="true"></div>
-  <div class="bg-overlay" aria-hidden="true"></div>
-  <canvas id="stageFxCanvas" aria-hidden="true"></canvas>
-  <div class="stage-fx-fallback" aria-hidden="true"></div>
+  <canvas id="table3dCanvas" aria-label="3D 牌桌"></canvas>
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
@@ -47,67 +41,38 @@
       </div>
     </header>
 
-    <section class="hero-tagline" aria-label="产品 slogan">
-      <h1 class="hero-tagline__lead">不会说话的人，都有一个嘴替。</h1>
-      <p class="hero-tagline__sub">把想说的，替你说出来。</p>
-    </section>
+    <main class="table3d-stage">
+      <aside class="table-rail">
+        <button id="opponentDeckButton" class="table-rail-button" type="button">
+          <span aria-hidden="true">♠</span>
+          <strong>对方出牌</strong>
+          <small><b id="opponentDeckCount">1</b> 张可选</small>
+        </button>
+        <button id="packSpineButton" class="table-rail-button" type="button">
+          <span class="spine-gem" aria-hidden="true">★</span>
+          <strong>我的卡包</strong>
+          <small><span id="packCount">3</span> 张收藏</small>
+        </button>
+        <button id="archiveHistoryButton" class="table-rail-button" type="button">全部回合</button>
+      </aside>
+      <div id="roundControls" class="round-controls"></div>
 
-    <main class="game-table">
-      <section class="board-zone">
-        <aside class="opponent-action-zone">
-          <button id="opponentDeckButton" class="opponent-action-button" type="button">
-            <span aria-hidden="true">♠</span>
-            <strong>对方出牌</strong>
-            <small><b id="opponentDeckCount">1</b> 张可选</small>
-          </button>
-        </aside>
+      <div id="playHud" class="play-hud" hidden>
+        <div class="play-hud-inner">
+          <header class="play-hud-head">
+            <span id="playHudRank" class="play-hud-rank"></span>
+            <strong id="playHudTitle"></strong>
+          </header>
+          <p id="playHudQuote" class="play-hud-quote"></p>
+          <div id="playHudStyles" class="play-hud-styles" role="radiogroup" aria-label="表达风格"></div>
+          <div class="play-hud-actions">
+            <button id="playHudCancel" class="secondary-button" type="button">取消</button>
+            <button id="playHudConfirm" class="primary-button" type="button">出牌</button>
+          </div>
+        </div>
+      </div>
 
-        <section class="battlefield board-stage">
-          <div class="board-stage-content">
-          <div class="board-head">
-            <span>对方当前场景</span><span>我的当前回应</span>
-          </div>
-          <div class="round-row current-row">
-            <span class="round-label active-label">当前轮</span>
-            <div class="duel-stack previous-opponent-stack">
-              <div id="previousOpponentSlot" class="field-slot previous-slot"></div>
-              <button id="previousOpponentPeek" class="previous-peek" data-previous-card="opponent" type="button" aria-label="放大查看上一轮场景牌"></button>
-              <div id="currentOpponentSlot" class="field-slot current-slot"></div>
-            </div>
-            <span class="round-arrow active-arrow">→</span>
-            <div class="duel-stack previous-player-stack">
-              <div id="previousPlayerSlot" class="field-slot previous-slot"></div>
-              <button id="previousPlayerPeek" class="previous-peek" data-previous-card="player" type="button" aria-label="放大查看上一轮回应牌"></button>
-              <div id="currentPlayerSlot" class="field-slot current-slot"></div>
-            </div>
-          </div>
-          <div id="roundControls" class="round-controls"></div>
-          </div>
-        </section>
-
-        <aside class="archive-rail">
-          <button id="packSpineButton" class="pack-spine" type="button" aria-label="打开我的卡包">
-            <span class="spine-gem">★</span>
-            <strong>我的卡包</strong>
-            <small><span id="packCount">3</span> 张收藏</small>
-            <i aria-hidden="true"></i>
-          </button>
-          <button id="archiveHistoryButton" class="archive-history" type="button">查看全部回合</button>
-        </aside>
-      </section>
-
-      <section class="hand-zone">
-        <header class="hand-header">
-          <div>
-            <span>当前应对手牌</span>
-            <strong id="handAxis">按一个统一维度展开主要解法</strong>
-            <small id="handCoverage"></small>
-            <small id="handPlanSource" class="hand-source" aria-live="polite"></small>
-          </div>
-          <div class="hand-legend"><span class="legend primary"></span>主推荐 <span class="legend backup"></span>条件备选 <span class="legend other"></span>其他路线</div>
-        </header>
-        <div id="handViewport" class="hand-viewport"><div id="handFan" class="hand-fan"></div></div>
-      </section>
+      <aside id="cardDetail" class="card-detail" hidden></aside>
     </main>
   </div>
 
@@ -201,7 +166,7 @@
     }
   }
   </script>
-  <script>window.__APP_BUILD__ = '2e3b0cd'; console.info('[build]', window.__APP_BUILD__);</script>
-  <script src="data/demo-data.js"></script><script src="src/data-model.js"></script><script src="src/ai-client.js"></script><script src="src/ai-engine.js"></script><script src="src/ai-log.js"></script><script src="src/storage.js"></script><script src="src/backgrounds.js"></script><script src="src/motion-preferences.js"></script><script src="src/stage-fx-scenes.js"></script><script src="src/stage-fx-scene-factory.js"></script><script src="src/stage-fx-effects.js"></script><script src="src/stage-fx.js"></script><script src="src/stage-fx-controller.js"></script><script type="module" src="src/stage-fx-bootstrap.js"></script><script src="src/app.js"></script>
+  <script>window.__APP_BUILD__ = '3d-table'; console.info('[build]', window.__APP_BUILD__);</script>
+  <script src="data/demo-data.js"></script><script src="src/data-model.js"></script><script src="src/ai-client.js"></script><script src="src/ai-engine.js"></script><script src="src/ai-log.js"></script><script src="src/storage.js"></script><script src="src/table3d/tween.js"></script><script src="src/table3d/card-texture.js"></script><script src="src/table3d/card3d.js"></script><script src="src/table3d/scene3d.js"></script><script src="src/table3d/hand3d.js"></script><script src="src/table3d/board3d.js"></script><script src="src/table3d/interact3d.js"></script><script src="src/table3d/index.js"></script><script src="src/app.js"></script><script type="module" src="src/table3d-bootstrap.js"></script>
 </body>
 </html>

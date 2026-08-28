@@ -15,12 +15,11 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
     'dist/assets/data-model.js',
     'dist/assets/ai-client.js',
     'dist/assets/storage.js',
-    'dist/assets/backgrounds.js',
-    'dist/assets/motion-preferences.js',
-    'dist/assets/stage-fx-scenes.js',
-    'dist/assets/stage-fx-scene-factory.js',
-    'dist/assets/stage-fx-controller.js',
-    'dist/assets/stage-fx-bootstrap.js',
+    'dist/assets/table3d/tween.js',
+    'dist/assets/table3d/card-texture.js',
+    'dist/assets/table3d/scene3d.js',
+    'dist/assets/table3d/index.js',
+    'dist/assets/table3d-bootstrap.js',
     'dist/assets/styles.css',
     'dist/assets/backgrounds/manifest.json',
     'dist/vendor/three/three.module.js',
@@ -31,8 +30,8 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   const html = fs.readFileSync(path.join(root, 'dist/index.html'), 'utf8');
   assert.match(html, /assets\/styles\.css/);
   assert.match(html, /assets\/storage\.js/);
-  assert.match(html, /assets\/backgrounds\.js/);
-  assert.match(html, /assets\/stage-fx-bootstrap\.js/);
+  assert.match(html, /assets\/table3d\/index\.js/);
+  assert.match(html, /assets\/table3d-bootstrap\.js/);
   assert.match(html, /assets\/app\.js/);
   assert.match(html, /three\.module\.js/);
   assert.doesNotMatch(html, /node_modules|localhost/);

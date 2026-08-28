@@ -29,14 +29,16 @@ const builtHtml = sourceHtml
   .replace('src="src/ai-log.js"', 'src="assets/ai-log.js"')
   .replace('src="src/app.js"', 'src="assets/app.js"')
   .replace('src="src/storage.js"', 'src="assets/storage.js"')
-  .replace('src="src/backgrounds.js"', 'src="assets/backgrounds.js"')
-  .replace('src="src/motion-preferences.js"', 'src="assets/motion-preferences.js"')
-  .replace('src="src/stage-fx-scenes.js"', 'src="assets/stage-fx-scenes.js"')
-  .replace('src="src/stage-fx-scene-factory.js"', 'src="assets/stage-fx-scene-factory.js"')
-  .replace('src="src/stage-fx-effects.js"', 'src="assets/stage-fx-effects.js"')
-  .replace('src="src/stage-fx.js"', 'src="assets/stage-fx.js"')
-  .replace('src="src/stage-fx-controller.js"', 'src="assets/stage-fx-controller.js"')
-  .replace('src="src/stage-fx-bootstrap.js"', 'src="assets/stage-fx-bootstrap.js"')
+  .replace('src="src/table3d/tween.js"', 'src="assets/table3d/tween.js"')
+  .replace('src="src/table3d/card-texture.js"', 'src="assets/table3d/card-texture.js"')
+  .replace('src="src/table3d/card3d.js"', 'src="assets/table3d/card3d.js"')
+  .replace('src="src/table3d/scene3d.js"', 'src="assets/table3d/scene3d.js"')
+  .replace('src="src/table3d/hand3d.js"', 'src="assets/table3d/hand3d.js"')
+  .replace('src="src/table3d/board3d.js"', 'src="assets/table3d/board3d.js"')
+  .replace('src="src/table3d/interact3d.js"', 'src="assets/table3d/interact3d.js"')
+  .replace('src="src/table3d/index.js"', 'src="assets/table3d/index.js"')
+  .replace('src="src/app.js"', 'src="assets/app.js"')
+  .replace('src="src/table3d-bootstrap.js"', 'src="assets/table3d-bootstrap.js"')
   // 注入 git commit hash 给前端读取
   .replace(/window\.__APP_BUILD__ = '[^']*'/, `window.__APP_BUILD__ = '${buildHash}'`);
 
@@ -48,14 +50,8 @@ await cp(path.join(root, 'src', 'ai-log.js'), path.join(assets, 'ai-log.js'));
 await cp(path.join(root, 'src', 'storage.js'), path.join(assets, 'storage.js'));
 await cp(path.join(root, 'src', 'data-model.js'), path.join(assets, 'data-model.js'));
 await cp(path.join(root, 'src', 'ai-client.js'), path.join(assets, 'ai-client.js'));
-await cp(path.join(root, 'src', 'backgrounds.js'), path.join(assets, 'backgrounds.js'));
-await cp(path.join(root, 'src', 'motion-preferences.js'), path.join(assets, 'motion-preferences.js'));
-await cp(path.join(root, 'src', 'stage-fx-scenes.js'), path.join(assets, 'stage-fx-scenes.js'));
-await cp(path.join(root, 'src', 'stage-fx-scene-factory.js'), path.join(assets, 'stage-fx-scene-factory.js'));
-await cp(path.join(root, 'src', 'stage-fx-effects.js'), path.join(assets, 'stage-fx-effects.js'));
-await cp(path.join(root, 'src', 'stage-fx.js'), path.join(assets, 'stage-fx.js'));
-await cp(path.join(root, 'src', 'stage-fx-controller.js'), path.join(assets, 'stage-fx-controller.js'));
-await cp(path.join(root, 'src', 'stage-fx-bootstrap.js'), path.join(assets, 'stage-fx-bootstrap.js'));
+await cp(path.join(root, 'src', 'table3d'), path.join(assets, 'table3d'), { recursive: true });
+await cp(path.join(root, 'src', 'table3d-bootstrap.js'), path.join(assets, 'table3d-bootstrap.js'));
 await cp(path.join(root, 'data', 'demo-data.js'), path.join(dist, 'data', 'demo-data.js'));
 await cp(path.join(root, 'assets', 'backgrounds'), path.join(assets, 'backgrounds'), { recursive: true });
 await cp(path.join(root, 'assets', 'icons'), path.join(assets, 'icons'), { recursive: true });
