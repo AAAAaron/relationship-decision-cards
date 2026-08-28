@@ -115,16 +115,42 @@
       canvas.width = 256; canvas.height = 256;
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, 256, 256);
-      const glow = ctx.createRadialGradient(128, 116, 10, 128, 116, 118);
-      glow.addColorStop(0, 'rgba(255,214,140,0.4)');
-      glow.addColorStop(0.65, 'rgba(255,190,105,0.12)');
+      // 底座阴影
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath();
+      ctx.ellipse(128, 214, 78, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // 中央暖光晕
+      const glow = ctx.createRadialGradient(128, 112, 8, 128, 112, 116);
+      glow.addColorStop(0, 'rgba(255,216,146,0.62)');
+      glow.addColorStop(0.6, 'rgba(255,190,105,0.2)');
       glow.addColorStop(1, 'rgba(255,190,105,0)');
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, 256, 256);
-      ctx.font = '130px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+      // 金色细环
+      ctx.strokeStyle = 'rgba(231,189,101,0.5)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(128, 116, 88, 0, Math.PI * 2);
+      ctx.stroke();
+      // 图案: emoji 渲染可用则用 emoji, 否则兜底发光 ✦
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(emoji, 128, 122);
+      ctx.font = '130px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+      const width = ctx.measureText(emoji).width;
+      if (width > 40) {
+        ctx.fillText(emoji, 128, 120);
+      } else {
+        ctx.shadowColor = 'rgba(255,214,140,0.9)';
+        ctx.shadowBlur = 26;
+        const g = ctx.createLinearGradient(0, 40, 0, 200);
+        g.addColorStop(0, '#ffe9b8');
+        g.addColorStop(1, '#d8a94e');
+        ctx.fillStyle = g;
+        ctx.font = '800 120px "Outfit","PingFang SC",sans-serif';
+        ctx.fillText('\u2726', 128, 122);
+        ctx.shadowBlur = 0;
+      }
       return canvas;
     }
     function setSceneProp(sceneType) {
@@ -144,7 +170,7 @@
           new THREE.PlaneGeometry(1.05, 1.05),
           new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false })
         );
-        scenePropMesh.position.set(-2.45, 0.62, -0.75);
+        scenePropMesh.position.set(-2.35, 0.6, -0.45);
         scenePropMesh.rotation.y = 0.35;
         root.add(scenePropMesh);
       }
@@ -328,6 +354,8 @@
       burstAt,
       saveFlight,
       update,
+      hover,
+      setSceneProp,
       getBoardMeshes,
       clearPlayer() {
         if (playerCard) {
