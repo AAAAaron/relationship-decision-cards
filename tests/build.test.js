@@ -19,6 +19,8 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
     'dist/assets/table3d/card-texture.js',
     'dist/assets/table3d/scene3d.js',
     'dist/assets/table3d/index.js',
+    'dist/assets/table3d/modern-strategy.js',
+    'dist/assets/table3d/modern-strategy.css',
     'dist/assets/table3d-bootstrap.js',
     'dist/assets/styles.css',
     'dist/assets/backgrounds/manifest.json',
@@ -35,4 +37,7 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(html, /assets\/app\.js/);
   assert.match(html, /three\.module\.js/);
   assert.doesNotMatch(html, /node_modules|localhost/);
+
+  const bootstrap = fs.readFileSync(path.join(root, 'dist/assets/table3d-bootstrap.js'), 'utf8');
+  assert.match(bootstrap, /table3d\/modern-strategy\.js/);
 });
