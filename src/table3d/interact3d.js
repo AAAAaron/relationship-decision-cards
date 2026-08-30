@@ -1,5 +1,5 @@
 // table3d: Raycaster 拾取
-// 统一处理 pointermove/pointerdown: 命中手牌/战场牌回调, 光标反馈
+// 统一处理 pointermove/pointerdown: 命中手牌/战场牌/桌边控件回调, 光标反馈
 (function initTable3dInteract(globalScope, factory) {
   const api = factory();
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -34,11 +34,11 @@
       return hits.length ? hits[0].object : null;
     }
 
-    function resolveCard(object) {
-      // 沿父链找到带 userData.card 的组
+    function resolveInteractive(object) {
+      // 沿父链找到带 userData.card 或 userData.tableControl 的交互组
       let obj = object;
       while (obj) {
-        if (obj.userData && obj.userData.card) return obj;
+        if (obj.userData && (obj.userData.card || obj.userData.tableControl)) return obj;
         obj = obj.parent;
       }
       return null;
@@ -53,19 +53,19 @@
       requestAnimationFrame(() => {
         rafPending = false;
         const hit = pick(lastEvent);
-        const cardGroup = hit ? resolveCard(hit) : null;
-        if (cardGroup !== currentHit) {
-          currentHit = cardGroup;
-          if (domElement) domElement.style.cursor = cardGroup ? 'pointer' : '';
-          if (typeof onHover === 'function') onHover(cardGroup, lastEvent);
+        const target = hit ? resolveInteractive(hit) : null;
+        if (target !== currentHit) {
+          currentHit = target;
+          if (domElement) domElement.style.cursor = target ? 'pointer' : '';
+          if (typeof onHover === 'function') onHover(target, lastEvent);
         }
       });
     }
 
     function pointerDown(event) {
       const hit = pick(event);
-      const cardGroup = hit ? resolveCard(hit) : null;
-      if (typeof onClick === 'function') onClick(cardGroup, event);
+      const target = hit ? resolveInteractive(hit) : null;
+      if (typeof onClick === 'function') onClick(target, event);
     }
 
     if (domElement) {
@@ -75,7 +75,8 @@
 
     return {
       pick,
-      resolveCard,
+      resolveCard: resolveInteractive,
+      resolveInteractive,
       dispose() {
         if (domElement) {
           domElement.removeEventListener('pointermove', scheduleHover);
