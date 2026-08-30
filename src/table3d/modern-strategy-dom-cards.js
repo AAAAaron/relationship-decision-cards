@@ -10,21 +10,22 @@ if (!document.querySelector(`link[href="${cssHref}"]`)) {
   document.head.appendChild(link);
 }
 
-// Keep the WebGL card geometry as a subtle physical shadow/effect target, but do
-// not ask a rasterized CanvasTexture to be the primary reading surface.
+// WebGL keeps geometry only as an animation/lighting target. The card face itself
+// must never be a second readable surface beneath the native DOM card, otherwise
+// rasterized Chinese text will bleed through and make the DOM type look dirty.
 const createCard3DBase = Card3d.createCard3D.bind(Card3d);
 Card3d.createCard3D = function createMutedWebGLCard(args) {
   const group = createCard3DBase(args);
   const card = group?.userData?.card;
   [card?.frontMaterial, card?.backMaterial].filter(Boolean).forEach(material => {
     material.transparent = true;
-    material.opacity = 0.10;
+    material.opacity = 0;
     material.depthWrite = false;
     material.needsUpdate = true;
   });
   if (card?.body?.material) {
     card.body.material.transparent = true;
-    card.body.material.opacity = 0.18;
+    card.body.material.opacity = 0.10;
     card.body.material.depthWrite = false;
     card.body.material.needsUpdate = true;
   }
@@ -62,7 +63,18 @@ function backRows(spec) {
   return rows;
 }
 
-function cardMarkup(spec, { id = '', hand = false, selected = false, side = '' } = {}) {
+function sceneClass(spec) {
+  const scene = metaValue(spec, '场景');
+  if (/会议|评审|汇报/.test(scene)) return 'scene-meeting';
+  if (/电梯|偶遇|走廊|途中/.test(scene)) return 'scene-encounter';
+  if (/饭|餐|聚/.test(scene)) return 'scene-meal';
+  if (/微信|消息|群|异步/.test(scene)) return 'scene-message';
+  if (/电话|语音|视频/.test(scene)) return 'scene-phone';
+  if (/私|单聊|办公室/.test(scene)) return 'scene-private';
+  return 'scene-default';
+}
+
+function cardMarkup(spec, { id = '', hand = false, selected = false, side = '', entering = false } = {}) {
   if (!spec) return '';
   const isScene = spec.kind === 'scene';
   const rank = spec.rank || 'other';
@@ -75,7 +87,9 @@ function cardMarkup(spec, { id = '', hand = false, selected = false, side = '' }
     'dom-strategy-card',
     isScene ? 'scene' : 'reply',
     `rank-${rank}`,
-    selected ? 'selected' : ''
+    isScene ? sceneClass(spec) : '',
+    selected ? 'selected' : '',
+    entering ? 'entering' : ''
   ].filter(Boolean).join(' ');
 
   const headLabel = isScene ? (source || '场景') : rankLabel(rank);
@@ -117,6 +131,11 @@ function createLayer() {
   return layer;
 }
 
+function specKey(spec) {
+  if (!spec) return '';
+  return JSON.stringify([spec.kind, spec.rank, spec.title, spec.quote, spec.meta]);
+}
+
 export function installDomCardLayer(bridge) {
   if (!bridge || document.querySelector('.dom-card-layer')) return null;
   const layer = createLayer();
@@ -125,18 +144,27 @@ export function installDomCardLayer(bridge) {
   const handRoot = layer.querySelector('[data-dom-hand-layer]');
   let snapshot = null;
   let selectedId = null;
+  let lastOpponentKey = '';
+  let lastPlayerKey = '';
 
   function render(nextSnapshot) {
     snapshot = nextSnapshot || {};
     selectedId = snapshot.selectedId ?? bridge.getSelectedId?.() ?? selectedId;
-    opponentRoot.innerHTML = cardMarkup(snapshot.opponent, { side: 'opponent' });
-    playerRoot.innerHTML = cardMarkup(snapshot.player, { side: 'player' });
+    const opponentKey = specKey(snapshot.opponent);
+    const playerKey = specKey(snapshot.player);
+    const opponentEntering = Boolean(opponentKey && opponentKey !== lastOpponentKey);
+    const playerEntering = Boolean(playerKey && playerKey !== lastPlayerKey);
+    opponentRoot.innerHTML = cardMarkup(snapshot.opponent, { side: 'opponent', entering: opponentEntering });
+    playerRoot.innerHTML = cardMarkup(snapshot.player, { side: 'player', entering: playerEntering });
     handRoot.innerHTML = (snapshot.hand || []).map(entry => cardMarkup(entry.data, {
       id: entry.id,
       hand: true,
       selected: entry.id === selectedId,
-      side: 'hand'
+      side: 'hand',
+      entering: Boolean(snapshot.deal)
     })).join('');
+    lastOpponentKey = opponentKey;
+    lastPlayerKey = playerKey;
   }
 
   function selectHand(id) {
@@ -150,6 +178,43 @@ export function installDomCardLayer(bridge) {
     window.dispatchEvent(new CustomEvent('table3d:hand-select', {
       detail: { id: nextId, data: nextId ? entry?.data || null : null }
     }));
+  }
+
+  function animateSelectedToPlayer() {
+    const selected = selectedId
+      ? handRoot.querySelector(`[data-dom-card-id="${CSS.escape(selectedId)}"]`)
+      : handRoot.querySelector('.dom-strategy-card.selected');
+    if (!selected || typeof selected.animate !== 'function') return Promise.resolve();
+    const rect = selected.getBoundingClientRect();
+    const clone = selected.cloneNode(true);
+    clone.classList.remove('selected', 'entering', 'is-flipped');
+    clone.classList.add('dom-card-flight');
+    clone.style.left = `${rect.left}px`;
+    clone.style.top = `${rect.top}px`;
+    clone.style.width = `${rect.width}px`;
+    clone.style.height = `${rect.height}px`;
+    document.body.appendChild(clone);
+    selected.style.opacity = '0';
+
+    const targetWidth = Math.min(178, rect.width * 1.10);
+    const targetLeft = (window.innerWidth - targetWidth) / 2;
+    const targetTop = window.innerHeight * 0.435;
+    const dx = targetLeft - rect.left;
+    const dy = targetTop - rect.top;
+    const scale = targetWidth / rect.width;
+    const animation = clone.animate([
+      { transform: 'translate3d(0,0,0) scale(1)', opacity: 1 },
+      { transform: `translate3d(${dx * .52}px,${dy * .45 - 14}px,0) scale(${1 + (scale - 1) * .5})`, opacity: 1, offset: .48 },
+      { transform: `translate3d(${dx}px,${dy}px,0) scale(${scale})`, opacity: 1 }
+    ], {
+      duration: 420,
+      easing: 'cubic-bezier(.22,.76,.22,1)',
+      fill: 'forwards'
+    });
+    return animation.finished.catch(() => {}).finally(() => {
+      clone.remove();
+      if (selected.isConnected) selected.style.opacity = '';
+    });
   }
 
   layer.addEventListener('click', event => {
@@ -184,6 +249,15 @@ export function installDomCardLayer(bridge) {
   bridge.sync = nextSnapshot => {
     const result = syncBase(nextSnapshot);
     render(nextSnapshot);
+    return result;
+  };
+
+  const playBase = bridge.playSelectedHand.bind(bridge);
+  bridge.playSelectedHand = async () => {
+    const [result] = await Promise.all([
+      playBase(),
+      animateSelectedToPlayer()
+    ]);
     return result;
   };
 
