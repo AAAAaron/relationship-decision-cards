@@ -79,8 +79,16 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(domCards, /installDomCardLayer/);
   assert.match(domCards, /dom-readable-cards/);
   assert.match(domCards, /table3d:hand-select/);
-  assert.match(domCards, /material\.opacity = 0\.10/);
+  assert.match(domCards, /material\.opacity = 0;/);
+  assert.match(domCards, /animateSelectedToPlayer/);
+  assert.match(domCards, /bridge\.playSelectedHand = async/);
+  assert.match(domCards, /entering/);
   assert.match(domCards, /is-flipped/);
+
+  const domCss = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-dom-cards.css'), 'utf8');
+  assert.match(domCss, /domCardLand/);
+  assert.match(domCss, /domHandDeal/);
+  assert.match(domCss, /dom-card-flight/);
 
   const topdown = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-topdown.js'), 'utf8');
   assert.match(topdown, /FLAT_RX/);
