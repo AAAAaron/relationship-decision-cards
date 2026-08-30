@@ -27,6 +27,7 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
     'dist/assets/table3d/modern-strategy-controls.js',
     'dist/assets/table3d/modern-strategy-hero.js',
     'dist/assets/table3d/modern-strategy-hero.css',
+    'dist/assets/table3d/modern-strategy-topdown.js',
     'dist/assets/table3d-bootstrap.js',
     'dist/assets/styles.css',
     'dist/assets/backgrounds/manifest.json',
@@ -50,6 +51,7 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(bootstrap, /table3d\/modern-strategy-art\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-controls\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-hero\.js/);
+  assert.match(bootstrap, /table3d\/modern-strategy-topdown\.js/);
   assert.match(bootstrap, /opponentDeckButton/);
   assert.match(bootstrap, /packSpineButton/);
 
@@ -57,4 +59,9 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(hero, /prevPersonButton/);
   assert.match(hero, /personButton/);
   assert.match(hero, /matterButton/);
+
+  const topdown = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-topdown.js'), 'utf8');
+  assert.match(topdown, /FLAT_RX/);
+  assert.match(topdown, /12\.6/);
+  assert.match(topdown, /focusOn = \(\) => \{\}/);
 });
