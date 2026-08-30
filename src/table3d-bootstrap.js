@@ -7,6 +7,7 @@
     // 覆盖层加载失败时直接进入原有降级逻辑，避免出现半初始化牌桌。
     await import('./table3d/modern-strategy.js');
     await import('./table3d/modern-strategy-tuning.js');
+    await import('./table3d/modern-strategy-art.js');
 
     const index = window.Table3dIndex;
     const canvas = document.getElementById('table3dCanvas');
