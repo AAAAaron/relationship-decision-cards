@@ -1,5 +1,13 @@
 const g = window;
 
+if (!document.querySelector('link[data-modern-strategy-hero]')) {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = new URL('./modern-strategy-hero.css', import.meta.url).href;
+  link.dataset.modernStrategyHero = '1';
+  document.head.appendChild(link);
+}
+
 function byId(id) { return document.getElementById(id); }
 function textOf(id) { return (byId(id)?.textContent || '').trim(); }
 
