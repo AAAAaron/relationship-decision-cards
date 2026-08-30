@@ -24,6 +24,7 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
     'dist/assets/table3d/modern-strategy-tuning.js',
     'dist/assets/table3d/modern-strategy-tuning.css',
     'dist/assets/table3d/modern-strategy-art.js',
+    'dist/assets/table3d/modern-strategy-readable.js',
     'dist/assets/table3d/modern-strategy-controls.js',
     'dist/assets/table3d/modern-strategy-hero.js',
     'dist/assets/table3d/modern-strategy-hero.css',
@@ -49,6 +50,7 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(bootstrap, /table3d\/modern-strategy\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-tuning\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-art\.js/);
+  assert.match(bootstrap, /table3d\/modern-strategy-readable\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-controls\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-hero\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-topdown\.js/);
@@ -59,6 +61,12 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(hero, /prevPersonButton/);
   assert.match(hero, /personButton/);
   assert.match(hero, /matterButton/);
+
+  const readable = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-readable.js'), 'utf8');
+  assert.match(readable, /AI 首选/);
+  assert.match(readable, /quoteFontSize/);
+  assert.match(readable, /spec\.kind === 'scene'/);
+  assert.match(readable, /baseBack/);
 
   const topdown = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-topdown.js'), 'utf8');
   assert.match(topdown, /FLAT_RX/);
