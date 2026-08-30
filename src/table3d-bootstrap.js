@@ -2,6 +2,13 @@
 (async function bootstrapTable3d() {
   try {
     const THREE = await import('three');
+
+    // Modern Strategy Table 只覆盖视觉/布局模块，不改 app.js 的业务状态与回调协议。
+    // 覆盖层加载失败时直接进入原有降级逻辑，避免出现半初始化牌桌。
+    await import('./table3d/modern-strategy.js');
+    await import('./table3d/modern-strategy-tuning.js');
+    await import('./table3d/modern-strategy-art.js');
+
     const index = window.Table3dIndex;
     const canvas = document.getElementById('table3dCanvas');
     if (!index || !canvas) throw new Error('table3d 缺少挂载点');
@@ -19,7 +26,7 @@
     });
     if (!bridge) throw new Error('WebGL 初始化失败');
     window.Table3dBridge = bridge;
-    document.body.classList.add('table3d-live');
+    document.body.classList.add('table3d-live', 'modern-strategy-table');
     bridge.start();
     window.dispatchEvent(new CustomEvent('table3d:ready'));
     window.addEventListener('resize', () => bridge.handleResize());

@@ -1,0 +1,246 @@
+/* Modern Strategy Table — visual-only overrides for the table3d experience. */
+body.table3d-live {
+  background:#080d12;
+}
+
+body.table3d-live .app-shell {
+  width:100%;
+  height:100vh;
+  margin:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  overflow:visible;
+}
+
+body.table3d-live .topbar {
+  position:fixed;
+  top:12px;
+  left:16px;
+  right:16px;
+  z-index:20;
+  min-height:50px;
+  padding:5px 9px;
+  border:1px solid rgba(217,228,246,.10);
+  border-radius:15px;
+  background:linear-gradient(180deg,rgba(12,19,28,.76),rgba(8,14,22,.62));
+  backdrop-filter:blur(18px) saturate(1.12);
+  -webkit-backdrop-filter:blur(18px) saturate(1.12);
+  box-shadow:0 12px 34px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+body.table3d-live .brand-mark {
+  width:32px;
+  height:32px;
+  border-radius:10px;
+  font-size:17px;
+  background:linear-gradient(145deg,#e1be77,#b8893c);
+}
+
+body.table3d-live .brand strong { font-size:13px; }
+body.table3d-live .brand small { display:none; }
+body.table3d-live .current-context { gap:4px; }
+
+body.table3d-live .hero-chip,
+body.table3d-live .matter-chip {
+  min-height:38px;
+  border-color:transparent;
+  background:transparent;
+  border-radius:11px;
+  padding:4px 8px;
+}
+
+body.table3d-live .hero-chip:hover,
+body.table3d-live .matter-chip:hover {
+  background:rgba(255,255,255,.045);
+  border-color:rgba(217,228,246,.10);
+}
+
+body.table3d-live .hero-avatar {
+  width:30px;
+  height:30px;
+  color:#1a2027;
+  background:linear-gradient(145deg,#e3c58b,#b99654);
+  box-shadow:0 0 0 1px rgba(255,255,255,.12),0 5px 16px rgba(0,0,0,.22);
+}
+
+body.table3d-live .context-kicker,
+body.table3d-live .matter-count { display:none!important; }
+body.table3d-live .hero-chip strong,
+body.table3d-live .matter-chip strong { font-size:11.5px; }
+body.table3d-live .hero-chip small,
+body.table3d-live .matter-chip small { font-size:9px; opacity:.72; }
+
+body.table3d-live .round-icon,
+body.table3d-live .ghost-button {
+  background:rgba(255,255,255,.025);
+  border-color:rgba(217,228,246,.09);
+  color:rgba(225,232,242,.72);
+  box-shadow:none;
+}
+
+body.table3d-live .top-actions {
+  gap:4px;
+  opacity:.62;
+  transition:opacity .18s ease;
+}
+body.table3d-live .top-actions:hover { opacity:1; }
+body.table3d-live .top-actions .round-icon { width:30px; height:30px; font-size:11px; }
+body.table3d-live .top-actions .ghost-button { min-height:30px; padding:5px 9px; font-size:10px; }
+
+body.table3d-live #table3dCanvas { background:#080d12; }
+
+/* Old left rail becomes quiet table-edge controls. */
+body.table3d-live .table-rail {
+  position:fixed;
+  inset:0;
+  transform:none;
+  display:block;
+  z-index:8;
+  pointer-events:none;
+}
+
+body.table3d-live .table-rail-button {
+  position:absolute;
+  min-width:0;
+  width:78px;
+  min-height:66px;
+  padding:9px 7px;
+  border:1px solid rgba(217,228,246,.10);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(16,24,34,.72),rgba(8,14,22,.62));
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  color:rgba(240,244,249,.88);
+  box-shadow:0 10px 28px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.035);
+  pointer-events:auto;
+  opacity:.72;
+}
+body.table3d-live .table-rail-button:hover {
+  opacity:1;
+  transform:translateY(-2px);
+  border-color:rgba(218,187,125,.36);
+  box-shadow:0 14px 34px rgba(0,0,0,.24);
+}
+body.table3d-live .table-rail-button strong { font-size:11px; }
+body.table3d-live .table-rail-button small { font-size:9px; color:rgba(216,224,236,.58); }
+body.table3d-live .table-rail-button > span:first-child { font-size:15px; color:#cdb075; }
+
+body.table3d-live #opponentDeckButton {
+  left:20px;
+  top:48%;
+  transform:translateY(-50%);
+}
+body.table3d-live #opponentDeckButton:hover { transform:translateY(calc(-50% - 2px)); }
+body.table3d-live #packSpineButton { right:20px; bottom:23%; }
+body.table3d-live #archiveHistoryButton {
+  right:22px;
+  bottom:16%;
+  width:auto;
+  min-height:34px;
+  padding:7px 10px;
+  font-size:9px;
+  opacity:.5;
+}
+
+/* Action row: one understated control strip between played card and hand. */
+body.table3d-live .round-controls {
+  position:fixed;
+  left:50%;
+  bottom:31.5vh;
+  transform:translateX(-50%);
+  z-index:10;
+  margin:0;
+  padding:5px;
+  border-radius:999px;
+  background:rgba(7,12,18,.46);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:0 8px 20px rgba(0,0,0,.15);
+}
+body.table3d-live .round-controls:empty { display:none; }
+body.table3d-live .round-controls .primary-button,
+body.table3d-live .round-controls .secondary-button {
+  min-height:31px;
+  padding:6px 11px;
+  font-size:10px;
+  border-radius:999px;
+}
+
+/* Selection HUD is a compact decision strip, not another card-sized modal. */
+body.table3d-live .play-hud {
+  position:fixed;
+  left:50%;
+  bottom:14px;
+  transform:translateX(-50%);
+  z-index:30;
+  width:min(560px,calc(100vw - 36px));
+  pointer-events:auto;
+}
+body.table3d-live .play-hud-inner {
+  padding:9px 11px;
+  border:1px solid rgba(217,228,246,.12);
+  border-radius:15px;
+  background:rgba(10,16,24,.82);
+  backdrop-filter:blur(18px) saturate(1.08);
+  -webkit-backdrop-filter:blur(18px) saturate(1.08);
+  box-shadow:0 16px 44px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035);
+}
+body.table3d-live .play-hud-head {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:0;
+}
+body.table3d-live .play-hud-head strong { font-size:12px; }
+body.table3d-live .play-hud-quote { display:none; }
+body.table3d-live .play-hud-styles {
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin-top:7px;
+}
+body.table3d-live .play-hud-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:6px;
+  margin-top:7px;
+}
+body.table3d-live .play-hud .style-tab,
+body.table3d-live .play-hud .primary-button,
+body.table3d-live .play-hud .secondary-button {
+  min-height:29px;
+  padding:5px 9px;
+  font-size:10px;
+}
+
+body.table3d-live .table-tooltip,
+body.table3d-live .card-detail {
+  border:1px solid rgba(217,228,246,.11);
+  background:rgba(8,14,22,.88);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  box-shadow:0 18px 46px rgba(0,0,0,.3);
+}
+body.table3d-live .table-tooltip { border-radius:12px; }
+body.table3d-live .card-detail { border-radius:16px; }
+
+body.table3d-live .modal-panel {
+  border-color:rgba(217,228,246,.13);
+  background:linear-gradient(180deg,rgba(16,24,35,.98),rgba(9,15,23,.98));
+  box-shadow:0 30px 80px rgba(0,0,0,.48);
+}
+
+@media (max-width:820px) {
+  body.table3d-live .topbar { top:6px; left:6px; right:6px; border-radius:12px; }
+  body.table3d-live .brand { display:none; }
+  body.table3d-live .current-context { justify-self:start; overflow-x:auto; }
+  body.table3d-live .hero-chip,
+  body.table3d-live .matter-chip { flex:0 0 auto; }
+  body.table3d-live #opponentDeckButton { left:8px; width:64px; }
+  body.table3d-live #packSpineButton { right:8px; width:64px; }
+  body.table3d-live #archiveHistoryButton { right:8px; }
+  body.table3d-live .round-controls { bottom:29vh; max-width:80vw; }
+  body.table3d-live .play-hud { bottom:7px; width:calc(100vw - 14px); }
+}
