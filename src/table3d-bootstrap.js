@@ -9,6 +9,7 @@
     await import('./table3d/modern-strategy-tuning.js');
     await import('./table3d/modern-strategy-art.js');
     await import('./table3d/modern-strategy-controls.js');
+    await import('./table3d/modern-strategy-hero.js');
 
     const index = window.Table3dIndex;
     const canvas = document.getElementById('table3dCanvas');
