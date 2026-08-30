@@ -25,6 +25,8 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
     'dist/assets/table3d/modern-strategy-tuning.css',
     'dist/assets/table3d/modern-strategy-art.js',
     'dist/assets/table3d/modern-strategy-controls.js',
+    'dist/assets/table3d/modern-strategy-hero.js',
+    'dist/assets/table3d/modern-strategy-hero.css',
     'dist/assets/table3d-bootstrap.js',
     'dist/assets/styles.css',
     'dist/assets/backgrounds/manifest.json',
@@ -47,6 +49,12 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(bootstrap, /table3d\/modern-strategy-tuning\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-art\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-controls\.js/);
+  assert.match(bootstrap, /table3d\/modern-strategy-hero\.js/);
   assert.match(bootstrap, /opponentDeckButton/);
   assert.match(bootstrap, /packSpineButton/);
+
+  const hero = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-hero.js'), 'utf8');
+  assert.match(hero, /prevPersonButton/);
+  assert.match(hero, /personButton/);
+  assert.match(hero, /matterButton/);
 });
