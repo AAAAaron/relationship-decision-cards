@@ -2,13 +2,16 @@ const g = window;
 const Card3d = g.Table3dCard3d;
 if (!Card3d) throw new Error('DOM card layer: Table3dCard3d missing');
 
-const cssHref = new URL('./modern-strategy-dom-cards.css', import.meta.url).href;
-if (!document.querySelector(`link[href="${cssHref}"]`)) {
+function ensureCss(relativePath) {
+  const href = new URL(relativePath, import.meta.url).href;
+  if (document.querySelector(`link[href="${href}"]`)) return;
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = cssHref;
+  link.href = href;
   document.head.appendChild(link);
 }
+ensureCss('./modern-strategy-dom-cards.css');
+ensureCss('./modern-strategy-hand-layout.css');
 
 // WebGL keeps geometry only as an animation/lighting target. The card face itself
 // must never be a second readable surface beneath the native DOM card, otherwise
