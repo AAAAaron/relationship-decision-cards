@@ -1,0 +1,187 @@
+/* Hybrid strategy table: readable DOM cards over the Three.js tabletop. */
+.dom-card-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  font-family: "Outfit","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+}
+
+.dom-card-slot {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.dom-card-slot.opponent { top: 16.5vh; }
+.dom-card-slot.player { top: 43.5vh; }
+
+.dom-strategy-card {
+  width: 178px;
+  min-height: 252px;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, opacity .16s ease;
+}
+.dom-strategy-card:hover { transform: translateY(-3px); }
+.dom-strategy-card:focus-visible { outline: 2px solid rgba(216,178,104,.85); outline-offset: 3px; }
+
+.dom-strategy-card.scene {
+  color: #eef4fb;
+  border: 1px solid rgba(158,184,221,.30);
+  background: linear-gradient(180deg,rgba(29,47,72,.97),rgba(10,20,33,.98));
+  box-shadow: 0 18px 44px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.dom-strategy-card.reply {
+  color: #26231f;
+  border: 1px solid rgba(114,94,62,.22);
+  background: linear-gradient(180deg,#fffdf7,#f0e7d9);
+  box-shadow: 0 16px 38px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.72);
+}
+
+.dom-card-head {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 11px 6px;
+}
+.dom-card-rank {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 750;
+  letter-spacing: .02em;
+}
+.reply.rank-primary .dom-card-rank { color:#6c4b13; background:#f3e4bf; border:1px solid #d4b36d; }
+.reply.rank-backup .dom-card-rank { color:#36547f; background:#e2eaf6; border:1px solid #a9bcda; }
+.reply.rank-other .dom-card-rank { color:#56606b; background:#e9ecef; border:1px solid #c6ccd3; }
+.reply.rank-risk .dom-card-rank { color:#78383e; background:#f2dfe1; border:1px solid #d6a3a8; }
+.scene .dom-card-rank { color:#d8e5f6; background:rgba(122,153,198,.13); border:1px solid rgba(168,194,230,.22); }
+.dom-card-kind { font-size:10px; opacity:.52; white-space:nowrap; }
+
+.dom-card-title {
+  margin: 0;
+  padding: 3px 12px 8px;
+  font-size: 17px;
+  line-height: 1.25;
+  font-weight: 820;
+  letter-spacing: -.01em;
+}
+
+.dom-card-scene-art {
+  height: 78px;
+  margin: 0 10px 9px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+  background:
+    radial-gradient(circle at 52% 28%,rgba(111,154,209,.23),transparent 40%),
+    linear-gradient(145deg,#253b59,#0e1d31 70%);
+  border: 1px solid rgba(176,201,235,.15);
+}
+.dom-card-scene-art::before,
+.dom-card-scene-art::after { content:""; position:absolute; opacity:.6; }
+.dom-card-scene-art::before {
+  width: 76%; height: 1px; background:rgba(220,232,247,.22); top:54%; left:12%;
+  box-shadow: 0 18px 0 rgba(220,232,247,.08),0 -18px 0 rgba(220,232,247,.08);
+}
+.dom-card-scene-art::after {
+  width: 42px; height: 42px; border:1px solid rgba(216,178,104,.30); border-radius:50%;
+  background:radial-gradient(circle,rgba(216,178,104,.18),transparent 68%);
+}
+.dom-card-scene-art span { position:relative; z-index:1; font-size:10px; color:rgba(229,238,249,.62); letter-spacing:.16em; }
+
+.dom-card-quote {
+  margin: 0;
+  padding: 5px 13px 13px;
+  font-weight: 620;
+  line-height: 1.48;
+  overflow-wrap: anywhere;
+}
+.scene .dom-card-quote { font-size: 14px; color:#f2f6fb; }
+.reply .dom-card-quote {
+  font-size: 17px;
+  line-height: 1.52;
+  font-weight: 680;
+  color:#211f1b;
+}
+
+.dom-card-reason {
+  margin: 3px 11px 11px;
+  padding: 8px 9px;
+  border-radius: 10px;
+  font-size: 10.5px;
+  line-height: 1.38;
+  color:#73695d;
+  background:rgba(78,62,40,.055);
+}
+.dom-card-reason strong { color:#70501d; font-weight:750; }
+
+.dom-hand-layer {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 9px;
+  width: min(940px, calc(100vw - 110px));
+  pointer-events: none;
+}
+.dom-hand-layer .dom-strategy-card {
+  width: clamp(142px, 11.7vw, 174px);
+  min-height: 224px;
+  pointer-events: auto;
+}
+.dom-hand-layer .dom-strategy-card:hover { transform: translateY(-10px) scale(1.025); z-index:2; }
+.dom-hand-layer .dom-strategy-card.selected {
+  transform: translateY(-13px) scale(1.035);
+  border-color:rgba(203,164,95,.72);
+  box-shadow:0 22px 48px rgba(0,0,0,.32),0 0 0 2px rgba(216,178,104,.22);
+  z-index:3;
+}
+.dom-hand-layer .dom-card-title { font-size: 16px; }
+.dom-hand-layer .dom-card-quote { font-size: 15px; line-height:1.48; }
+.dom-hand-layer .dom-card-reason { display:none; }
+
+/* The DOM card is the readable surface; WebGL remains the physical table/effect layer. */
+body.dom-readable-cards .table-tooltip { display:none!important; }
+
+@media (max-width: 980px) {
+  .dom-strategy-card { width:160px; min-height:228px; }
+  .dom-card-slot.opponent { top:15vh; }
+  .dom-card-slot.player { top:41.5vh; }
+  .dom-hand-layer { gap:5px; width:calc(100vw - 24px); bottom:12px; }
+  .dom-hand-layer .dom-strategy-card { width:clamp(118px,18vw,150px); min-height:202px; }
+  .dom-hand-layer .dom-card-head { padding:7px 8px 4px; }
+  .dom-hand-layer .dom-card-title { padding-left:9px; padding-right:9px; font-size:14px; }
+  .dom-hand-layer .dom-card-quote { padding-left:10px; padding-right:10px; font-size:13px; }
+}
+
+@media (max-width: 720px) {
+  .dom-card-slot.opponent { top:13.5vh; }
+  .dom-card-slot.player { top:39.5vh; }
+  .dom-strategy-card { width:142px; min-height:205px; border-radius:15px; }
+  .dom-card-scene-art { height:58px; }
+  .dom-card-title { font-size:14px; }
+  .reply .dom-card-quote { font-size:14px; }
+  .scene .dom-card-quote { font-size:12px; }
+  .dom-hand-layer { overflow-x:auto; justify-content:flex-start; padding:10px 14px 4px; box-sizing:border-box; scroll-snap-type:x proximity; }
+  .dom-hand-layer .dom-strategy-card { flex:0 0 132px; width:132px; scroll-snap-align:center; }
+}
