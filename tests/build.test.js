@@ -31,6 +31,7 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
     'dist/assets/table3d/modern-strategy-topdown.js',
     'dist/assets/table3d/modern-strategy-dom-cards.js',
     'dist/assets/table3d/modern-strategy-dom-cards.css',
+    'dist/assets/table3d/modern-strategy-hand-layout.css',
     'dist/assets/table3d/modern-strategy-dom-card-flip.css',
     'dist/assets/table3d/modern-strategy-dom-flip-loader.js',
     'dist/assets/table3d-bootstrap.js',
@@ -82,6 +83,7 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(domCards, /material\.opacity = 0;/);
   assert.match(domCards, /animateSelectedToPlayer/);
   assert.match(domCards, /bridge\.playSelectedHand = async/);
+  assert.match(domCards, /modern-strategy-hand-layout\.css/);
   assert.match(domCards, /entering/);
   assert.match(domCards, /is-flipped/);
 
@@ -89,6 +91,12 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(domCss, /domCardLand/);
   assert.match(domCss, /domHandDeal/);
   assert.match(domCss, /dom-card-flight/);
+
+  const handCss = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-hand-layout.css'), 'utf8');
+  assert.match(handCss, /height: 220px/);
+  assert.match(handCss, /margin-left: -18px/);
+  assert.match(handCss, /max-height: 820px/);
+  assert.match(handCss, /-webkit-line-clamp: 6/);
 
   const topdown = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-topdown.js'), 'utf8');
   assert.match(topdown, /FLAT_RX/);
