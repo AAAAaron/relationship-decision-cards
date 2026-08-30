@@ -5,7 +5,7 @@ const Hand = g.Table3dHand;
 if (!Scene || !Board || !Hand) throw new Error('Top-down strategy table: base modules missing');
 
 const FLAT_RX = -Math.PI / 2;
-const BOARD_SCALE = 1.14;
+const BOARD_SCALE = 1.26;
 const BOARD_Y = 0.055;
 
 // Communication-first tabletop: true overhead view. Perspective remains only to
@@ -18,16 +18,17 @@ if (Scene.LAYOUT) {
   Object.assign(Scene.LAYOUT.packPos, { x: 3.35, z: 2.20 });
   Scene.LAYOUT.hand.z = 2.20;
   Object.assign(Scene.LAYOUT.camera, {
-    fov: 32,
+    fov: 30,
     pos: [0, 13.4, 0.01],
     lookAt: [0, 0, 0]
   });
 }
 
-// Hand cards stay on the tabletop. Hover/select only change height and size.
-if (Hand.IDLE) Object.assign(Hand.IDLE, { lift: 0.060, scale: 0.94, rx: FLAT_RX });
-if (Hand.HOVER) Object.assign(Hand.HOVER, { lift: 0.145, scale: 1.035, rx: FLAT_RX });
-if (Hand.SELECT) Object.assign(Hand.SELECT, { lift: 0.205, scale: 1.085, rx: FLAT_RX });
+// Flat cards are intentionally large enough to read without opening a detail
+// panel. Hover/select stay restrained and never tilt toward the camera.
+if (Hand.IDLE) Object.assign(Hand.IDLE, { lift: 0.060, scale: 1.08, rx: FLAT_RX });
+if (Hand.HOVER) Object.assign(Hand.HOVER, { lift: 0.145, scale: 1.14, rx: FLAT_RX });
+if (Hand.SELECT) Object.assign(Hand.SELECT, { lift: 0.205, scale: 1.19, rx: FLAT_RX });
 
 // Replace the remaining Hearthstone fan with a quiet row of alternatives. Cards
 // may overlap a little on narrow layouts, but do not curve or rotate away from
@@ -40,7 +41,7 @@ Hand.createHand3D = function createTabletopHand(args) {
       ...(args.hand || {}),
       z: Scene.LAYOUT?.hand?.z ?? 2.20,
       spacing: 0.82,
-      curve: 0.018,
+      curve: 0,
       ry: 0,
       rz: 0,
       yDrop: 0
@@ -94,7 +95,6 @@ Board.createBoard3D = function createTopDownBoard(args) {
   const tween = args.tweenEngine;
   const LAYOUT = args.LAYOUT;
 
-  // Both initial sync and animated opponent plays end in the same flat pose.
   const setOpponentBase = board.setOpponent.bind(board);
   board.setOpponent = spec => flattenGroup(setOpponentBase(spec), { scale: BOARD_SCALE });
 
