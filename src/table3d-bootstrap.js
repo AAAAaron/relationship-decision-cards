@@ -12,6 +12,8 @@
     await import('./table3d/modern-strategy-controls.js');
     await import('./table3d/modern-strategy-hero.js');
     await import('./table3d/modern-strategy-topdown.js');
+    await import('./table3d/modern-strategy-dom-flip-loader.js');
+    const domCards = await import('./table3d/modern-strategy-dom-cards.js');
 
     const index = window.Table3dIndex;
     const canvas = document.getElementById('table3dCanvas');
@@ -39,6 +41,11 @@
       }
     });
     if (!bridge) throw new Error('WebGL 初始化失败');
+
+    // Content is rendered as native DOM text for clarity. Three.js remains the
+    // tabletop/effect layer and keeps invisible-ish physical cards as animation targets.
+    const domCardLayer = domCards.installDomCardLayer?.(bridge) || null;
+    window.Table3dDomCardLayer = domCardLayer;
     window.Table3dBridge = bridge;
     document.body.classList.add('table3d-live', 'modern-strategy-table');
     bridge.start();
