@@ -101,6 +101,13 @@ body.table3d-live.modern-strategy-table #archiveHistoryButton {
   opacity:.34;
 }
 
+/* Once the true 3D deck/pack hit targets exist, their DOM twins become fallback-only. */
+body.table3d-live.table3d-controls-ready.modern-strategy-table #opponentDeckButton,
+body.table3d-live.table3d-controls-ready.modern-strategy-table #packSpineButton {
+  visibility:hidden;
+  pointer-events:none;
+}
+
 /* Keep the round actions between the played response and the fan, but lighter. */
 body.table3d-live.modern-strategy-table .round-controls {
   bottom:28.5vh;
