@@ -5,11 +5,11 @@ const BaseCard3d = g.Table3dCard3d;
 const BaseTexture = g.Table3dCardTexture;
 if (!BaseScene || !BaseBoard || !BaseCard3d || !BaseTexture) throw new Error('Modern Strategy Table: base modules missing');
 
-// Load visual-only CSS without touching index.html.
+// Load visual-only CSS from the same module directory in source and built assets.
 if (!document.querySelector('link[data-modern-strategy]')) {
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = 'src/table3d/modern-strategy.css';
+  link.href = new URL('./modern-strategy.css', import.meta.url).href;
   link.dataset.modernStrategy = '1';
   document.head.appendChild(link);
 }
