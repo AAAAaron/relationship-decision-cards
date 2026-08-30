@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -12,11 +15,27 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 测试并构建
+        run: npm run check
+
   deploy:
+    if: github.event_name != 'pull_request'
+    needs: verify
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -30,8 +49,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: 测试并构建
-        run: npm run check
+      - name: 构建静态站点
+        run: npm run build
 
       - name: 配置 Pages
         uses: actions/configure-pages@v5
