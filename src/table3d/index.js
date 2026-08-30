@@ -29,10 +29,16 @@
     const seen = { opponent: '', player: '', previous: '' };
     const lastSpec = { opponent: null, player: null };
 
-    // hover: 手牌抬起 / 战场牌抬向相机, 并回调浮卡数据(带鼠标坐标)
+    // hover: 手牌抬起 / 战场牌抬向相机 / 牌堆卡包轻微抬升
     function handleHover(group, event) {
       let payload = null;
-      if (group) {
+      if (group && group.userData && group.userData.tableControl) {
+        hand3d.hover(null);
+        board3d.hover(null);
+        if (board3d.hoverControl) board3d.hoverControl(group);
+        payload = { kind: 'control', control: group.userData.tableControl };
+      } else if (group) {
+        if (board3d.hoverControl) board3d.hoverControl(null);
         const entry = hand3d.entryForGroup(group);
         if (entry) {
           hand3d.hover(entry.id);
@@ -46,16 +52,28 @@
       } else {
         hand3d.hover(null);
         board3d.hover(null);
+        if (board3d.hoverControl) board3d.hoverControl(null);
       }
       if (payload && event && typeof event.clientX === 'number') {
         payload.x = event.clientX;
         payload.y = event.clientY;
       }
-      if (callbacks.onHandHover) callbacks.onHandHover(payload);
+      if (payload && payload.kind === 'control') {
+        if (callbacks.onHandHover) callbacks.onHandHover(null);
+        if (callbacks.onTableControlHover) callbacks.onTableControlHover(payload);
+      } else {
+        if (callbacks.onTableControlHover) callbacks.onTableControlHover(null);
+        if (callbacks.onHandHover) callbacks.onHandHover(payload);
+      }
     }
 
     function handleClick(group) {
       if (flying) return;
+      if (group && group.userData && group.userData.tableControl) {
+        if (board3d.hoverControl) board3d.hoverControl(group);
+        if (callbacks.onTableControl) callbacks.onTableControl(group.userData.tableControl);
+        return;
+      }
       if (group) {
         const entry = hand3d.entryForGroup(group);
         if (entry) {
@@ -78,6 +96,7 @@
         }
       }
       // 点空白: 相机复位 + 取消选中
+      if (board3d.hoverControl) board3d.hoverControl(null);
       if (scene3d.isReviewing && scene3d.isReviewing()) {
         scene3d.resetView();
         if (callbacks.onBoardClick) callbacks.onBoardClick(null);
