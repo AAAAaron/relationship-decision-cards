@@ -86,7 +86,6 @@ function drawReadableFace(ctx, spec) {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
-  // Only one quiet accent edge. No gems, rivets or fantasy ornaments.
   ctx.fillStyle = rank.accent;
   rr(ctx, 28, 30, 7, H - 60, 3.5);
   ctx.fill();
@@ -111,7 +110,7 @@ function drawReadableFace(ctx, spec) {
   ctx.lineTo(174, 250);
   ctx.stroke();
 
-  // The actual sentence the user may say is the visual center of the card.
+  // The sentence the user may actually say is the visual center of the card.
   const qSize = quoteFontSize(quote);
   ctx.font = `650 ${qSize}px ${FONT}`;
   ctx.fillStyle = '#211f1b';
@@ -123,21 +122,24 @@ function drawReadableFace(ctx, spec) {
   const startY = Math.max(availableTop + qSize, availableTop + ((availableBottom - availableTop - blockHeight) / 2) + qSize);
   lines.forEach((line, i) => ctx.fillText(line, 54, startY + i * lineHeight));
 
-  // One reason only. Full logic remains on the card back.
-  const reason = truncate(spec.back?.logic || spec.back?.invalid || '', 48);
+  // One rationale only. For an already-played reply, prefer the AI rationale;
+  // speaking style already has its own tiny footer. Full logic remains on back.
+  const reasonSource = spec.kind === 'reply'
+    ? (spec.back?.invalid || spec.back?.logic || '')
+    : (spec.back?.logic || spec.back?.invalid || '');
+  const reason = truncate(reasonSource, 48);
   if (reason) {
     ctx.fillStyle = 'rgba(58,50,40,.07)';
     rr(ctx, 52, 988, W - 104, 116, 18);
     ctx.fill();
     ctx.font = `700 20px ${FONT}`;
     ctx.fillStyle = rank.ink;
-    ctx.fillText(spec.kind === 'reply' ? '本回合采用' : '为什么值得考虑', 70, 1027);
+    ctx.fillText(spec.kind === 'reply' ? '本回合判断' : '为什么值得考虑', 70, 1027);
     ctx.font = `520 24px ${FONT}`;
     ctx.fillStyle = '#6b6257';
     wrap(ctx, reason, W - 144, 2).forEach((line, i) => ctx.fillText(line, 70, 1067 + i * 31));
   }
 
-  // Reply cards may show the chosen speaking style, but only as a small footer.
   const styleMeta = Array.isArray(spec.meta) ? spec.meta.find(m => m.label === '语气') : null;
   if (styleMeta?.value) {
     ctx.font = `600 18px ${FONT}`;
