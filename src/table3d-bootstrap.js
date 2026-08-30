@@ -8,6 +8,7 @@
     await import('./table3d/modern-strategy.js');
     await import('./table3d/modern-strategy-tuning.js');
     await import('./table3d/modern-strategy-art.js');
+    await import('./table3d/modern-strategy-controls.js');
 
     const index = window.Table3dIndex;
     const canvas = document.getElementById('table3dCanvas');
@@ -21,7 +22,17 @@
       callbacks: {
         onHandHover: (payload) => window.dispatchEvent(new CustomEvent('table3d:hover', { detail: payload })),
         onHandSelect: (id, data) => window.dispatchEvent(new CustomEvent('table3d:hand-select', { detail: { id, data } })),
-        onBoardClick: (kind) => window.dispatchEvent(new CustomEvent('table3d:board-click', { detail: { kind } }))
+        onBoardClick: (kind) => window.dispatchEvent(new CustomEvent('table3d:board-click', { detail: { kind } })),
+        onTableControl: (control) => {
+          const buttonId = control === 'opponent-deck'
+            ? 'opponentDeckButton'
+            : control === 'pack'
+              ? 'packSpineButton'
+              : null;
+          if (buttonId) document.getElementById(buttonId)?.click();
+          window.dispatchEvent(new CustomEvent('table3d:control', { detail: { control } }));
+        },
+        onTableControlHover: (payload) => window.dispatchEvent(new CustomEvent('table3d:control-hover', { detail: payload }))
       }
     });
     if (!bridge) throw new Error('WebGL 初始化失败');
