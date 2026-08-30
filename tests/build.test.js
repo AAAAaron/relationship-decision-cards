@@ -62,6 +62,10 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
 
   const topdown = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-topdown.js'), 'utf8');
   assert.match(topdown, /FLAT_RX/);
-  assert.match(topdown, /12\.6/);
+  assert.match(topdown, /13\.4/);
+  assert.match(topdown, /camera\.up\.set\(0, 0, -1\)/);
+  assert.match(topdown, /spacing: 0\.82/);
+  assert.match(topdown, /ry: 0/);
+  assert.match(topdown, /rz: 0/);
   assert.match(topdown, /focusOn = \(\) => \{\}/);
 });
