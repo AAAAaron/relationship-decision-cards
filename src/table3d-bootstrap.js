@@ -14,6 +14,7 @@
     await import('./table3d/modern-strategy-topdown.js');
     await import('./table3d/modern-strategy-dom-flip-loader.js');
     const domCards = await import('./table3d/modern-strategy-dom-cards.js');
+    const handBrowse = await import('./table3d/modern-strategy-hand-browse.js');
 
     const index = window.Table3dIndex;
     const canvas = document.getElementById('table3dCanvas');
@@ -42,10 +43,13 @@
     });
     if (!bridge) throw new Error('WebGL 初始化失败');
 
-    // Content is rendered as native DOM text for clarity. Three.js remains the
-    // tabletop/effect layer and keeps invisible-ish physical cards as animation targets.
+    // Native DOM remains the readable card surface. The hand browsing controller
+    // restores the original shallow fan + drag/wheel browsing without bringing back
+    // rasterized WebGL text.
     const domCardLayer = domCards.installDomCardLayer?.(bridge) || null;
+    const curvedHand = handBrowse.installCurvedHandBrowsing?.(domCardLayer) || null;
     window.Table3dDomCardLayer = domCardLayer;
+    window.Table3dCurvedHand = curvedHand;
     window.Table3dBridge = bridge;
     document.body.classList.add('table3d-live', 'modern-strategy-table');
     bridge.start();
