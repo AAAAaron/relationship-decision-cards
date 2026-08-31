@@ -10,8 +10,20 @@ function cardsOf(hand) {
   return [...hand.querySelectorAll(':scope > .dom-strategy-card')];
 }
 
+function centerPrimaryCard(hand) {
+  const cards = cardsOf(hand);
+  if (cards.length < 2) return false;
+  const primary = cards.find(card => card.classList.contains('rank-primary'));
+  if (!primary) return false;
+  const ordered = cards.filter(card => card !== primary);
+  const target = Math.floor(ordered.length / 2);
+  ordered.splice(target, 0, primary);
+  const changed = ordered.some((card, index) => card !== cards[index]);
+  if (changed) ordered.forEach(card => hand.appendChild(card));
+  return changed;
+}
+
 // Restored from the old DOM layoutHand():
-// - primary/center sits highest
 // - 138px center spacing for a normal 5-card hand
 // - 5px vertical drop per half-step
 // - 4.2deg rotation per half-step
@@ -50,10 +62,16 @@ export function installCurvedHandBrowsing(domCardLayer) {
   let focus = -1;
   let browseShift = 0;
   let maxBrowse = 0;
+  let reordering = false;
 
   function refresh() {
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(() => {
+      if (!reordering) {
+        reordering = true;
+        centerPrimaryCard(hand);
+        reordering = false;
+      }
       const { cards, span } = layoutOriginalHand(hand, focus, browseShift);
       const available = Math.max(240, hand.clientWidth - 30);
       const narrow = window.matchMedia('(max-width:720px)').matches;
@@ -73,7 +91,6 @@ export function installCurvedHandBrowsing(domCardLayer) {
     layoutOriginalHand(hand, focus, browseShift);
   }
 
-  // Event delegation survives hand innerHTML replacement on every sync.
   const onMouseOver = event => {
     const card = event.target.closest('.dom-strategy-card');
     if (!card || card.parentElement !== hand) return;
@@ -94,11 +111,12 @@ export function installCurvedHandBrowsing(domCardLayer) {
     const rect = card.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width - 0.5;
     const y = (event.clientY - rect.top) / rect.height - 0.5;
-    card.style.setProperty('--tilt-rx', `${(-y * 4).toFixed(1)}deg`);
-    card.style.setProperty('--tilt-ry', `${(x * 4).toFixed(1)}deg`);
+    card.style.setProperty('--tilt-rx', `${(-y * 5).toFixed(1)}deg`);
+    card.style.setProperty('--tilt-ry', `${(x * 5).toFixed(1)}deg`);
   };
 
   const observer = new MutationObserver(() => {
+    if (reordering) return;
     focus = -1;
     browseShift = 0;
     refresh();
@@ -108,7 +126,7 @@ export function installCurvedHandBrowsing(domCardLayer) {
   window.addEventListener('resize', onResize);
   refresh();
 
-  // Overflow browsing is deliberately secondary. A standard 3–5 card hand does not move as a viewport.
+  // Overflow browsing is secondary. A standard 3–5 card hand uses the original fixed fan.
   let dragging = false;
   let moved = false;
   let suppressClick = false;
@@ -208,5 +226,5 @@ export function installCurvedHandBrowsing(domCardLayer) {
   };
 }
 
-export { layoutOriginalHand };
+export { layoutOriginalHand, centerPrimaryCard };
 export const modernStrategyHandBrowseInstalled = true;
