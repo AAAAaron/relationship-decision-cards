@@ -95,20 +95,27 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(domCss, /dom-card-flight/);
 
   const handCss = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-hand-layout.css'), 'utf8');
-  assert.match(handCss, /overflow-x: auto/);
-  assert.match(handCss, /--hand-drop/);
-  assert.match(handCss, /--hand-rot/);
-  assert.match(handCss, /rotate\(var\(--hand-rot/);
-  assert.match(handCss, /滑动浏览/);
-  assert.match(handCss, /-webkit-line-clamp: 6/);
+  assert.match(handCss, /position:absolute/);
+  assert.match(handCss, /width:200px/);
+  assert.match(handCss, /height:252px!important/);
+  assert.match(handCss, /transform-origin:50% 100%/);
+  assert.match(handCss, /-webkit-line-clamp:6/);
 
   const handBrowse = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-hand-browse.js'), 'utf8');
   assert.match(handBrowse, /installCurvedHandBrowsing/);
-  assert.match(handBrowse, /applyArc/);
+  assert.match(handBrowse, /centerPrimaryCard/);
+  assert.match(handBrowse, /Math\.min\(138, 760/);
+  assert.match(handBrowse, /x -= 30/);
+  assert.match(handBrowse, /x \+= 30/);
+  assert.match(handBrowse, /y - 46/);
+  assert.match(handBrowse, /offset \* 4\.2/);
+  assert.match(handBrowse, /scale\(1\.05\)/);
   assert.match(handBrowse, /pointerdown/);
   assert.match(handBrowse, /wheel/);
-  assert.match(handBrowse, /scrollLeft/);
-  assert.match(handBrowse, /--hand-rot/);
+
+  const flipCss = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-dom-card-flip.css'), 'utf8');
+  assert.match(flipCss, /--tilt-rx/);
+  assert.match(flipCss, /--tilt-ry/);
 
   const topdown = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-topdown.js'), 'utf8');
   assert.match(topdown, /FLAT_RX/);
