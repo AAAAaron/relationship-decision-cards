@@ -32,6 +32,7 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
     'dist/assets/table3d/modern-strategy-dom-cards.js',
     'dist/assets/table3d/modern-strategy-dom-cards.css',
     'dist/assets/table3d/modern-strategy-hand-layout.css',
+    'dist/assets/table3d/modern-strategy-hand-browse.js',
     'dist/assets/table3d/modern-strategy-dom-card-flip.css',
     'dist/assets/table3d/modern-strategy-dom-flip-loader.js',
     'dist/assets/table3d-bootstrap.js',
@@ -61,7 +62,9 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(bootstrap, /table3d\/modern-strategy-topdown\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-dom-flip-loader\.js/);
   assert.match(bootstrap, /table3d\/modern-strategy-dom-cards\.js/);
+  assert.match(bootstrap, /table3d\/modern-strategy-hand-browse\.js/);
   assert.match(bootstrap, /installDomCardLayer/);
+  assert.match(bootstrap, /installCurvedHandBrowsing/);
   assert.match(bootstrap, /opponentDeckButton/);
   assert.match(bootstrap, /packSpineButton/);
 
@@ -83,7 +86,6 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(domCards, /material\.opacity = 0;/);
   assert.match(domCards, /animateSelectedToPlayer/);
   assert.match(domCards, /bridge\.playSelectedHand = async/);
-  assert.match(domCards, /modern-strategy-hand-layout\.css/);
   assert.match(domCards, /entering/);
   assert.match(domCards, /is-flipped/);
 
@@ -93,10 +95,20 @@ test('构建生成可直接静态部署的完整 dist 目录', () => {
   assert.match(domCss, /dom-card-flight/);
 
   const handCss = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-hand-layout.css'), 'utf8');
-  assert.match(handCss, /height: 220px/);
-  assert.match(handCss, /margin-left: -18px/);
-  assert.match(handCss, /max-height: 820px/);
+  assert.match(handCss, /overflow-x: auto/);
+  assert.match(handCss, /--hand-drop/);
+  assert.match(handCss, /--hand-rot/);
+  assert.match(handCss, /rotate\(var\(--hand-rot/);
+  assert.match(handCss, /滑动浏览/);
   assert.match(handCss, /-webkit-line-clamp: 6/);
+
+  const handBrowse = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-hand-browse.js'), 'utf8');
+  assert.match(handBrowse, /installCurvedHandBrowsing/);
+  assert.match(handBrowse, /applyArc/);
+  assert.match(handBrowse, /pointerdown/);
+  assert.match(handBrowse, /wheel/);
+  assert.match(handBrowse, /scrollLeft/);
+  assert.match(handBrowse, /--hand-rot/);
 
   const topdown = fs.readFileSync(path.join(root, 'dist/assets/table3d/modern-strategy-topdown.js'), 'utf8');
   assert.match(topdown, /FLAT_RX/);
